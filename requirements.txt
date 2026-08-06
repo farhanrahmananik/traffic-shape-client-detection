@@ -1,6 +1,6 @@
 requests
 beautifulsoup4
-scapy
+dpkt
 numpy
 pandas
 scikit-learn
