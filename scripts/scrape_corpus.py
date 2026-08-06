@@ -13,35 +13,60 @@ same PYTHONPATH is what pytest.ini already declares:
     PYTHONPATH=src python scripts/scrape_corpus.py --dry-run
     PYTHONPATH=src python scripts/scrape_corpus.py
 
+If you pipe the output anywhere -- `| tee`, `| less` -- set pipefail
+first, or the exit code you read is the pipe's, not this script's. See
+the note under "Exit codes" below; the first full run lost its gate that
+way.
+
 Output streams are split on purpose: progress goes to stderr, and the
 final summary to stdout, so the summary can be piped or captured while
 the crawl is still narrating itself.
 
 Exit codes:
-    0   corpus written; only upstream failures, if any
+    0   corpus written; only upstream and/or excluded failures
     1   corpus written but NOT REPRODUCIBLE -- local failures occurred
     2   aborted before writing anything (robots.txt unreadable, or
         discovery found no pages)
 
-Why failures are split into two classes:
+    Note when piping: `script.py | tee log.txt` reports tee's exit code,
+    not this script's, so the gate below fires while $? reads 0. That
+    happened on the first full run. Use `set -o pipefail`, or read
+    ${PIPESTATUS[0]}:
 
-    Some failures are permanent properties of b-tu.de and recur
-    identically on every run: assets the site itself 404s (its own CSS
-    references jQuery-UI images that are not deployed), and URLs
-    robots.txt tells us not to fetch. Those are facts about the corpus.
-    They belong in the manifest, and they must NOT raise an alarm --
-    a warning that fires on every single run is a warning people learn
-    to scroll past, and then the one that matters scrolls past too.
+        set -o pipefail
+        PYTHONPATH=src python scripts/scrape_corpus.py | tee scrape.log
 
-    Other failures are properties of THIS run: a connection error, a
-    response over the size ceiling, a redirect off-host, a file that
-    could not be written. Run the script again and you get a different
-    mirror. That breaks the one claim this project makes in place of
-    publishing the corpus -- that the scripts regenerate it. It also
-    means some pages are quietly missing a resource the real page has,
-    so their traces are systematically short by one request; that would
-    surface at step 6 as an unexplained accuracy quirk, weeks after its
-    cause. So local failures are loud, and they fail the run.
+Why failures are split into three classes:
+
+    The distinction that matters is not "did it work" but "will the next
+    run produce the same corpus". Only one of these three classes says
+    no.
+
+    upstream -- properties of b-tu.de itself: assets the site 404s (its
+        own CSS references jQuery-UI images that are not deployed), and
+        URLs robots.txt tells us not to fetch. Identical on every run.
+
+    excluded -- deterministic too, but withheld by OUR policy rather
+        than by the site: off-host assets (all of them on
+        www-docs.b-tu.de, BTU's own document server) and responses over
+        the 8 MB ceiling. The URL and the file size do not change
+        between runs, so neither does this list.
+
+    local -- properties of THIS run: a connection error, a file that
+        could not be written. Run the script again and you get a
+        different mirror.
+
+    Only the third is an alarm. The measured first run makes the case:
+    29 upstream + 8 "local" under the old two-class split, of which 7
+    were in fact deterministic. A gate that fires on all 8 is a gate
+    that fires on every run, and a warning that always fires is one
+    people learn to scroll past -- taking the one that matters with it.
+
+    Upstream and excluded still mean the mirror is missing something the
+    real page has. That is a deficiency of the mirror against the live
+    site, not a class-confounding artefact: both clients load the same
+    mirror, so a missing asset is missing for Firefox and wget alike.
+    It belongs in the README's limitations, not in an alarm.
 
     The split is made on FetchRecord.outcome, never on the reason text.
     Reason strings are written for people and get reworded; an outcome
@@ -61,7 +86,7 @@ from importlib.metadata import PackageNotFoundError, version
 from pathlib import Path
 
 from tsd.discover import CorpusDiscoverer
-from tsd.fetcher import PoliteFetcher
+from tsd.fetcher import MAX_RESPONSE_BYTES, PoliteFetcher
 from tsd.mirror import SiteMirror
 from tsd.robots import USER_AGENT, RobotsError, RobotsPolicy
 from tsd.urls import BASE_URL
@@ -75,14 +100,27 @@ EXIT_NOT_REPRODUCIBLE = 1
 EXIT_ABORTED = 2
 
 # Failure outcomes that are properties of b-tu.de rather than of this
-# run: the site's own 404s, and the URLs robots.txt refuses us. Both are
-# deterministic, so a mirror containing them is still reproducible.
-#
-# Every other outcome -- error, too_large, blocked_host, write_error,
-# missing_html, depth_exceeded -- is local. Unknown outcomes fall
-# through to local on purpose: a new failure mode should be noticed,
-# not silently absorbed into the expected list.
+# run: the site's own 404s, and the URLs robots.txt refuses us.
 UPSTREAM_OUTCOMES = frozenset({"http_error", "blocked_robots"})
+
+# Deterministic as well, but withheld by our own policy rather than by
+# the site. The URL of an off-host asset and the size of a file do not
+# change between runs, so this list does not either.
+#
+# Caveat on blocked_host: PoliteFetcher emits it for two different
+# situations -- a URL that was off-host to begin with (a third-party or
+# sibling-host asset, deterministic) and a request that REDIRECTED
+# off-host mid-flight, which can be a genuine anomaly. They share one
+# outcome value, so both land here for now. Distinguishing them means a
+# separate outcome in fetcher.py, not parsing the reason text; worth
+# doing if a redirect-driven one ever shows up. On the first full run,
+# all 5 were www-docs.b-tu.de, BTU's own document server.
+EXCLUDED_OUTCOMES = frozenset({"blocked_host", "too_large"})
+
+# Everything else -- error, write_error, missing_html, depth_exceeded --
+# is local. Unknown outcomes fall through to local on purpose: a new
+# failure mode should be noticed, not silently absorbed into a list of
+# things we already decided not to care about.
 
 
 # --------------------------------------------------------------
@@ -160,8 +198,7 @@ class Progress:
             self.say(f"  asset {filename} ({size} bytes)")
         elif kind == "failure":
             url, outcome, reason = payload
-            label = "fail " if outcome in UPSTREAM_OUTCOMES else "LOCAL"
-            self.say(f"  {label} {url} [{outcome}] {reason}")
+            self.say(f"  {classify(outcome):8} {url} [{outcome}] {reason}")
 
 
 # --------------------------------------------------------------
@@ -291,25 +328,36 @@ def build_manifest(
             "bytes": total_bytes,
             "refused": len(refused),
             "failures_upstream": len(failures["upstream"]),
+            "failures_excluded": len(failures["excluded"]),
             "failures_local": len(failures["local"]),
         },
     }
 
 
+def classify(outcome: str) -> str:
+    """Which of the three failure classes an outcome belongs to."""
+    if outcome in UPSTREAM_OUTCOMES:
+        return "upstream"
+    if outcome in EXCLUDED_OUTCOMES:
+        return "excluded"
+    return "local"
+
+
 def split_failures(failures) -> dict[str, list[dict]]:
     """
-    Sort mirror failures into upstream (expected) and local (alarming).
+    Sort mirror failures into upstream, excluded and local.
 
     Classified on the outcome value, never on the reason text -- see the
-    module docstring. Both lists are written to the manifest in full:
-    the upstream ones are part of what the corpus IS, and a reader
-    checking reproducibility needs to see that they recurred.
+    module docstring. All three lists go into the manifest in full: the
+    first two are part of what the corpus IS, and a reader checking
+    reproducibility needs to see that they recurred unchanged.
     """
-    split: dict[str, list[dict]] = {"upstream": [], "local": []}
+    split: dict[str, list[dict]] = {"upstream": [], "excluded": [], "local": []}
 
     for url, outcome, reason in failures:
-        bucket = "upstream" if outcome in UPSTREAM_OUTCOMES else "local"
-        split[bucket].append({"url": url, "outcome": outcome, "reason": reason})
+        split[classify(outcome)].append(
+            {"url": url, "outcome": outcome, "reason": reason}
+        )
 
     return split
 
@@ -428,16 +476,25 @@ def main(argv: list[str] | None = None) -> int:
     print_summary(args, manifest)
 
     upstream = manifest["failures"]["upstream"]
+    excluded = manifest["failures"]["excluded"]
     local = manifest["failures"]["local"]
 
-    # Upstream failures are expected on this corpus -- b-tu.de's own CSS
-    # references jQuery-UI images that are not deployed, and robots.txt
-    # withholds a script. One line, no alarm: they are listed in full in
-    # the manifest, which is where anyone checking them will look.
+    # Both of these are deterministic, so neither threatens the claim
+    # that the scripts regenerate the corpus. One line each, no alarm:
+    # they are listed in full in the manifest, which is where anyone
+    # checking them will look.
     if upstream:
         print(
             f"{len(upstream)} upstream failure(s) (site 404s / robots.txt "
             f"refusals) -- expected, listed in {args.manifest}",
+            file=sys.stderr,
+        )
+
+    if excluded:
+        print(
+            f"{len(excluded)} excluded by policy (off-host / over the "
+            f"{MAX_RESPONSE_BYTES // (1024 * 1024)} MB ceiling) -- "
+            f"deterministic, listed in {args.manifest}",
             file=sys.stderr,
         )
 
@@ -482,6 +539,7 @@ def print_summary(args, manifest: dict) -> None:
     print(f"  bytes         : {totals['bytes']}")
     print(f"  refused       : {totals['refused']}")
     print(f"  failures      : {totals['failures_upstream']} upstream, "
+          f"{totals['failures_excluded']} excluded, "
           f"{totals['failures_local']} local")
     print(f"  mirror        : {args.output_dir}")
     print(f"  manifest      : {args.manifest}")

@@ -377,20 +377,37 @@ behaviour. Isolation keeps the first and removes the second.
 
 ### `scripts/scrape_corpus.py`
 
-- **Mirror failures are split into two classes, and only one of them is
-  an alarm.** *Upstream* (`http_error`, `blocked_robots`) are permanent
-  properties of b-tu.de: its own CSS references jQuery-UI images that are
-  not deployed (9 × 404), and robots.txt withholds a script. Those recur
-  identically on every run → **exit 0**, one summary line on stderr, full
-  list in the manifest. *Local* (`error`, `too_large`, `blocked_host`,
-  `write_error`, `missing_html`, `depth_exceeded`) vary between runs, so
-  the corpus is no longer reproducible → **exit 1**, loud warning.
-- **The reason it is split at all:** a warning that fires on every single
-  run is a warning people learn to scroll past — and then the one that
-  matters scrolls past too. An alarm that is never silent is not an alarm.
+- **Mirror failures are split into three classes, and only one is an
+  alarm.** The question being asked is not "did everything work" but
+  "will the next run produce the same corpus".
+  - *upstream* (`http_error`, `blocked_robots`) — properties of b-tu.de:
+    its own CSS references jQuery-UI images that are not deployed, and
+    robots.txt withholds a script. **29** on the first full run.
+  - *excluded* (`blocked_host`, `too_large`) — deterministic too, but
+    withheld by **our** policy: off-host assets and responses over the
+    8 MB ceiling. **7** on the first full run.
+  - *local* (`error`, `write_error`, plus anything unrecognised) — vary
+    between runs, so the corpus stops being reproducible. **1**.
+  Upstream and excluded → **exit 0**, one summary line each. Local →
+  **exit 1**, loud.
+- **Why three and not two:** the first split called all 8 non-upstream
+  failures local, and 7 of them were in fact deterministic. A gate that
+  fires on every run is a gate people learn to scroll past — and then the
+  one that matters scrolls past too. An alarm that is never silent is not
+  an alarm.
 - **Classification is on `outcome`, never on the reason string**, and an
   **unrecognised outcome counts as local**. A new failure mode should be
-  noticed, not silently absorbed into the expected list.
+  noticed, not absorbed into a list of things already decided not to care
+  about.
+- **Known limit of the `blocked_host` bucket:** `PoliteFetcher` uses that
+  one outcome both for a URL that was off-host to begin with
+  (deterministic) and for a request that *redirected* off-host mid-flight
+  (potentially a real anomaly). Both are counted as excluded for now.
+  Separating them means a new outcome in `fetcher.py` — not parsing the
+  reason text.
+- **Piping hides the exit code.** `… | tee scrape.log` reports tee's
+  status, so the gate fired on the first full run while `$?` read 0. Use
+  `set -o pipefail` or `${PIPESTATUS[0]}`.
 - **The manifest is the published substitute for the mirror**, so it
   carries no BTU content — only URLs, local filenames, sizes, sha256
   hashes and timestamps. The hashes are the point: they let anyone
@@ -402,6 +419,49 @@ behaviour. Isolation keeps the first and removes the second.
   truth for the same facts is a pair of sources that will disagree later.
 - **`bytes` and `sha256` are read back off disk**, not taken from memory,
   so the manifest describes the file that will actually be served.
+
+#### Two deliberate gaps in the mirror — both go in the README limitations
+
+**`www-docs.b-tu.de` is not mirrored.** BTU serves documents from that
+sibling host, and `PoliteFetcher` is single-host by design, so those
+assets are refused as `blocked_host` (5 on the first run). This is a
+**deficiency of the mirror against the live site, not a class-confounding
+artefact**: both clients load the same mirror, so anything missing from it
+is missing for Firefox and wget alike, and affects them equally. Widening
+the fetcher to a second host would mean a second robots.txt, a second
+crawl-delay budget and a second trust boundary — cost paid on the crawl
+side for no gain on the measurement side.
+
+**The 8 MB response ceiling stays as it is** (2 assets refused,
+`too_large`). It exists so a stray video or large PDF cannot walk into a
+corpus that is loaded ~100 times per capture round. Same reasoning as
+above: a missing large asset is missing for both clients. Raising the
+ceiling would inflate every trace on both sides without separating them.
+
+Neither is a bug to fix. Both are honest limitations to state: the mirror
+is *the site minus these*, and the measured numbers describe traffic
+shapes on that corpus.
+
+#### Future improvement — deliberately NOT now (scope)
+
+A targeted repair path, so one failed asset does not imply a full
+re-scrape. Two things block it today:
+
+1. `DiscoveryResult.html_cache` lives only in memory, so redoing one
+   page's rewrite means re-fetching that page.
+2. Failures record the asset URL but not the page that referenced it,
+   and the neutralised reference leaves no trace on disk to grep for.
+
+Persisting the cache (gitignored) and recording the referring page would
+reduce a repair to a handful of requests. It would also need `SiteMirror`
+to separate "pages to write" from "the known page set used for link
+rewriting" — today one argument does both, so re-mirroring a single page
+reports the other 99 as `missing_html`.
+
+Worth doing only if a repair is ever actually needed. Re-scraping is the
+worse option in the meantime, not because of the load but because BTU's
+link graph moves: the same seed on a changed site yields a *different*
+corpus, which would silently invalidate captures already taken.
 
 ---
 
@@ -454,10 +514,18 @@ outstanding:
       pinned dependencies (`requirements.lock.txt`)
 - [x] **Step 2a–2i** — `robots.py`, `fetcher.py`, `urls.py`, `discover.py`,
       all with tests (79 passing, no network required)
-- [ ] **Step 2j** — `src/tsd/mirror.py`: write pages + assets to
+- [x] **Step 2j** — `src/tsd/mirror.py`: write pages + assets to
       `data/mirror/`, rewrite links against the frozen page set, deterministic
-      output, loud failures
-- [ ] **Step 2k** — `scripts/scrape_corpus.py` entry point + manifest
+      output, loud failures (26 tests, no network required)
+- [x] **Step 2k** — `scripts/scrape_corpus.py` entry point + manifest
+- [x] **Scope 1 — corpus scraped**, 2026-08-06, seed 42, 19 of 20 walks:
+      **100 pages, 1701 assets, 220,636,729 bytes (210 MiB)**.
+      37 mirror failures: **29 upstream** (18 robots.txt refusals, 11 site
+      404s), **7 excluded by policy** (5 off-host `www-docs.b-tu.de`,
+      2 over the 8 MB ceiling), **1 local** (one `ConnectionError` on a
+      TYPO3 thumbnail — inspected and accepted, see
+      `results/provenance/scrape_notes.md`). Plus 7 pages refused during
+      discovery. Manifest: `results/corpus_manifest.json`.
 - [ ] **Step 3** — HTTPS server, self-signed cert
 - [ ] **Step 4** — capture harness
 - [ ] **Step 5** — feature extraction
@@ -466,5 +534,7 @@ outstanding:
 - [ ] **Step 8** — CLI
 - [ ] **Step 9** — README + case-study page
 
-The corpus has **not been scraped yet**. No request has been made to b-tu.de
-other than fetching robots.txt.
+The corpus **has been scraped** (2026-08-06). `data/mirror/` is gitignored;
+what is published in its place is `results/corpus_manifest.json` (per-file
+sha256, so a re-run can be checked against it) and
+`results/provenance/`.

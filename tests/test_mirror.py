@@ -437,8 +437,11 @@ def test_off_host_iframe_is_recorded_and_removed(tmp_path):
     assert "<iframe></iframe>" in html
     assert len(result.failures) == 1
     url, outcome, reason = result.failures[0]
-    # blocked_host is a LOCAL outcome: an embed that leaves the host is
-    # not a fact about b-tu.de's content, and the run must fail on it.
+    # blocked_host: deterministic, so scrape_corpus.py counts it as
+    # "excluded by policy" rather than as a failed run. It still means
+    # the mirrored page is missing something the real page has -- which
+    # is a limitation of the mirror, not a difference between clients,
+    # since both load the same mirror.
     assert outcome == "blocked_host"
     assert "off-host" in reason
 
