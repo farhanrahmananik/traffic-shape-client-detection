@@ -23,6 +23,11 @@ Design rationale:
     Every fetch -- allowed, blocked or failed -- is recorded. That log
     becomes results/corpus_manifest.json, which is what we publish in
     place of the mirror itself.
+
+    get() returns a FetchResult, not a requests.Response. Nothing from
+    the requests library escapes this module, so call sites cannot
+    depend on its internals and swapping the HTTP client later touches
+    only this file.
 """
 
 from __future__ import annotations
@@ -48,7 +53,25 @@ MAX_RESPONSE_BYTES = 8 * 1024 * 1024
 # Streaming chunk size for the size ceiling check.
 CHUNK_BYTES = 64 * 1024
 
-Outcome = Literal["ok", "blocked_robots", "blocked_host", "http_error", "error", "too_large"]
+Outcome = Literal[
+    "ok", "blocked_robots", "blocked_host", "http_error", "error", "too_large"
+]
+
+
+@dataclass
+class FetchResult:
+    """What a successful fetch produced. No requests internals leak out."""
+
+    url: str  # final URL, after any redirects
+    body: bytes
+    status_code: int
+    content_type: str
+    headers: dict
+
+    @property
+    def text(self) -> str:
+        """Decode as UTF-8, replacing undecodable bytes."""
+        return self.body.decode("utf-8", errors="replace")
 
 
 @dataclass
@@ -123,13 +146,13 @@ class PoliteFetcher:
     # Public API
     # ----------------------------------------------------------
 
-    def get(self, url: str) -> requests.Response:
+    def get(self, url: str) -> FetchResult:
         """
         Fetch one URL politely.
 
         Raises FetchBlocked if the request was refused before it was
-        made, or FetchFailed if it was made and did not succeed. On
-        success the response body is already fully read.
+        made, or FetchFailed if it was made and did not succeed.
+        Returns a FetchResult on success.
         """
         blocked = self._refusal_reason(url)
         if blocked is not None:
@@ -182,9 +205,6 @@ class PoliteFetcher:
                 )
             )
 
-        response._content = body  # noqa: SLF001 -- body was consumed by _read_body
-        response._content_consumed = True  # noqa: SLF001
-
         self._record(
             url,
             "ok",
@@ -193,7 +213,14 @@ class PoliteFetcher:
             bytes_received=len(body),
             elapsed_seconds=elapsed,
         )
-        return response
+
+        return FetchResult(
+            url=response.url,
+            body=body,
+            status_code=response.status_code,
+            content_type=response.headers.get("Content-Type", ""),
+            headers=dict(response.headers),
+        )
 
     @property
     def log(self) -> list[FetchRecord]:
