@@ -354,18 +354,44 @@ corrupts a working page. The three lazy-loading `data-*` names it does
 handle are there because they are a documented convention with a known
 meaning — not because the module tries to parse arbitrary data.
 
-So the residual risk is real and it is **not fixable in the scraper**.
-Whatever those scripts fetch will **not** appear in the PCAP, because
-tcpdump is filtered to the local server host and port — but the DNS lookup
-and connect latency **will** land inside Firefox's inter-arrival times.
-And wget executes no JavaScript, so the cost falls on the **Firefox class
-only**. The model could learn "this class sometimes waits on a stalled
-external connection" instead of "browsers load pages this way".
+This is **not fixable in the scraper**, and it is no longer a prediction.
 
-**Therefore step 4 must block all network except loopback for the duration
-of each capture** — network namespace, or firewall rules on the capture
-host. This is mandatory, not a precaution: the rewriting provably does not
-catch everything.
+#### MEASURED: Firefox does reach the live site — 2026-08-06
+
+Loading the mirror's root page in Firefox with the Network panel
+recording and the cache disabled, two requests left the machine:
+
+| Request | Result |
+|---|---|
+| `GET https://www.b-tu.de/…/matomo.js` | 200, 68.45 kB, **409 ms**, initiator `line 518 > injectedScript` |
+| `POST https://www.b-tu.de/…/matomo.php?action_name=…` | beacon, `NS_BINDING_ABORTED` after **190 ms** |
+
+Both are BTU's own Matomo analytics, surviving inside JavaScript that
+link rewriting cannot reach. **Neither appears in the PCAP**, because
+tcpdump is filtered to the local host and port — but their DNS, connect
+and TLS time lands inside Firefox's inter-arrival times, and wget
+executes no JavaScript, so the cost falls on **one class only**. 409 ms
+is not a rounding error next to a loopback RTT of ~0.03 ms.
+
+**Network isolation during capture is therefore a measured requirement,
+not a precaution.** Step 4 blocks all traffic except loopback for the
+duration of each capture — network namespace, or firewall rules on the
+capture host.
+
+#### Also measured on that load — what step 4 and step 5 must decide
+
+- **Firefox issued 62 requests; `wget --page-requisites` issued 116 for
+  the same page.** wget fetches every `srcset` variant, Firefox picks one
+  per set and defers lazy-loaded images. This is **genuine client
+  behaviour — signal, not artefact. Do not try to equalise it.**
+- **Firefox requests `/favicon.ico` (404); wget requests `/robots.txt`
+  (404).** One trivially learnable marker per class, produced by how each
+  client is invoked rather than by how it loads a page. **Step 4 must
+  decide how each client is invoked, and the README must state it** — a
+  classifier that scores well by finding a 404 has learned the harness.
+- **Firefox kept requesting carousel images after the load completed.**
+  **Step 5 must decide when a trace ends.** Cutting too early removes
+  exactly the Firefox signature; cutting too late measures idle time.
 
 Related, and worth stating separately in the README: the **cookie banner
 runs under Firefox and not under wget**. That difference is genuine client
@@ -476,48 +502,133 @@ corpus, which would silently invalidate captures already taken.
   it now warns loudly — `--quiet` does not silence it — and only when
   the client did not itself ask to close.
 
+#### TLS, as measured
+
+All measured 2026-08-06, `data/mirror` served on `127.0.0.1:8443`.
+
+- **No version pin in the `SSLContext`.** Both clients negotiate TLS 1.3
+  unprompted — Firefox 153.0.3 and GNU Wget 1.21.4. Pinning would
+  constrain the clients without changing what they do, and a pin that
+  silently stops matching a future client is worse than no pin.
+- **The cipher difference does not matter, and that was checked rather
+  than assumed.** Firefox picks `TLS_AES_128_GCM_SHA256`, wget picks
+  `TLS_AES_256_GCM_SHA384`. TLS 1.3 AEAD record overhead is identical
+  either way — 5-byte header plus 16-byte tag — so the key length
+  changes neither ciphertext length nor packet boundaries. The
+  difference is in the ClientHello, which is client behaviour and
+  therefore signal, not an artefact of the setup.
+- **Certificate: a local root CA plus an IP-only leaf**, fingerprints
+  pinned in `results/provenance/tls_cert.txt`. Firefox accepts the
+  825-day leaf through a user-imported CA; the 398-day cap applies only
+  to roots in the Mozilla program. **Verified before any capture was
+  taken** — deliberately, because a certificate problem discovered
+  mid-round invalidates the round.
+- **Firefox resumes TLS sessions; wget never does.** Observed:
+  "Reused, TLSv1.3" with 8 session-cache hits for Firefox, while wget
+  starts a fresh process per fetch. A resumed handshake omits the server
+  certificate, so every Firefox trace after the first would be ~1 KB
+  lighter than the first — a **process-lifetime artefact, not client
+  behaviour**. Handled at capture time with a fresh Firefox profile per
+  page load, which the HTTP cache requires anyway.
+  **Do not "fix" this by disabling session tickets on the server.** That
+  would make the server behave unlike any real server, and it would hide
+  a resumption bug in the capture harness rather than prevent one.
+
 ---
 
 ## Reusing my earlier scripts
 
 `scraper.py` and `custom_server.py` (in the uploads) are my own earlier work.
-They are being rewritten into this structure, not dropped. Known changes still
-outstanding:
+They are being rewritten into this structure, not dropped.
 
-### `custom_server.py` → `scripts/serve.py`
+### `custom_server.py` → `src/tsd/server.py` + `scripts/serve.py` — DONE
 
-1. **It is HTTP; this project needs HTTPS.** `ssl.SSLContext` + `wrap_socket`
-   with the self-signed cert. The TLS record layer *is* the observable size
+All six changes are implemented and covered by `tests/test_server.py`. The
+reasoning is kept because it is why the code looks the way it does; see also
+the `src/tsd/server.py` decisions entry above.
+
+1. **It was HTTP; this project needs HTTPS.** Now `ssl.SSLContext` with the
+   local CA's leaf certificate. The TLS record layer *is* the observable size
    structure — without it the premise collapses.
-2. **Biggest problem: single-threaded sequential accept loop.** Firefox opens
-   up to ~6 parallel connections per page load; wget goes one at a time. A
-   server that handles one socket at a time would artificially serialise
-   Firefox's parallelism, so the model would learn *the server's queuing
-   behaviour* rather than real client concurrency. Must be threaded.
-3. **`recv(4096)` once is not enough.** Firefox's headers are large and TCP
-   gives no message boundaries — loop until `\r\n\r\n`.
-4. **Keep-alive is ambiguous.** It advertises HTTP/1.1 (persistent implied)
-   but closes after each response with no `Connection: close`. Firefox will
-   try to reuse, fail, reconnect — noisy timing. Make the policy explicit and
-   **identical for both clients**.
-5. **Harden the path traversal check** — `realpath()` and verify the result
-   is inside WEB_ROOT, so symlinks are covered too.
-6. **Keep response headers constant-length** — a per-request `Date` header
-   adds size noise.
+2. **The worst problem was the single-threaded sequential accept loop.**
+   Firefox opens up to ~6 parallel connections per page load; wget goes one at
+   a time. A server handling one socket at a time would have artificially
+   serialised Firefox's parallelism, so the model would have learned *the
+   server's queuing behaviour* rather than real client concurrency. Now one
+   daemon thread per connection — and, the part that is easy to get wrong,
+   **the listening socket is not wrapped in TLS**. Wrapping it would move
+   every handshake inside `accept()` on one thread, which serialises Firefox
+   exactly as before while the code still looks concurrent.
+   `test_connections_are_served_in_parallel` fails if that regression is
+   reintroduced.
+3. **`recv(4096)` once was not enough.** Firefox's headers are large and TCP
+   gives no message boundaries. Now loops until `\r\n\r\n`, with a 16 KB /
+   100-line ceiling → 431, because an unbounded read is a one-line denial of
+   service.
+4. **Keep-alive was ambiguous.** It advertised HTTP/1.1 (persistent implied)
+   but closed after each response with no `Connection: close`, so Firefox
+   would try to reuse, fail and reconnect while wget barely noticed. The
+   policy is now explicit in every response and **identical for both
+   clients**.
+5. **The path traversal check is hardened.** Percent-decoding happens *before*
+   the check (otherwise `%2e%2e%2f` walks straight past it), then
+   `realpath()` so a symlink inside the mirror cannot point out, then
+   `commonpath()` rather than `startswith()` — a prefix test accepts
+   `/data/mirror-evil` for a root of `/data/mirror`. All three cases are
+   tested.
+6. **Response headers are constant-length.** No `Date` (its digits change
+   length), and no `Server`, `ETag` or `Last-Modified` either: without the
+   validators there is no conditional-request path for the two clients to
+   take differently. Headers and body go out in **one** `sendall()`, so Nagle
+   cannot make identical responses land on different packet boundaries.
 
-### `scraper.py` → rewritten across `src/tsd/` + `scripts/`
+### `scraper.py` → rewritten across `src/tsd/` + `scripts/` — DONE
 
-1. UA was a fake Chrome string → replaced with the honest UA above.
-2. robots.txt was never checked → now `robots.py` + `fetcher.py`.
-3. Output path `btu_mirror` → `data/mirror`.
-4. **`save_asset()` swallowed failures** (`except Exception: return None`),
-   silently leaving the original absolute URL in the HTML. During capture the
-   browser would then fetch that asset **from the real b-tu.de** — outside
-   network traffic contaminating a supposedly local, isolated capture, and
-   invisible to the loopback filter. Asset rewrite failures must be loud.
-5. Needs `results/corpus_manifest.json`: URL, local filename, byte size, HTTP
-   status, fetch timestamp. Publishable, leaks no BTU content, and makes the
-   corpus verifiable.
+All five changes are in place, and the corpus was scraped with them
+(2026-08-06). Each line says what was wrong and which module owns that
+concern now, so the flaw and its fix can be read together.
+
+1. **The UA was a fake Chrome string.** Now the honest, contactable UA
+   above — it lives in `robots.py` next to the robots parsing it is
+   matched against, and `fetcher.py` is what actually sets the header, so
+   there is one place to change it and no call site that can forget.
+   Never a browser string, never a library default: b-tu.de blocks
+   generic library agents, and if a WAF ever 403s us the answer is not
+   impersonation.
+2. **robots.txt was never checked.** Now `robots.py` (prefix layer via
+   `RobotFileParser`, plus a compiled-regex wildcard layer, because
+   `Disallow: /*/wiki/` can never fire under prefix matching) enforced by
+   `fetcher.py`. `PoliteFetcher.get()` is the single chokepoint for every
+   outbound request — politeness spread across call sites breaks
+   silently. It fails closed: unreadable robots.txt means nothing is
+   crawled.
+3. **Output path `btu_mirror` → `data/mirror`.** `urls.py` decides the
+   local filenames (readable prefix plus a sha256 digest, so two long
+   URLs sharing a prefix cannot collide), `mirror.py` writes them, and
+   the directory is a CLI argument of `scrape_corpus.py`. That last part
+   is why `.gitignore` denies all of `data/` by default rather than
+   listing paths: a run into `data/mirror_test/` once left 289 files of
+   BTU content that git was ready to commit.
+4. **`save_asset()` swallowed failures** (`except Exception: return
+   None`), silently leaving the original absolute URL in the HTML. During
+   capture the browser would then fetch that asset **from the real
+   b-tu.de** — outside network traffic contaminating a supposedly local,
+   isolated capture, and invisible to the loopback filter. Now
+   `mirror.py` **records the failure and neutralises the reference**:
+   recording alone would leave the live request in place, so the
+   attribute is deleted or the CSS reference becomes
+   `url("about:blank")`. Each failure carries an `outcome`, and
+   `scrape_corpus.py` classifies it upstream / excluded / local so the
+   alarm only sounds for the class that matters. Rewriting a page's links
+   correctly also required knowing the final page set first, which is why
+   `discover.py` runs as a separate pass before `mirror.py`.
+5. **It needed `results/corpus_manifest.json`.** Built by
+   `scrape_corpus.py` and committed: URL, local filename, byte size,
+   sha256, HTTP status and fetch timestamp per page and per asset, over
+   **100 pages and 1701 assets**. Publishable, leaks no BTU content, and
+   makes the corpus verifiable — the hashes are what turn "regenerate it
+   by running the scripts" from a claim into something a reader can
+   check.
 
 ---
 
@@ -539,7 +650,16 @@ outstanding:
       TYPO3 thumbnail — inspected and accepted, see
       `results/provenance/scrape_notes.md`). Plus 7 pages refused during
       discovery. Manifest: `results/corpus_manifest.json`.
-- [ ] **Step 3** — HTTPS server, self-signed cert
+- [x] **Step 3 — HTTPS server, self-signed cert** (Scope 2), 2026-08-06.
+      `scripts/make_cert.sh` (local root CA + IP-only 825-day leaf,
+      fingerprints in `results/provenance/tls_cert.txt`),
+      `src/tsd/server.py` + `scripts/serve.py` (49 tests). All six
+      `custom_server.py` problems fixed. Measured serving `data/mirror` on
+      `127.0.0.1:8443`: both clients negotiate **TLS 1.3** unprompted
+      (Firefox 153.0.3 `TLS_AES_128_GCM_SHA256`, Wget 1.21.4
+      `TLS_AES_256_GCM_SHA384` — identical AEAD record overhead);
+      Firefox 62 requests vs wget 116 for the same page; Firefox resumes
+      sessions, wget never does.
 - [ ] **Step 4** — capture harness
 - [ ] **Step 5** — feature extraction
 - [ ] **Step 6** — classifier with round-based split
