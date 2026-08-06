@@ -1,0 +1,9 @@
+requests
+beautifulsoup4
+scapy
+numpy
+pandas
+scikit-learn
+joblib
+shap
+matplotlib
