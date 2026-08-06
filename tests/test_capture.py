@@ -557,6 +557,68 @@ def test_metadata_records_how_the_round_was_actually_run(config):
     assert metadata["totals"]["per_client"] == {"firefox": 1, "wget": 1}
 
 
+def test_limited_round_is_distinguishable_from_a_complete_one(config, mirror):
+    """
+    The first smoke run wrote "pages": 100 beside 4 traces, because
+    --limit 2 was used and never recorded. Read later, that file
+    describes a complete round -- and the PCAPs cannot say otherwise,
+    so a partial round could be trained on as though it were full.
+
+    The metadata alone has to answer "was this the whole corpus?".
+    """
+    config.limit = 2
+
+    metadata = build_round_metadata(
+        config=config, started_at="a", finished_at="b", result=build_result(),
+        versions={}, invocations={}, fingerprint=None,
+    )
+    totals = metadata["totals"]
+
+    assert metadata["limit"] == 2
+    assert totals["limit"] == 2
+    assert totals["pages_available"] == 3
+    assert totals["pages_attempted"] == 2
+    assert totals["pages_attempted"] < totals["pages_available"]
+
+    # The ambiguous single count is gone: there is no key that could be
+    # read as either number.
+    assert "pages" not in totals
+
+
+def test_complete_round_records_no_limit(config, mirror):
+    """A full round says so by recording a null limit, not by omission."""
+    result = RoundResult()
+    for page in ("index.html", "fakultaet1_e4b6727e14b7.html",
+                 "news_500820843cff.html"):
+        result.traces.append(TraceResult("wget", page, f"p/{page}.pcap", 10, 100))
+
+    totals = build_round_metadata(
+        config=config, started_at="a", finished_at="b", result=result,
+        versions={}, invocations={}, fingerprint=None,
+    )["totals"]
+
+    assert totals["limit"] is None
+    assert totals["pages_attempted"] == totals["pages_available"] == 3
+
+
+def test_pages_attempted_counts_traces_not_intent(config, mirror):
+    """
+    Counted from the traces that exist, not from the limit: a round that
+    was cut short by a crash after one page must not report two.
+    """
+    result = RoundResult()
+    result.traces.append(TraceResult("wget", "index.html", "p/i.pcap", 10, 100))
+    config.limit = 2
+
+    totals = build_round_metadata(
+        config=config, started_at="a", finished_at="b", result=result,
+        versions={}, invocations={}, fingerprint=None,
+    )["totals"]
+
+    assert totals["limit"] == 2
+    assert totals["pages_attempted"] == 1
+
+
 def test_metadata_contains_no_page_content(config, mirror):
     """
     results/ is published. A round's metadata may describe the traces;

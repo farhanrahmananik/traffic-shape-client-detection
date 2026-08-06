@@ -142,6 +142,11 @@ therefore measure **client-side processing time**, not network latency. Good
 for signal clarity, but it must be stated in the README limitations, and it
 means results do not directly transfer to WAN conditions.
 
+It has a size-side twin, measured later: kernel GSO batches loopback writes,
+so single "packets" of 32768 and 47616 bytes appear in the captures. See
+"Loopback is not the wire" under the `capture.py` decisions. Both limitations
+say the same thing from different directions, and both go in the README.
+
 ---
 
 ## Repo layout
@@ -533,6 +538,99 @@ All measured 2026-08-06, `data/mirror` served on `127.0.0.1:8443`.
   **Do not "fix" this by disabling session tickets on the server.** That
   would make the server behave unlike any real server, and it would hide
   a resumption bug in the capture harness rather than prevent one.
+
+### `src/tsd/capture.py`
+
+Everything here was measured on the way to a working round, not designed
+in advance. Where a decision cost a debugging session, that is recorded —
+the wrong turn is the useful part.
+
+- **`sudo unshare -n`, never `unshare -rn`.** The `-r` flag adds a user
+  namespace that maps the caller to uid 0. tcpdump then drops privileges
+  and tries to `chown` the savefile to a uid that is not mapped in that
+  namespace, fails, and exits — leaving a **24-byte pcap with a valid
+  header and zero packets**. The filename is right, the header is right,
+  and the trace is empty. Nothing else in the pipeline would notice.
+  This is why `count_pcap_packets()` exists at all, and why zero packets
+  is a **recorded failure rather than a silent success**. Two assertions
+  hold the invocation (`command[:3] == ["sudo", "unshare", "-n"]` and
+  `"-rn" not in joined`) — a comment would not have survived the next
+  edit.
+- **The server runs inside the namespace.** Each namespace has its own
+  loopback, so a server started outside is simply unreachable from
+  inside — which presents as a broken server rather than a broken
+  invocation. **One server per round, not per page**: per-page startup
+  would land in every trace.
+- **Isolation is verified per round**, by probing external hosts, and a
+  host that resolves **aborts the round** rather than warning. `--no-netns`
+  waives only the marker, never the check: **a flag is a claim, a failed
+  connection is a measurement.**
+- **Firefox's profile directory must be created before launch.**
+  `--profile` does not create it, and a missing one kills Firefox with
+  **SIGKILL and no useful message**. This cost a debugging round: the
+  failure was first attributed to the network namespace, and the control
+  experiment — the same command with no namespace — is what showed the
+  namespace was innocent. **The wrong fix would have been
+  `MOZ_DISABLE_CONTENT_SANDBOX=1`**, which changes Firefox's process
+  structure and would have put a timing artefact into one class only.
+  Worth remembering as a method: when something fails inside a new
+  environment, test the same thing outside it before blaming it.
+- **Firefox runs under Wayland** (`MOZ_ENABLE_WAYLAND=1`). X11 uses
+  abstract unix sockets, which network namespaces isolate; Wayland's
+  socket is a filesystem path and survives. Verified working inside the
+  namespace, which is why Wayland is forced rather than autodetected.
+- **wget runs with `-e robots=off`.** In recursive mode it requests
+  `/robots.txt` first and gets a 404 that Firefox never produces — a
+  property of **how the harness invokes wget**, not of wget being
+  automation. A classifier that scores well by finding a 404 has learned
+  the harness. **Firefox's own `/favicon.ico` request is deliberately NOT
+  suppressed**: the browser does that by itself, unasked, so it is
+  genuine client behaviour and belongs in the data.
+- **End of load is the capture going quiet, not a fixed timeout**,
+  because Firefox keeps requesting carousel images after the page reports
+  itself loaded. Measured on the smoke run: the quiet wait is
+  **wall-clock only and does not extend the trace** — traces ran
+  0.38–0.50 s while `quiet_seconds` was 3.0, so no padding enters the
+  packet timestamps. The old captures' 3 s of padding at each end is not
+  reintroduced.
+- **`pages_attempted` is counted from the traces that exist, never from
+  `--limit`.** Limit is what was asked for; traces are what happened.
+  The first smoke run wrote `"pages": 100` for a 4-trace round — intent
+  recorded as outcome, and unreadable as such six months later.
+
+#### MEASURED: smoke run, 2026-08-07 (2 pages, both clients)
+
+| client | SYNs | packets | duration |
+|---|---|---|---|
+| firefox | 6 | 159 | 0.39–0.50 s |
+| wget | 1 | 223–227 | 0.38–0.42 s |
+
+Firefox opens ~6 parallel connections; wget uses one sequential
+connection. **This is visible in the PCAP, and it is the reason the
+server had to be threaded** — a sequential accept loop would have
+serialised the six and recorded the server's queuing as the client's
+behaviour.
+
+Firefox produced **exactly 159 packets on both pages**. Not a bug: both
+pages reference exactly 13 assets, because BTU's interior pages share
+nearly all their chrome. That shared structure is **favourable here** —
+it leaves little for a model to learn about the page rather than the
+client, which is the whole point of loading the same pages with both
+clients.
+
+#### Loopback is not the wire — for the README limitations
+
+Kernel GSO batches writes on loopback, so the captures contain single
+"packets" of **32768 and 47616 bytes**. This affects both classes
+equally and is **not class-confounding**, but it means the size and
+burst features describe **application-layer write behaviour rather than
+MTU-bounded wire patterns**.
+
+It is the size-side twin of the ~0.03 ms loopback RTT already recorded
+under Environment, which does the same thing to the timing features.
+**Both belong in the README**: together they say that these results
+characterise client behaviour under ideal local conditions, and do not
+transfer directly to WAN captures.
 
 ---
 

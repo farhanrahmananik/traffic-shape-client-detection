@@ -657,9 +657,24 @@ def build_round_metadata(
         "server_cert_sha256": fingerprint,
         "invocations": {client: list(argv) for client, argv in invocations.items()},
         "versions": versions,
+        "limit": config.limit,
         "traces": [trace.to_dict() for trace in result.traces],
         "totals": {
-            "pages": len(list_pages(config.web_root)),
+            # Three numbers, not one. The first smoke run recorded
+            # "pages": 100 next to 4 traces, because --limit 2 was used
+            # and never written down -- and read six months later, that
+            # file describes a complete round. A partial round and a
+            # full one have to be told apart from the metadata alone,
+            # since the PCAPs themselves cannot say which they belong
+            # to.
+            #
+            # `pages_available` is what the mirror holds, `pages_attempted`
+            # is counted from the traces actually produced rather than
+            # from the limit, so it reports what happened rather than
+            # what was intended.
+            "pages_available": len(list_pages(config.web_root)),
+            "pages_attempted": len({trace.page for trace in result.traces}),
+            "limit": config.limit,
             "traces_ok": sum(1 for trace in result.traces if trace.ok),
             "traces_failed": len(result.failures),
             "per_client": result.per_client(),
