@@ -45,25 +45,64 @@ from tsd.server import (
     DEFAULT_PORT,
     DEFAULT_WEB_ROOT,
     MAX_CONNECTIONS,
+    MAX_REQUESTS_PER_CONNECTION,
     MirrorServer,
 )
+
+EPILOG = """\
+run from the repository root:
+
+    PYTHONPATH=src python scripts/serve.py
+    PYTHONPATH=src python scripts/serve.py --quiet     # during capture
+
+src/ is not installed as a package, so PYTHONPATH=src is required --
+the same invocation pytest.ini declares and scripts/scrape_corpus.py
+documents.
+"""
+
+
+class _HelpFormatter(
+    argparse.ArgumentDefaultsHelpFormatter, argparse.RawDescriptionHelpFormatter
+):
+    """Show defaults, and leave the epilog's line breaks alone."""
 
 
 def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
     parser = argparse.ArgumentParser(
         description="Serve the mirrored corpus over local HTTPS.",
-        formatter_class=argparse.ArgumentDefaultsHelpFormatter,
+        epilog=EPILOG,
+        formatter_class=_HelpFormatter,
     )
-    parser.add_argument("--host", default=DEFAULT_HOST)
+    # Every option carries a help string: ArgumentDefaultsHelpFormatter
+    # only appends "(default: ...)" to options that have one, so an
+    # option without help silently hides its default.
+    parser.add_argument(
+        "--host", default=DEFAULT_HOST, help="address to bind"
+    )
     parser.add_argument(
         "--port",
         type=int,
         default=DEFAULT_PORT,
         help="0 picks a free port; the chosen port is printed at startup",
     )
-    parser.add_argument("--web-root", type=Path, default=DEFAULT_WEB_ROOT)
-    parser.add_argument("--cert", type=Path, default=DEFAULT_CERTFILE)
-    parser.add_argument("--key", type=Path, default=DEFAULT_KEYFILE)
+    parser.add_argument(
+        "--web-root",
+        type=Path,
+        default=DEFAULT_WEB_ROOT,
+        help="directory to serve, as written by scripts/scrape_corpus.py",
+    )
+    parser.add_argument(
+        "--cert",
+        type=Path,
+        default=DEFAULT_CERTFILE,
+        help="TLS certificate, as written by scripts/make_cert.sh",
+    )
+    parser.add_argument(
+        "--key",
+        type=Path,
+        default=DEFAULT_KEYFILE,
+        help="TLS private key, as written by scripts/make_cert.sh",
+    )
     parser.add_argument(
         "--max-connections",
         type=int,
@@ -71,9 +110,19 @@ def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
         help="connections past this are refused, not queued",
     )
     parser.add_argument(
+        "--max-requests",
+        type=int,
+        default=MAX_REQUESTS_PER_CONNECTION,
+        help=(
+            "requests per connection before the server closes it; reaching "
+            "it forces a client reconnection into the trace and prints a "
+            "warning that --quiet does not silence"
+        ),
+    )
+    parser.add_argument(
         "--quiet",
         action="store_true",
-        help="log only startup and fatal errors; use during capture rounds",
+        help="log only startup, the request cap, and fatal errors",
     )
     return parser.parse_args(argv)
 
@@ -89,6 +138,7 @@ def main(argv: list[str] | None = None) -> int:
         keyfile=args.key,
         quiet=args.quiet,
         max_connections=args.max_connections,
+        max_requests_per_connection=args.max_requests,
     )
 
     try:

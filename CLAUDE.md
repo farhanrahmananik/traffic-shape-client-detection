@@ -463,6 +463,19 @@ worse option in the meantime, not because of the load but because BTU's
 link graph moves: the same seed on a changed site yields a *different*
 corpus, which would silently invalidate captures already taken.
 
+### `src/tsd/server.py`
+
+- **The per-connection request cap is 1000, and it is deliberately
+  generous. Do not lower it.** At 100 it fired on the real corpus:
+  `wget --page-requisites` sent 116 requests down one sequential
+  connection and got closed at 100, then reconnected — a full TLS
+  handshake injected into the middle of the trace. Firefox spreads the
+  same 116 across ~6 parallel connections and never comes near the cap.
+  **A limit only one client can reach is a server property the model
+  would learn as a client property.** The cap stays as a DoS guard, but
+  it now warns loudly — `--quiet` does not silence it — and only when
+  the client did not itself ask to close.
+
 ---
 
 ## Reusing my earlier scripts

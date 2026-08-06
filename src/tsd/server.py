@@ -84,7 +84,29 @@ RECV_BYTES = 4096
 # A stalled client must not hold a thread forever.
 REQUEST_TIMEOUT = 10.0
 KEEP_ALIVE_TIMEOUT = 5.0
-MAX_REQUESTS_PER_CONNECTION = 100
+
+# Requests per connection before the server closes it.
+#
+# This was 100, and 100 fired on the real corpus. Serving data/mirror to
+# `wget --page-requisites`, the first connection carried exactly 100
+# requests, the server closed it, and wget reconnected for the remaining
+# 16 -- a second full TLS handshake in the middle of the trace, put
+# there by the server.
+#
+# Worse, it lands on one class only. wget fetches everything down a
+# single sequential connection, so it reaches the cap; Firefox spreads
+# the same requests across ~6 parallel connections and never gets near
+# it. A cap that only one client can hit is a feature of the server that
+# the model would learn as a feature of the client.
+#
+# 1000 is far above anything this corpus needs: the heaviest observed
+# page requires 116 requests. The cap stays, because an unbounded
+# connection is still a denial-of-service surface -- but the point is
+# that it now fires loudly instead of quietly. A limit that fires
+# silently shapes the data; a limit that fires loudly guards it. Same
+# principle as the failure classification in scripts/scrape_corpus.py:
+# the alarm is only worth having if it is audible when it matters.
+MAX_REQUESTS_PER_CONNECTION = 1000
 
 HEADER_TERMINATOR = b"\r\n\r\n"
 
@@ -370,6 +392,7 @@ class MirrorServer:
         keyfile: str | Path = DEFAULT_KEYFILE,
         quiet: bool = False,
         max_connections: int = MAX_CONNECTIONS,
+        max_requests_per_connection: int = MAX_REQUESTS_PER_CONNECTION,
     ):
         self.web_root = Path(web_root)
         self.host = host
@@ -378,6 +401,7 @@ class MirrorServer:
         self.keyfile = Path(keyfile)
         self.quiet = quiet
         self.max_connections = max_connections
+        self.max_requests_per_connection = max_requests_per_connection
 
         self._socket: socket.socket | None = None
         self._context: ssl.SSLContext | None = None
@@ -567,7 +591,7 @@ class MirrorServer:
             self.log(f"close {peer}")
 
     def _serve_requests(self, conn, peer: str) -> None:
-        for served in range(MAX_REQUESTS_PER_CONNECTION):
+        for served in range(self.max_requests_per_connection):
             conn.settimeout(KEEP_ALIVE_TIMEOUT if served else REQUEST_TIMEOUT)
 
             try:
@@ -581,7 +605,7 @@ class MirrorServer:
                                             extra_headers=error.extra_headers))
                 return
 
-            last = served == MAX_REQUESTS_PER_CONNECTION - 1
+            last = served == self.max_requests_per_connection - 1
 
             try:
                 request = parse_request(raw)
@@ -596,8 +620,30 @@ class MirrorServer:
             conn.sendall(response)
             self.log(f"  {peer} {request.method} {request.target} -> {status}")
 
+            # The client had not asked to stop; we are cutting it off.
+            # That forces a reconnection and a second TLS handshake into
+            # the middle of whatever is being captured right now, so the
+            # warning ignores --quiet. A capture round taken after this
+            # line prints is not usable.
+            if last and not request.wants_close:
+                self._warn_request_cap(peer)
+
             if close:
                 return
+
+    def _warn_request_cap(self, peer: str) -> None:
+        self.log(
+            f"WARNING: {peer} reached the {self.max_requests_per_connection}"
+            f"-request cap and was closed by the server, mid-connection.\n"
+            f"         The client will reconnect, adding a TLS handshake to "
+            f"the middle of this trace.\n"
+            f"         THIS CAPTURE IS CONTAMINATED: the extra handshake is "
+            f"the server's behaviour, not the client's,\n"
+            f"         and only a client that uses one sequential connection "
+            f"can reach the cap at all.\n"
+            f"         Raise --max-requests and recapture.",
+            always=True,
+        )
 
     def _respond(self, request: Request, close: bool) -> tuple[bytes, int]:
         """Build the response for one parsed request."""

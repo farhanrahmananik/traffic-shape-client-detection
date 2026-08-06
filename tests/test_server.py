@@ -94,6 +94,9 @@ class FakeSocket:
     def sendall(self, data: bytes) -> None:
         self.sent += data
 
+    def settimeout(self, _seconds: float) -> None:
+        pass
+
 
 @pytest.fixture(scope="session")
 def certificate(tmp_path_factory) -> tuple[Path, Path]:
@@ -627,6 +630,89 @@ def test_connections_past_the_cap_are_refused_not_queued(web_root, certificate):
     finally:
         conn.close()
         server.stop()
+
+
+# --------------------------------------------------------------
+# The per-connection request cap
+# --------------------------------------------------------------
+
+def capped_server(web_root, limit: int, quiet: bool) -> MirrorServer:
+    """A server with a tiny request cap. Never started; no TLS needed."""
+    return MirrorServer(
+        web_root=web_root,
+        certfile=web_root / "unused.crt",
+        keyfile=web_root / "unused.key",
+        quiet=quiet,
+        max_requests_per_connection=limit,
+    )
+
+
+GET_INDEX = b"GET /index.html HTTP/1.1\r\nHost: x\r\n\r\n"
+
+
+def test_request_cap_warns_loudly_and_quiet_does_not_silence_it(web_root, capsys):
+    """
+    The cap fired on the real corpus at 100: wget put all 116 requests
+    down one sequential connection, the server cut it off, and wget
+    reconnected -- an extra TLS handshake mid-trace, produced by the
+    server. Firefox spreads the same requests over ~6 connections and
+    never reaches the cap, so the artefact lands on one class only.
+
+    The cap stays as a DoS guard, but it has to be audible: a limit that
+    fires silently shapes the data, while a limit that fires loudly
+    guards it. --quiet is for routine per-request logging, not for this.
+    """
+    server = capped_server(web_root, limit=2, quiet=True)
+    conn = FakeSocket([GET_INDEX, GET_INDEX])
+
+    server._serve_requests(conn, "127.0.0.1:54321")
+
+    warning = capsys.readouterr().err
+
+    assert "WARNING" in warning
+    assert "127.0.0.1:54321" in warning
+    assert "2-request cap" in warning
+    assert "CONTAMINATED" in warning
+    assert "--max-requests" in warning
+
+    # And the connection really was closed by us, not by the client.
+    assert conn.sent.count(b"Connection: close") == 1
+
+
+def test_no_warning_when_the_cap_is_not_reached(web_root, capsys):
+    """The alarm has to be silent in the normal case to mean anything."""
+    server = capped_server(web_root, limit=10, quiet=True)
+
+    server._serve_requests(FakeSocket([GET_INDEX, GET_INDEX]), "127.0.0.1:1")
+
+    assert "WARNING" not in capsys.readouterr().err
+
+
+def test_no_warning_when_the_client_asked_to_close(web_root, capsys):
+    """
+    Reaching the last permitted request is only an artefact if the
+    client had more to send. A client that says "close" on that same
+    request loses nothing.
+    """
+    server = capped_server(web_root, limit=1, quiet=True)
+    request = b"GET /index.html HTTP/1.1\r\nHost: x\r\nConnection: close\r\n\r\n"
+
+    server._serve_requests(FakeSocket([request]), "127.0.0.1:2")
+
+    assert "WARNING" not in capsys.readouterr().err
+
+
+def test_default_request_cap_clears_the_heaviest_page(web_root):
+    """
+    116 requests is the heaviest page measured in this corpus. The
+    default has to sit far enough above it that no page can reach it,
+    or the cap is back to shaping the data.
+    """
+    from tsd.server import MAX_REQUESTS_PER_CONNECTION as default_cap
+
+    assert default_cap >= 1000
+    assert capped_server(web_root, 5, False).max_requests_per_connection == 5
+    assert MirrorServer(web_root=web_root).max_requests_per_connection == default_cap
 
 
 def test_missing_certificate_points_at_make_cert(web_root, tmp_path):
