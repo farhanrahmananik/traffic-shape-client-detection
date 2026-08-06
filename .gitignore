@@ -1,6 +1,19 @@
-data/mirror/
-data/pcaps/
-data/features/
+# data/ is default-deny: everything under it is ignored, and only the
+# .gitkeep placeholders come back.
+#
+# Listing the known subdirectories one by one was not enough. The mirror
+# path is a CLI argument (scrape_corpus.py --output-dir), so a run into
+# data/mirror_test/ produced BTU content that git was ready to commit --
+# and the publishing rule says the mirror must never be published. An
+# allowlist of paths cannot cover a path chosen at runtime, and it does
+# not cover the next subdirectory anyone adds either. Denying the whole
+# tree does both.
+#
+# "data/**" rather than "data/": git does not descend into an ignored
+# directory, so the !-rules below would never be consulted.
+data/**
+!data/**/
+!data/**/.gitkeep
 
 certs/
 *.pem

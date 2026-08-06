@@ -267,6 +267,142 @@ Run tests with `pytest` (config in `pytest.ini`, `pythonpath = src`).
   away. The corpus is "100 pages the walk happened to reach", not "the 100
   most important pages". This goes in the README.
 
+### `src/tsd/mirror.py`
+
+- **Pages come from `DiscoveryResult.html_cache`, never re-fetched.** The
+  walk already paid for that HTML. Only assets are fetched here.
+- **A failed asset is recorded AND neutralised.** `MirrorResult.failures`
+  gets `(url, outcome, reason)`, and the reference is deleted from the HTML
+  (`url("about:blank")` inside CSS). Recording alone would not be enough:
+  the original `save_asset()` bug did damage by leaving the *live* URL in
+  the page, so that during capture the browser fetched from the real
+  b-tu.de — outside traffic in a supposedly isolated capture, invisible to
+  the loopback filter. An empty `url("")` is not usable as the dead value
+  either; it makes the browser re-request the page itself.
+- **A non-empty `failures` list means the mirror is suspect.** The caller
+  decides; the module never decides for it by staying quiet.
+- **Every failure carries an `outcome` value, not just a reason string.**
+  `outcome` comes from `FetchRecord.outcome`, plus three the module raises
+  itself (`write_error`, `missing_html`, `depth_exceeded`). Callers branch
+  on the outcome; the reason is prose for humans and will get reworded.
+  `scripts/scrape_corpus.py` classifies upstream vs local on it — see
+  below. Never classify a failure by matching on its reason text.
+- **`<base href>` is removed.** Left in, that one tag would re-point every
+  carefully rewritten relative reference back at the live site at load
+  time. It is used to resolve references, then dropped.
+- **Two prefixes, one asset map.** Pages sit at the mirror root, assets in
+  `assets/`. So a page refers to `assets/x.png` while a stylesheet — which
+  already lives in `assets/` — refers to the sibling `x.png`. Getting this
+  backwards yields a mirror that looks right in a file listing and 404s in
+  the browser.
+- **Assets are deduplicated by normalised URL and fetched exactly once.**
+  A site-wide stylesheet referenced from 100 pages is 1 request. Failures
+  are cached too, so a dead URL is reported once, not per page.
+- **Circular `@import` terminates** because the asset map entry is written
+  *before* a stylesheet's own contents are walked. `MAX_CSS_DEPTH = 3` is a
+  separate guard; exceeding it is a recorded failure, not a silent
+  absolute URL left in place.
+- **`srcset` is parsed per the HTML algorithm, not `split(",")`** — a
+  `data:` URI contains commas. Descriptors (`1x`, `800w`) are preserved:
+  they decide which image the browser actually requests, so dropping them
+  would change Firefox's request pattern and leave wget's untouched — an
+  artefact landing on one class only.
+- **`<style>` blocks are read with `get_text()`, not `tag.string`.**
+  `.string` is `None` whenever the block is not exactly one child, which a
+  CSS comment or CDATA section can cause — and the block would then be
+  skipped in silence with every `url()` in it still absolute. Same bug
+  class as above, reintroduced by an idiom. Rewritten content is put back
+  as a `Stylesheet` string so no formatter escapes a `>` child selector.
+- **Anything a browser auto-fetches is handled**: `<link rel=stylesheet|
+  icon>`, `<script src>`, `<img src|srcset|data-src|data-original|
+  data-lazy-src>`, `<source>`, `<input type=image>`, `<iframe>`,
+  `<embed>`, `<object data>`, `<video src|poster>`, `<audio>`, `<track>`,
+  inline `style=`, `<style>` blocks, and `url()` inside CSS files.
+  `<link>` relations that a browser fetches but we do not mirror
+  (`preload`, `prefetch`, `preconnect`, `apple-touch-icon`, `manifest`, …)
+  have their tags **stripped**; metadata relations (`canonical`,
+  `alternate`) are harmless and stay.
+- **Third-party embeds neutralise themselves.** A YouTube or OSM `<iframe>`
+  is off-host, so `PoliteFetcher` refuses it with `blocked_host`, the
+  failure is recorded, and the attribute is deleted.
+- **Link rewriting knows the frozen page set**: in-corpus → local
+  filename; anything else → absolute URL to the live site. Relative would
+  resolve against the local server and 404 during capture, and a 404's
+  traffic shape is nothing like a page load.
+- **Deterministic**: pages iterated `sorted()` (the caller may pass a set,
+  and set order is not stable), assets in document order, filenames from
+  `urls.py` digests, no timestamp written anywhere. Same cache in, same
+  bytes out — which is what makes "regenerate it by running the scripts"
+  true.
+
+#### Known issue carried into step 4 — measured, not hypothetical
+
+The mirror stores b-tu.de's own JavaScript, and **Firefox will run it
+during capture**. Link rewriting cannot reach inside that JavaScript, so
+live URLs survive in it. This was **measured**, not assumed: five BTU
+pages were mirrored and scanned, and live `b-tu.de` URLs remain in
+
+- `data-cookieman-settings` — the cookie-consent JSON config, present on
+  **every page**, with b-tu.de URLs inside it
+- `data-condition-uri="https://www.b-tu.de/barrierefreiheit?type=3132"` on
+  a `<script>` tag — almost certainly fetched by AJAX at runtime
+
+**mirror.py deliberately does not rewrite these.** `data-*` attributes are
+JavaScript's private namespace; the browser never auto-fetches them, and
+guessing which ones hold URLs is an unbounded surface where a wrong guess
+corrupts a working page. The three lazy-loading `data-*` names it does
+handle are there because they are a documented convention with a known
+meaning — not because the module tries to parse arbitrary data.
+
+So the residual risk is real and it is **not fixable in the scraper**.
+Whatever those scripts fetch will **not** appear in the PCAP, because
+tcpdump is filtered to the local server host and port — but the DNS lookup
+and connect latency **will** land inside Firefox's inter-arrival times.
+And wget executes no JavaScript, so the cost falls on the **Firefox class
+only**. The model could learn "this class sometimes waits on a stalled
+external connection" instead of "browsers load pages this way".
+
+**Therefore step 4 must block all network except loopback for the duration
+of each capture** — network namespace, or firewall rules on the capture
+host. This is mandatory, not a precaution: the rewriting provably does not
+catch everything.
+
+Related, and worth stating separately in the README: the **cookie banner
+runs under Firefox and not under wget**. That difference is genuine client
+behaviour and belongs in the data — a browser executing page JavaScript is
+exactly what separates the two classes. What must not be in the data is
+that banner's JavaScript reaching the outside world, because then its
+latency enters the Firefox class as contamination rather than as client
+behaviour. Isolation keeps the first and removes the second.
+
+### `scripts/scrape_corpus.py`
+
+- **Mirror failures are split into two classes, and only one of them is
+  an alarm.** *Upstream* (`http_error`, `blocked_robots`) are permanent
+  properties of b-tu.de: its own CSS references jQuery-UI images that are
+  not deployed (9 × 404), and robots.txt withholds a script. Those recur
+  identically on every run → **exit 0**, one summary line on stderr, full
+  list in the manifest. *Local* (`error`, `too_large`, `blocked_host`,
+  `write_error`, `missing_html`, `depth_exceeded`) vary between runs, so
+  the corpus is no longer reproducible → **exit 1**, loud warning.
+- **The reason it is split at all:** a warning that fires on every single
+  run is a warning people learn to scroll past — and then the one that
+  matters scrolls past too. An alarm that is never silent is not an alarm.
+- **Classification is on `outcome`, never on the reason string**, and an
+  **unrecognised outcome counts as local**. A new failure mode should be
+  noticed, not silently absorbed into the expected list.
+- **The manifest is the published substitute for the mirror**, so it
+  carries no BTU content — only URLs, local filenames, sizes, sha256
+  hashes and timestamps. The hashes are the point: they let anyone
+  re-running the script check they got the same corpus without either
+  side publishing a byte of b-tu.de's content.
+- **`status_code`, `content_type` and `fetched_at` come from
+  `fetcher.log`**, and the page/asset inventory from `mirror.py`'s
+  `on_event` callback. Neither is re-derived here: a second source of
+  truth for the same facts is a pair of sources that will disagree later.
+- **`bytes` and `sha256` are read back off disk**, not taken from memory,
+  so the manifest describes the file that will actually be served.
+
 ---
 
 ## Reusing my earlier scripts
