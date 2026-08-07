@@ -632,6 +632,118 @@ under Environment, which does the same thing to the timing features.
 characterise client behaviour under ideal local conditions, and do not
 transfer directly to WAN captures.
 
+### `src/tsd/features.py`
+
+- **Two layers, kept apart.** `read_trace()` owns dpkt and the file I/O;
+  `extract_features()` is a pure function over the records. The step-8
+  CLI calls the second one directly, so **the training path and the
+  inference path cannot drift apart** — if each did its own parsing and
+  its own arithmetic, the drift would surface as a model that scores
+  well in evaluation and badly in the tool that ships.
+- **Payload length comes from the IP and TCP headers, never from the
+  captured frame.** Snaplen is 96, so the frame on disk is clipped:
+  using its length would make **every packet larger than 96 bytes
+  identical**, destroying the entire size family while the feature table
+  still looked perfectly plausible. `ip.len` minus both header lengths
+  is present in those 96 bytes and is the real number. A test builds
+  exactly that situation — headers claiming 1448 and 32768 bytes, frames
+  clipped to 96 — because this is a failure that would never raise.
+- **A burst is a run of packets in the same direction, with no time
+  threshold.** This is a **modelling choice, not a fact about the
+  data**, so it is stated rather than buried. The obvious alternative —
+  same direction *and* less than T seconds apart — was rejected because
+  T has no principled value here: with a loopback RTT of ~0.03 ms, any T
+  separates "the client thinking" from "the network working" at a point
+  chosen by us, and a threshold picked by looking at a dataset this size
+  is a threshold that can be tuned toward the answer, knowingly or not.
+  Direction changes need no parameter and are decided by the protocol.
+  The cost — a long pause inside one direction does not split a burst —
+  is carried by the `iat_*` features, where that pause appears as a
+  large inter-arrival.
+
+#### `fin_count` and `rst_count`: implemented, measured, removed
+
+Measured across all 200 round-1 traces: **Firefox 0/100 FINs and 0/100
+RSTs; wget 100/100 of each.** No exceptions.
+
+That is not client behaviour, it is the harness. wget exits by itself,
+so its teardown lands inside the capture window; Firefox is killed only
+after tcpdump has already stopped, so its teardown is never recorded.
+The feature measures **how we stop each client**. Kept, it would have
+been a perfect separator sitting at the top of the SHAP plots explaining
+the wrong thing.
+
+This one was **harder to catch than the `/robots.txt` 404**, because
+"connection teardown feature" sounds legitimate — nothing about the name
+suggests it is about the harness. What caught it was running the
+features over the real captures and looking at a separation that was too
+clean.
+
+**Record that as method: a feature that separates perfectly is a reason
+to check the harness before celebrating.** The same reflex applies to
+step 6 — an accuracy that looks too good is a hypothesis about the rig,
+not a result.
+
+`syn_count` **stays**: 6 against 1 happens during the load, not at
+teardown, and it is the parallelism that made the threaded server
+necessary.
+
+*Residual, measured and not hidden:* the FIN and RST packets are still
+in the wget traces — **200 packets, 0.73% of wget's total** — and they
+still contribute to the count, size and burst features. Removing them
+would mean discarding packets under an arbitrary rule, a heavier
+intervention than the problem warrants. **This goes in the README
+limitations**: a small teardown asymmetry remains in the data even
+though no feature names it.
+
+#### Excluded on purpose
+
+Ports, addresses, absolute timestamps, TCP window size, MSS, option
+ordering, initial sequence numbers.
+
+They are **real client fingerprints, and that is exactly why they cannot
+be used**. The claim under test is that traffic *shape* alone separates a
+browser from a scraper. A stack fingerprint would win without ever
+testing that claim, and the SHAP plots would then faithfully explain a
+different experiment. Absolute timestamps are excluded for a second
+reason: they encode the capture round, which is the split group.
+
+The guard test is **token-based, not substring** — `'rst'` matches
+`'burst'`, so a substring check would either ban the whole burst family
+or, once someone "fixed" it by dropping `rst` from the list, stop
+guarding the thing it was written for.
+
+### `scripts/extract_features.py`
+
+- **`round` is written into the CSV, not reconstructed from a path
+  later.** The split is the one thing in this project that **cannot be
+  validated by looking at the result**: a leaked group produces *good*
+  numbers, not bad ones, and nothing downstream complains.
+- **The trace count on disk is cross-checked against `traces_ok` in the
+  round metadata, and a mismatch is an error, not a warning.** The
+  metadata is what is published in place of the PCAPs; if they disagree,
+  either the published record is wrong or the data changed outside the
+  harness, and **re-reading the disk cannot tell you which**. The CSV is
+  still written, for investigation, with stderr saying not to train on
+  it. Both the mismatch and the missing-metadata paths were exercised by
+  removing a PCAP and by pointing at an empty metadata directory — an
+  unexercised check is not a check.
+- **Constant features are reported, never dropped automatically.** Round
+  1 found three: `size_up_min`, `size_up_p25`, `size_down_min`, all zero
+  because every trace carries pure ACKs in both directions. **They are
+  kept.** Dropping a feature because it is constant is a decision made by
+  looking at the whole dataset *including the test rounds*, which is a
+  mild leak; and a feature that is constant in round 1 may not be in
+  round 3. The cost of keeping them is nil — tree models ignore
+  zero-variance columns and SHAP assigns them zero. What the report is
+  for is the *question*: a constant feature is usually a bug in
+  extraction and occasionally a fact about the traffic, and dropping it
+  silently answers neither.
+- **`data/features/` is gitignored because it derives from unpublished
+  PCAPs, not because it leaks anything.** Payload was never captured, so
+  the CSV holds only counts, sizes and timings. Publishing a derivative
+  of unpublished data would be inconsistent; that is the whole reason.
+
 ---
 
 ## Reusing my earlier scripts
@@ -758,9 +870,26 @@ concern now, so the flaw and its fix can be read together.
       `TLS_AES_256_GCM_SHA384` — identical AEAD record overhead);
       Firefox 62 requests vs wget 116 for the same page; Firefox resumes
       sessions, wget never does.
-- [ ] **Step 4** — capture harness
-- [ ] **Step 5** — feature extraction
-- [ ] **Step 6** — classifier with round-based split
+- [x] **Step 4 — capture harness**, and **round 1 captured 2026-08-07**:
+      `src/tsd/capture.py` + `scripts/capture_round.py`, 100 pages × 2
+      clients = **200 traces, 0 failures**, 47,645 packets, 4,921,694
+      bytes. Metadata: `results/capture_rounds/round_01_20260807.json`.
+      Per trace: firefox 6 SYNs / ~159–170 packets, wget 1 SYN /
+      ~222–228 packets.
+- [x] **Step 5 — feature extraction** — `src/tsd/features.py` (53
+      features, 30 tests) + `scripts/extract_features.py`. Round 1
+      extracted to `data/features/features.csv`: 200 rows, 57 columns
+      (4 labels + 53 features), metadata cross-check passed, 0 parse
+      failures.
+- [ ] **Step 6** — classifier with round-based split.
+      **Blocked until a second round exists.** `GroupKFold` needs at
+      least two groups, and with one round there is nothing to hold out
+      that does not share its conditions. **At least three rounds are
+      wanted**, so that each fold trains on more than half the data —
+      with two, every fold trains on exactly half and the variance
+      between folds says more about the split than about the model.
+      Rounds must be on **different days**: that is what makes them
+      different conditions rather than two names for one.
 - [ ] **Step 7** — SHAP
 - [ ] **Step 8** — CLI
 - [ ] **Step 9** — README + case-study page
