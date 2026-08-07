@@ -1,0 +1,1861 @@
+{
+  "round": 2,
+  "date": "20260807",
+  "started_at": "2026-08-07T08:51:09+00:00",
+  "finished_at": "2026-08-07T09:06:41+00:00",
+  "host": "127.0.0.1",
+  "port": 8443,
+  "web_root": "data/mirror",
+  "pcap_directory": "data/pcaps/round_02_20260807",
+  "snaplen": 96,
+  "tcpdump_filter": "host 127.0.0.1 and port 8443",
+  "capture_interface": "lo",
+  "quiet_seconds": 3.0,
+  "max_load_seconds": 90.0,
+  "network_namespace": "sudo unshare -n (loopback only), verified per round",
+  "server_cert_sha256": "AE:44:89:82:9A:B5:24:92:CB:12:BD:9A:4B:FB:8F:09:04:33:D4:E5:26:4B:85:CB:FD:36:E1:59:BD:91:D1:08",
+  "invocations": {
+    "wget": [
+      "wget",
+      "--ca-certificate=certs/ca.crt",
+      "--page-requisites",
+      "--no-directories",
+      "-e",
+      "robots=off",
+      "--quiet",
+      "--directory-prefix=<tmp>",
+      "<url>"
+    ],
+    "firefox": [
+      "firefox",
+      "--profile",
+      "<fresh-profile>",
+      "--no-remote",
+      "--new-instance",
+      "<url>"
+    ]
+  },
+  "versions": {
+    "firefox": "Mozilla Firefox 153.0.3",
+    "wget": "GNU Wget 1.21.4 built on linux-gnu.",
+    "tcpdump": "tcpdump version 4.99.4",
+    "openssl": "OpenSSL 3.0.13 30 Jan 2024 (Library: OpenSSL 3.0.13 30 Jan 2024)",
+    "python": "3.12.3"
+  },
+  "limit": null,
+  "traces": [
+    {
+      "client": "firefox",
+      "page": "ag-wassertechnik_dvgw-hochschulgruppe_25757e923e63.html",
+      "pcap": "data/pcaps/round_02_20260807/firefox/ag-wassertechnik_dvgw-hochschulgruppe_25757e923e63.pcap",
+      "packets": 164,
+      "bytes": 16388,
+      "ok": true,
+      "reason": null
+    },
+    {
+      "client": "firefox",
+      "page": "barrierefreiheit_a8425c89b49a.html",
+      "pcap": "data/pcaps/round_02_20260807/firefox/barrierefreiheit_a8425c89b49a.pcap",
+      "packets": 164,
+      "bytes": 16328,
+      "ok": true,
+      "reason": null
+    },
+    {
+      "client": "firefox",
+      "page": "beschaeftigte_e7b3ce5b463e.html",
+      "pcap": "data/pcaps/round_02_20260807/firefox/beschaeftigte_e7b3ce5b463e.pcap",
+      "packets": 191,
+      "bytes": 19082,
+      "ok": true,
+      "reason": null
+    },
+    {
+      "client": "firefox",
+      "page": "bibliothek_15621acdde3d.html",
+      "pcap": "data/pcaps/round_02_20260807/firefox/bibliothek_15621acdde3d.pcap",
+      "packets": 229,
+      "bytes": 22978,
+      "ok": true,
+      "reason": null
+    },
+    {
+      "client": "firefox",
+      "page": "bibliothek_ausleihen_bibliotheksausweis_44c3aff9b753.html",
+      "pcap": "data/pcaps/round_02_20260807/firefox/bibliothek_ausleihen_bibliotheksausweis_44c3aff9b753.pcap",
+      "packets": 168,
+      "bytes": 16746,
+      "ok": true,
+      "reason": null
+    },
+    {
+      "client": "firefox",
+      "page": "bibliothek_neu-hier_alumni_e717f5a30e9d.html",
+      "pcap": "data/pcaps/round_02_20260807/firefox/bibliothek_neu-hier_alumni_e717f5a30e9d.pcap",
+      "packets": 187,
+      "bytes": 18544,
+      "ok": true,
+      "reason": null
+    },
+    {
+      "client": "firefox",
+      "page": "bibliothek_suchen_patente_6678299b0e76.html",
+      "pcap": "data/pcaps/round_02_20260807/firefox/bibliothek_suchen_patente_6678299b0e76.pcap",
+      "packets": 187,
+      "bytes": 18634,
+      "ok": true,
+      "reason": null
+    },
+    {
+      "client": "firefox",
+      "page": "bibliothek_wir-ueber-uns_zentralcampus-cottbus_b17c9d87669e.html",
+      "pcap": "data/pcaps/round_02_20260807/firefox/bibliothek_wir-ueber-uns_zentralcampus-cottbus_b17c9d87669e.pcap",
+      "packets": 225,
+      "bytes": 22590,
+      "ok": true,
+      "reason": null
+    },
+    {
+      "client": "firefox",
+      "page": "biotechnology-ms_d8d44f5f2f1c.html",
+      "pcap": "data/pcaps/round_02_20260807/firefox/biotechnology-ms_d8d44f5f2f1c.pcap",
+      "packets": 188,
+      "bytes": 18806,
+      "ok": true,
+      "reason": null
+    },
+    {
+      "client": "firefox",
+      "page": "bwl-ms_83c4f086e8be.html",
+      "pcap": "data/pcaps/round_02_20260807/firefox/bwl-ms_83c4f086e8be.pcap",
+      "packets": 191,
+      "bytes": 19172,
+      "ok": true,
+      "reason": null
+    },
+    {
+      "client": "firefox",
+      "page": "bwl-ms_detailinformationen_ziel-des-studiums_a3882763dbe1.html",
+      "pcap": "data/pcaps/round_02_20260807/firefox/bwl-ms_detailinformationen_ziel-des-studiums_a3882763dbe1.pcap",
+      "packets": 163,
+      "bytes": 16246,
+      "ok": true,
+      "reason": null
+    },
+    {
+      "client": "firefox",
+      "page": "bwl-ms_ersti-infos_praesentation-einfuehrungsveranstaltung_3ea008573328.html",
+      "pcap": "data/pcaps/round_02_20260807/firefox/bwl-ms_ersti-infos_praesentation-einfuehrungsveranstaltung_3ea008573328.pcap",
+      "packets": 159,
+      "bytes": 15888,
+      "ok": true,
+      "reason": null
+    },
+    {
+      "client": "firefox",
+      "page": "bwl-ms_kontakt_2917f1aa82f9.html",
+      "pcap": "data/pcaps/round_02_20260807/firefox/bwl-ms_kontakt_2917f1aa82f9.pcap",
+      "packets": 167,
+      "bytes": 16694,
+      "ok": true,
+      "reason": null
+    },
+    {
+      "client": "firefox",
+      "page": "careercenter_96072810526b.html",
+      "pcap": "data/pcaps/round_02_20260807/firefox/careercenter_96072810526b.pcap",
+      "packets": 255,
+      "bytes": 25530,
+      "ok": true,
+      "reason": null
+    },
+    {
+      "client": "firefox",
+      "page": "careercenter_fuer-studierende-alumni_matching-day_fb5230dcf2c2.html",
+      "pcap": "data/pcaps/round_02_20260807/firefox/careercenter_fuer-studierende-alumni_matching-day_fb5230dcf2c2.pcap",
+      "packets": 202,
+      "bytes": 20194,
+      "ok": true,
+      "reason": null
+    },
+    {
+      "client": "firefox",
+      "page": "chesco_infrastruktur_fertigung-1_593c88a9de22.html",
+      "pcap": "data/pcaps/round_02_20260807/firefox/chesco_infrastruktur_fertigung-1_593c88a9de22.pcap",
+      "packets": 189,
+      "bytes": 18918,
+      "ok": true,
+      "reason": null
+    },
+    {
+      "client": "firefox",
+      "page": "chesco_page_aef52c19d08f.html",
+      "pcap": "data/pcaps/round_02_20260807/firefox/chesco_page_aef52c19d08f.pcap",
+      "packets": 233,
+      "bytes": 23426,
+      "ok": true,
+      "reason": null
+    },
+    {
+      "client": "firefox",
+      "page": "chesco_team_beantragung-mitgliedschaft_bc615d57341d.html",
+      "pcap": "data/pcaps/round_02_20260807/firefox/chesco_team_beantragung-mitgliedschaft_bc615d57341d.pcap",
+      "packets": 162,
+      "bytes": 16164,
+      "ok": true,
+      "reason": null
+    },
+    {
+      "client": "firefox",
+      "page": "chesco_unser-angebot_5edcc13e833e.html",
+      "pcap": "data/pcaps/round_02_20260807/firefox/chesco_unser-angebot_5edcc13e833e.pcap",
+      "packets": 214,
+      "bytes": 21358,
+      "ok": true,
+      "reason": null
+    },
+    {
+      "client": "firefox",
+      "page": "datenschutz_cc5647a0f560.html",
+      "pcap": "data/pcaps/round_02_20260807/firefox/datenschutz_cc5647a0f560.pcap",
+      "packets": 154,
+      "bytes": 15340,
+      "ok": true,
+      "reason": null
+    },
+    {
+      "client": "firefox",
+      "page": "entwicklung-und-vernetzung_wandelbar_b2bb29311daf.html",
+      "pcap": "data/pcaps/round_02_20260807/firefox/entwicklung-und-vernetzung_wandelbar_b2bb29311daf.pcap",
+      "packets": 242,
+      "bytes": 24074,
+      "ok": true,
+      "reason": null
+    },
+    {
+      "client": "firefox",
+      "page": "fakultaet6_dad033cd788b.html",
+      "pcap": "data/pcaps/round_02_20260807/firefox/fakultaet6_dad033cd788b.pcap",
+      "packets": 436,
+      "bytes": 44122,
+      "ok": true,
+      "reason": null
+    },
+    {
+      "client": "firefox",
+      "page": "fg-kognitive-materialanalytik_6c1267b2f509.html",
+      "pcap": "data/pcaps/round_02_20260807/firefox/fg-kognitive-materialanalytik_6c1267b2f509.pcap",
+      "packets": 190,
+      "bytes": 19060,
+      "ok": true,
+      "reason": null
+    },
+    {
+      "client": "firefox",
+      "page": "fg-kognitive-materialanalytik_lehre_semesteruebersicht_5e436ed7c293.html",
+      "pcap": "data/pcaps/round_02_20260807/firefox/fg-kognitive-materialanalytik_lehre_semesteruebersicht_5e436ed7c293.pcap",
+      "packets": 163,
+      "bytes": 16186,
+      "ok": true,
+      "reason": null
+    },
+    {
+      "client": "firefox",
+      "page": "fg-kognitive-materialanalytik_publikationen_fcfd4f59c1f4.html",
+      "pcap": "data/pcaps/round_02_20260807/firefox/fg-kognitive-materialanalytik_publikationen_fcfd4f59c1f4.pcap",
+      "packets": 167,
+      "bytes": 16694,
+      "ok": true,
+      "reason": null
+    },
+    {
+      "client": "firefox",
+      "page": "fg-kognitive-materialanalytik_publikationen_publications-3_2bc09098cb22.html",
+      "pcap": "data/pcaps/round_02_20260807/firefox/fg-kognitive-materialanalytik_publikationen_publications-3_2bc09098cb22.pcap",
+      "packets": 168,
+      "bytes": 16746,
+      "ok": true,
+      "reason": null
+    },
+    {
+      "client": "firefox",
+      "page": "fg-stadtplanung_776d1018596d.html",
+      "pcap": "data/pcaps/round_02_20260807/firefox/fg-stadtplanung_776d1018596d.pcap",
+      "packets": 199,
+      "bytes": 19768,
+      "ok": true,
+      "reason": null
+    },
+    {
+      "client": "firefox",
+      "page": "fg-stadtplanung_team_lehrbeauftragte_nele-trautwein-ma_560d3656ab0f.html",
+      "pcap": "data/pcaps/round_02_20260807/firefox/fg-stadtplanung_team_lehrbeauftragte_nele-trautwein-ma_560d3656ab0f.pcap",
+      "packets": 181,
+      "bytes": 18022,
+      "ok": true,
+      "reason": null
+    },
+    {
+      "client": "firefox",
+      "page": "fg-stadtplanung_team_mitarbeiterinnen_sebastian-alexander-gruenwald_542ac133b87c.html",
+      "pcap": "data/pcaps/round_02_20260807/firefox/fg-stadtplanung_team_mitarbeiterinnen_sebastian-alexander-gruenwald_542ac133b87c.pcap",
+      "packets": 177,
+      "bytes": 17634,
+      "ok": true,
+      "reason": null
+    },
+    {
+      "client": "firefox",
+      "page": "forschung_7ecc03ec470f.html",
+      "pcap": "data/pcaps/round_02_20260807/firefox/forschung_7ecc03ec470f.pcap",
+      "packets": 370,
+      "bytes": 36820,
+      "ok": true,
+      "reason": null
+    },
+    {
+      "client": "firefox",
+      "page": "ikmz_xwiki_bdcf327373da.html",
+      "pcap": "data/pcaps/round_02_20260807/firefox/ikmz_xwiki_bdcf327373da.pcap",
+      "packets": 20,
+      "bytes": 1980,
+      "ok": true,
+      "reason": null
+    },
+    {
+      "client": "firefox",
+      "page": "impressum_cd2e27be5143.html",
+      "pcap": "data/pcaps/round_02_20260807/firefox/impressum_cd2e27be5143.pcap",
+      "packets": 163,
+      "bytes": 16216,
+      "ok": true,
+      "reason": null
+    },
+    {
+      "client": "firefox",
+      "page": "index.html",
+      "pcap": "data/pcaps/round_02_20260807/firefox/index.pcap",
+      "packets": 533,
+      "bytes": 53666,
+      "ok": true,
+      "reason": null
+    },
+    {
+      "client": "firefox",
+      "page": "international_729581c72210.html",
+      "pcap": "data/pcaps/round_02_20260807/firefox/international_729581c72210.pcap",
+      "packets": 217,
+      "bytes": 21664,
+      "ok": true,
+      "reason": null
+    },
+    {
+      "client": "firefox",
+      "page": "international_aus-dem-ausland-an-die-btu_studium-mit-abschluss_9c0577765ce9.html",
+      "pcap": "data/pcaps/round_02_20260807/firefox/international_aus-dem-ausland-an-die-btu_studium-mit-abschluss_9c0577765ce9.pcap",
+      "packets": 297,
+      "bytes": 29724,
+      "ok": true,
+      "reason": null
+    },
+    {
+      "client": "firefox",
+      "page": "it-services_btu-account_nutzerinformation_3d1b9ffd0399.html",
+      "pcap": "data/pcaps/round_02_20260807/firefox/it-services_btu-account_nutzerinformation_3d1b9ffd0399.pcap",
+      "packets": 162,
+      "bytes": 16164,
+      "ok": true,
+      "reason": null
+    },
+    {
+      "client": "firefox",
+      "page": "it-services_btu-account_passwort-vergessen_8f8d79c396b1.html",
+      "pcap": "data/pcaps/round_02_20260807/firefox/it-services_btu-account_passwort-vergessen_8f8d79c396b1.pcap",
+      "packets": 164,
+      "bytes": 16328,
+      "ok": true,
+      "reason": null
+    },
+    {
+      "client": "firefox",
+      "page": "it-services_c8a5bfd8a992.html",
+      "pcap": "data/pcaps/round_02_20260807/firefox/it-services_c8a5bfd8a992.pcap",
+      "packets": 174,
+      "bytes": 17358,
+      "ok": true,
+      "reason": null
+    },
+    {
+      "client": "firefox",
+      "page": "kontakt_deb236f39a4e.html",
+      "pcap": "data/pcaps/round_02_20260807/firefox/kontakt_deb236f39a4e.pcap",
+      "packets": 176,
+      "bytes": 17672,
+      "ok": true,
+      "reason": null
+    },
+    {
+      "client": "firefox",
+      "page": "kuenstlerische-ausbildung-das_776248a97f12.html",
+      "pcap": "data/pcaps/round_02_20260807/firefox/kuenstlerische-ausbildung-das_776248a97f12.pcap",
+      "packets": 180,
+      "bytes": 18030,
+      "ok": true,
+      "reason": null
+    },
+    {
+      "client": "firefox",
+      "page": "lausitz-science-park_be4c6c8dad5a.html",
+      "pcap": "data/pcaps/round_02_20260807/firefox/lausitz-science-park_be4c6c8dad5a.pcap",
+      "packets": 358,
+      "bytes": 36046,
+      "ok": true,
+      "reason": null
+    },
+    {
+      "client": "firefox",
+      "page": "mehrsprachigkeit_53cb3eb18368.html",
+      "pcap": "data/pcaps/round_02_20260807/firefox/mehrsprachigkeit_53cb3eb18368.pcap",
+      "packets": 205,
+      "bytes": 20350,
+      "ok": true,
+      "reason": null
+    },
+    {
+      "client": "firefox",
+      "page": "mehrsprachigkeit_vision-und-chance_c2e36f8adb65.html",
+      "pcap": "data/pcaps/round_02_20260807/firefox/mehrsprachigkeit_vision-und-chance_c2e36f8adb65.pcap",
+      "packets": 176,
+      "bytes": 17582,
+      "ok": true,
+      "reason": null
+    },
+    {
+      "client": "firefox",
+      "page": "multimediazentrum_aktuelles_ansicht_29920-webex-nutzt-den-zentralen-btu-login_51f259d7da28.html",
+      "pcap": "data/pcaps/round_02_20260807/firefox/multimediazentrum_aktuelles_ansicht_29920-webex-nutzt-den-zentralen-btu-login_51f259d7da28.pcap",
+      "packets": 163,
+      "bytes": 16276,
+      "ok": true,
+      "reason": null
+    },
+    {
+      "client": "firefox",
+      "page": "multimediazentrum_ewerkzeuge_lernplattform-moodle_451d3a4d960a.html",
+      "pcap": "data/pcaps/round_02_20260807/firefox/multimediazentrum_ewerkzeuge_lernplattform-moodle_451d3a4d960a.pcap",
+      "packets": 208,
+      "bytes": 20746,
+      "ok": true,
+      "reason": null
+    },
+    {
+      "client": "firefox",
+      "page": "multimediazentrum_projekte_da91c9c58695.html",
+      "pcap": "data/pcaps/round_02_20260807/firefox/multimediazentrum_projekte_da91c9c58695.pcap",
+      "packets": 197,
+      "bytes": 19694,
+      "ok": true,
+      "reason": null
+    },
+    {
+      "client": "firefox",
+      "page": "news_500820843cff.html",
+      "pcap": "data/pcaps/round_02_20260807/firefox/news_500820843cff.pcap",
+      "packets": 213,
+      "bytes": 21276,
+      "ok": true,
+      "reason": null
+    },
+    {
+      "client": "firefox",
+      "page": "news_artikel_31566-wie-veraenderung-entsteht_31f64c73ad1b.html",
+      "pcap": "data/pcaps/round_02_20260807/firefox/news_artikel_31566-wie-veraenderung-entsteht_31f64c73ad1b.pcap",
+      "packets": 165,
+      "bytes": 16470,
+      "ok": true,
+      "reason": null
+    },
+    {
+      "client": "firefox",
+      "page": "news_artikel_31694-europaeische-innovationspartnerschaft-btu-gestaltet-zukunft-d_55d843492a19.html",
+      "pcap": "data/pcaps/round_02_20260807/firefox/news_artikel_31694-europaeische-innovationspartnerschaft-btu-gestaltet-zukunft-d_55d843492a19.pcap",
+      "packets": 171,
+      "bytes": 17082,
+      "ok": true,
+      "reason": null
+    },
+    {
+      "client": "firefox",
+      "page": "news_artikel_31701-resiliente-gesundheitslogistik-bei-waldbraenden_87d31f2afb00.html",
+      "pcap": "data/pcaps/round_02_20260807/firefox/news_artikel_31701-resiliente-gesundheitslogistik-bei-waldbraenden_87d31f2afb00.pcap",
+      "packets": 166,
+      "bytes": 16582,
+      "ok": true,
+      "reason": null
+    },
+    {
+      "client": "firefox",
+      "page": "news_artikel_31837-dinkel-gemuese-kakao-co-gesund-geniessen-mit-allen-sinnen_5f01f16e784c.html",
+      "pcap": "data/pcaps/round_02_20260807/firefox/news_artikel_31837-dinkel-gemuese-kakao-co-gesund-geniessen-mit-allen-sinnen_5f01f16e784c.pcap",
+      "packets": 178,
+      "bytes": 17776,
+      "ok": true,
+      "reason": null
+    },
+    {
+      "client": "firefox",
+      "page": "news_artikel_31866-kultur-staerkt-demokratie-und-zusammenhalt-im-laendlichen-rau_2a1542aa4ea2.html",
+      "pcap": "data/pcaps/round_02_20260807/firefox/news_artikel_31866-kultur-staerkt-demokratie-und-zusammenhalt-im-laendlichen-rau_2a1542aa4ea2.pcap",
+      "packets": 178,
+      "bytes": 17776,
+      "ok": true,
+      "reason": null
+    },
+    {
+      "client": "firefox",
+      "page": "news_artikel_31927-ki-forschung-an-der-btu-entwickelt-loesungen-fuer-industrie-l_be9030f9e9ec.html",
+      "pcap": "data/pcaps/round_02_20260807/firefox/news_artikel_31927-ki-forschung-an-der-btu-entwickelt-loesungen-fuer-industrie-l_be9030f9e9ec.pcap",
+      "packets": 169,
+      "bytes": 16828,
+      "ok": true,
+      "reason": null
+    },
+    {
+      "client": "firefox",
+      "page": "news_artikel_31942-femlights_d0e7976a14a6.html",
+      "pcap": "data/pcaps/round_02_20260807/firefox/news_artikel_31942-femlights_d0e7976a14a6.pcap",
+      "packets": 206,
+      "bytes": 20432,
+      "ok": true,
+      "reason": null
+    },
+    {
+      "client": "firefox",
+      "page": "news_artikel_31951-das-war-der-kultur-campus-in-sachsendorf-mit-rekordbesucherza_bf1662c5edfa.html",
+      "pcap": "data/pcaps/round_02_20260807/firefox/news_artikel_31951-das-war-der-kultur-campus-in-sachsendorf-mit-rekordbesucherza_bf1662c5edfa.pcap",
+      "packets": 259,
+      "bytes": 25948,
+      "ok": true,
+      "reason": null
+    },
+    {
+      "client": "firefox",
+      "page": "news_artikel_31984-schlauer-als-der-arzt-erlaubt-ein-unterhaltsamer-quizabend-ru_8eac16af81e5.html",
+      "pcap": "data/pcaps/round_02_20260807/firefox/news_artikel_31984-schlauer-als-der-arzt-erlaubt-ein-unterhaltsamer-quizabend-ru_8eac16af81e5.pcap",
+      "packets": 196,
+      "bytes": 19522,
+      "ok": true,
+      "reason": null
+    },
+    {
+      "client": "firefox",
+      "page": "news_artikel_32002-info-veranstaltung-master-architektur-2108_e12685e25b3c.html",
+      "pcap": "data/pcaps/round_02_20260807/firefox/news_artikel_32002-info-veranstaltung-master-architektur-2108_e12685e25b3c.pcap",
+      "packets": 182,
+      "bytes": 18254,
+      "ok": true,
+      "reason": null
+    },
+    {
+      "client": "firefox",
+      "page": "news_artikel_32004-open-lab-btu-cottbus-senftenberg-smarte-produktion-zum-anfass_8d204dbe00f1.html",
+      "pcap": "data/pcaps/round_02_20260807/firefox/news_artikel_32004-open-lab-btu-cottbus-senftenberg-smarte-produktion-zum-anfass_8d204dbe00f1.pcap",
+      "packets": 199,
+      "bytes": 19858,
+      "ok": true,
+      "reason": null
+    },
+    {
+      "client": "firefox",
+      "page": "news_artikel_32009-btu-doktorand-bjoern-riedel-mit-physik-studienpreis-geehrt_f025a1cf0c74.html",
+      "pcap": "data/pcaps/round_02_20260807/firefox/news_artikel_32009-btu-doktorand-bjoern-riedel-mit-physik-studienpreis-geehrt_f025a1cf0c74.pcap",
+      "packets": 168,
+      "bytes": 16686,
+      "ok": true,
+      "reason": null
+    },
+    {
+      "client": "firefox",
+      "page": "news_artikel_32042-dinkel-gemuese-kakao-co-kinderuni-exkursion-zur-confiserie-fe_49688d4137d7.html",
+      "pcap": "data/pcaps/round_02_20260807/firefox/news_artikel_32042-dinkel-gemuese-kakao-co-kinderuni-exkursion-zur-confiserie-fe_49688d4137d7.pcap",
+      "packets": 211,
+      "bytes": 21082,
+      "ok": true,
+      "reason": null
+    },
+    {
+      "client": "firefox",
+      "page": "news_artikel_32051-nimm-dein-hobby-ernst-dirk-wiedenhaupt-ueber-gruendung-studiu_dfa53dc5bc47.html",
+      "pcap": "data/pcaps/round_02_20260807/firefox/news_artikel_32051-nimm-dein-hobby-ernst-dirk-wiedenhaupt-ueber-gruendung-studiu_dfa53dc5bc47.pcap",
+      "packets": 530,
+      "bytes": 53522,
+      "ok": true,
+      "reason": null
+    },
+    {
+      "client": "firefox",
+      "page": "orientierungsstudium_e66267cddea9.html",
+      "pcap": "data/pcaps/round_02_20260807/firefox/orientierungsstudium_e66267cddea9.pcap",
+      "packets": 201,
+      "bytes": 20142,
+      "ok": true,
+      "reason": null
+    },
+    {
+      "client": "firefox",
+      "page": "physics-ms_a75e7ca646aa.html",
+      "pcap": "data/pcaps/round_02_20260807/firefox/physics-ms_a75e7ca646aa.pcap",
+      "packets": 184,
+      "bytes": 18388,
+      "ok": true,
+      "reason": null
+    },
+    {
+      "client": "firefox",
+      "page": "physics-ms_fachgebiete_3c6dca0b465f.html",
+      "pcap": "data/pcaps/round_02_20260807/firefox/physics-ms_fachgebiete_3c6dca0b465f.pcap",
+      "packets": 163,
+      "bytes": 16276,
+      "ok": true,
+      "reason": null
+    },
+    {
+      "client": "firefox",
+      "page": "physics-ms_kontakt_87f706744595.html",
+      "pcap": "data/pcaps/round_02_20260807/firefox/physics-ms_kontakt_87f706744595.pcap",
+      "packets": 171,
+      "bytes": 17022,
+      "ok": true,
+      "reason": null
+    },
+    {
+      "client": "firefox",
+      "page": "sprachen_c908678766f9.html",
+      "pcap": "data/pcaps/round_02_20260807/firefox/sprachen_c908678766f9.pcap",
+      "packets": 179,
+      "bytes": 17948,
+      "ok": true,
+      "reason": null
+    },
+    {
+      "client": "firefox",
+      "page": "studieninteressierte_a680c3cafd7a.html",
+      "pcap": "data/pcaps/round_02_20260807/firefox/studieninteressierte_a680c3cafd7a.pcap",
+      "packets": 231,
+      "bytes": 23034,
+      "ok": true,
+      "reason": null
+    },
+    {
+      "client": "firefox",
+      "page": "studieninteressierte_studienorte-entdecken_senftenberg_74043dead5de.html",
+      "pcap": "data/pcaps/round_02_20260807/firefox/studieninteressierte_studienorte-entdecken_senftenberg_74043dead5de.pcap",
+      "packets": 455,
+      "bytes": 45980,
+      "ok": true,
+      "reason": null
+    },
+    {
+      "client": "firefox",
+      "page": "studium_8ad66ffab00c.html",
+      "pcap": "data/pcaps/round_02_20260807/firefox/studium_8ad66ffab00c.pcap",
+      "packets": 210,
+      "bytes": 21090,
+      "ok": true,
+      "reason": null
+    },
+    {
+      "client": "firefox",
+      "page": "studium_im-studium_studienorganisation_quicklinks_lehrangebote_a305aafc625e.html",
+      "pcap": "data/pcaps/round_02_20260807/firefox/studium_im-studium_studienorganisation_quicklinks_lehrangebote_a305aafc625e.pcap",
+      "packets": 151,
+      "bytes": 15022,
+      "ok": true,
+      "reason": null
+    },
+    {
+      "client": "firefox",
+      "page": "studium_nach-dem-studium_alumni_alumni-campusfuehrungen_d3ce47e251bb.html",
+      "pcap": "data/pcaps/round_02_20260807/firefox/studium_nach-dem-studium_alumni_alumni-campusfuehrungen_d3ce47e251bb.pcap",
+      "packets": 159,
+      "bytes": 15828,
+      "ok": true,
+      "reason": null
+    },
+    {
+      "client": "firefox",
+      "page": "studium_nach-dem-studium_alumni_c5e070a05a8e.html",
+      "pcap": "data/pcaps/round_02_20260807/firefox/studium_nach-dem-studium_alumni_c5e070a05a8e.pcap",
+      "packets": 166,
+      "bytes": 16594,
+      "ok": true,
+      "reason": null
+    },
+    {
+      "client": "firefox",
+      "page": "studium_nach-dem-studium_alumni_events-und-news_ansicht_31945-interview-mit-btu-_1b0575b44cd3.html",
+      "pcap": "data/pcaps/round_02_20260807/firefox/studium_nach-dem-studium_alumni_events-und-news_ansicht_31945-interview-mit-btu-_1b0575b44cd3.pcap",
+      "packets": 168,
+      "bytes": 16746,
+      "ok": true,
+      "reason": null
+    },
+    {
+      "client": "firefox",
+      "page": "studium_nach-dem-studium_alumni_kontakt_c4c024f27538.html",
+      "pcap": "data/pcaps/round_02_20260807/firefox/studium_nach-dem-studium_alumni_kontakt_c4c024f27538.pcap",
+      "packets": 157,
+      "bytes": 15604,
+      "ok": true,
+      "reason": null
+    },
+    {
+      "client": "firefox",
+      "page": "studium_studienangebot_3c015f21ec33.html",
+      "pcap": "data/pcaps/round_02_20260807/firefox/studium_studienangebot_3c015f21ec33.pcap",
+      "packets": 155,
+      "bytes": 15380,
+      "ok": true,
+      "reason": null
+    },
+    {
+      "client": "firefox",
+      "page": "studium_studienangebot_studiengaenge_16bd0c856415.html",
+      "pcap": "data/pcaps/round_02_20260807/firefox/studium_studienangebot_studiengaenge_16bd0c856415.pcap",
+      "packets": 173,
+      "bytes": 17276,
+      "ok": true,
+      "reason": null
+    },
+    {
+      "client": "firefox",
+      "page": "studium_studienangebot_zertifikatsstudium_91ad18860a0b.html",
+      "pcap": "data/pcaps/round_02_20260807/firefox/studium_studienangebot_zertifikatsstudium_91ad18860a0b.pcap",
+      "packets": 193,
+      "bytes": 19246,
+      "ok": true,
+      "reason": null
+    },
+    {
+      "client": "firefox",
+      "page": "studium_vor-dem-studium_angebote-fuer-schuelerinnen-schueler_b4a0bac81f92.html",
+      "pcap": "data/pcaps/round_02_20260807/firefox/studium_vor-dem-studium_angebote-fuer-schuelerinnen-schueler_b4a0bac81f92.pcap",
+      "packets": 206,
+      "bytes": 20612,
+      "ok": true,
+      "reason": null
+    },
+    {
+      "client": "firefox",
+      "page": "studium_vor-dem-studium_angebote-fuer-schuelerinnen-schueler_infotage_d859e69a2c13.html",
+      "pcap": "data/pcaps/round_02_20260807/firefox/studium_vor-dem-studium_angebote-fuer-schuelerinnen-schueler_infotage_d859e69a2c13.pcap",
+      "packets": 186,
+      "bytes": 18642,
+      "ok": true,
+      "reason": null
+    },
+    {
+      "client": "firefox",
+      "page": "studium_vor-dem-studium_beratung-hilfe_93d6e76f82d8.html",
+      "pcap": "data/pcaps/round_02_20260807/firefox/studium_vor-dem-studium_beratung-hilfe_93d6e76f82d8.pcap",
+      "packets": 288,
+      "bytes": 28746,
+      "ok": true,
+      "reason": null
+    },
+    {
+      "client": "firefox",
+      "page": "studium_vor-dem-studium_bewerbung-zulassung-immatrikulation_immatrikulation_13a39a5943eb.html",
+      "pcap": "data/pcaps/round_02_20260807/firefox/studium_vor-dem-studium_bewerbung-zulassung-immatrikulation_immatrikulation_13a39a5943eb.pcap",
+      "packets": 162,
+      "bytes": 16074,
+      "ok": true,
+      "reason": null
+    },
+    {
+      "client": "firefox",
+      "page": "transfer_4b0895c198f7.html",
+      "pcap": "data/pcaps/round_02_20260807/firefox/transfer_4b0895c198f7.pcap",
+      "packets": 236,
+      "bytes": 23822,
+      "ok": true,
+      "reason": null
+    },
+    {
+      "client": "firefox",
+      "page": "unileben_334ce1f641fd.html",
+      "pcap": "data/pcaps/round_02_20260807/firefox/unileben_334ce1f641fd.pcap",
+      "packets": 225,
+      "bytes": 22350,
+      "ok": true,
+      "reason": null
+    },
+    {
+      "client": "firefox",
+      "page": "unileben_btu-region-erleben_campusleben_c2d87c035ffd.html",
+      "pcap": "data/pcaps/round_02_20260807/firefox/unileben_btu-region-erleben_campusleben_c2d87c035ffd.pcap",
+      "packets": 187,
+      "bytes": 18694,
+      "ok": true,
+      "reason": null
+    },
+    {
+      "client": "firefox",
+      "page": "unileben_btu-region-erleben_mensaplaene_03eade7440e1.html",
+      "pcap": "data/pcaps/round_02_20260807/firefox/unileben_btu-region-erleben_mensaplaene_03eade7440e1.pcap",
+      "packets": 155,
+      "bytes": 15410,
+      "ok": true,
+      "reason": null
+    },
+    {
+      "client": "firefox",
+      "page": "universitaet_9f000ac62c68.html",
+      "pcap": "data/pcaps/round_02_20260807/firefox/universitaet_9f000ac62c68.pcap",
+      "packets": 212,
+      "bytes": 21224,
+      "ok": true,
+      "reason": null
+    },
+    {
+      "client": "firefox",
+      "page": "universitaet_die-btu_kommunikation-marketing_68e58553109e.html",
+      "pcap": "data/pcaps/round_02_20260807/firefox/universitaet_die-btu_kommunikation-marketing_68e58553109e.pcap",
+      "packets": 212,
+      "bytes": 21134,
+      "ok": true,
+      "reason": null
+    },
+    {
+      "client": "firefox",
+      "page": "universitaet_die-btu_kommunikation-marketing_medienservice-presse_e66d3fe667b9.html",
+      "pcap": "data/pcaps/round_02_20260807/firefox/universitaet_die-btu_kommunikation-marketing_medienservice-presse_e66d3fe667b9.pcap",
+      "packets": 158,
+      "bytes": 15776,
+      "ok": true,
+      "reason": null
+    },
+    {
+      "client": "firefox",
+      "page": "universitaet_die-btu_praesidium_kanzler_veranstaltungsformular_de374846dfaa.html",
+      "pcap": "data/pcaps/round_02_20260807/firefox/universitaet_die-btu_praesidium_kanzler_veranstaltungsformular_de374846dfaa.pcap",
+      "packets": 157,
+      "bytes": 15694,
+      "ok": true,
+      "reason": null
+    },
+    {
+      "client": "firefox",
+      "page": "universitaet_fakultaeten-einrichtungen_439c8b3b1601.html",
+      "pcap": "data/pcaps/round_02_20260807/firefox/universitaet_fakultaeten-einrichtungen_439c8b3b1601.pcap",
+      "packets": 168,
+      "bytes": 16746,
+      "ok": true,
+      "reason": null
+    },
+    {
+      "client": "firefox",
+      "page": "universitaet_fakultaeten-einrichtungen_college_a7453c918fdf.html",
+      "pcap": "data/pcaps/round_02_20260807/firefox/universitaet_fakultaeten-einrichtungen_college_a7453c918fdf.pcap",
+      "packets": 168,
+      "bytes": 16686,
+      "ok": true,
+      "reason": null
+    },
+    {
+      "client": "firefox",
+      "page": "universitaet_fakultaeten-einrichtungen_universitaet_fakultaeten-einrichtungen_co_2816f0efe277.html",
+      "pcap": "data/pcaps/round_02_20260807/firefox/universitaet_fakultaeten-einrichtungen_universitaet_fakultaeten-einrichtungen_co_2816f0efe277.pcap",
+      "packets": 182,
+      "bytes": 18314,
+      "ok": true,
+      "reason": null
+    },
+    {
+      "client": "firefox",
+      "page": "universitaet_karriere-engagement_karriere_5afdcedecacd.html",
+      "pcap": "data/pcaps/round_02_20260807/firefox/universitaet_karriere-engagement_karriere_5afdcedecacd.pcap",
+      "packets": 206,
+      "bytes": 20552,
+      "ok": true,
+      "reason": null
+    },
+    {
+      "client": "firefox",
+      "page": "universitaet_karriere-engagement_karriere_berufungsmanagement_6442da393a5c.html",
+      "pcap": "data/pcaps/round_02_20260807/firefox/universitaet_karriere-engagement_karriere_berufungsmanagement_6442da393a5c.pcap",
+      "packets": 188,
+      "bytes": 18806,
+      "ok": true,
+      "reason": null
+    },
+    {
+      "client": "firefox",
+      "page": "universitaet_stiften-und-foerdern_0751cd7e08b7.html",
+      "pcap": "data/pcaps/round_02_20260807/firefox/universitaet_stiften-und-foerdern_0751cd7e08b7.pcap",
+      "packets": 174,
+      "bytes": 17358,
+      "ok": true,
+      "reason": null
+    },
+    {
+      "client": "firefox",
+      "page": "universitaet_stiften-und-foerdern_stiftung-der-btu_448bd9d1db45.html",
+      "pcap": "data/pcaps/round_02_20260807/firefox/universitaet_stiften-und-foerdern_stiftung-der-btu_448bd9d1db45.pcap",
+      "packets": 161,
+      "bytes": 15932,
+      "ok": true,
+      "reason": null
+    },
+    {
+      "client": "firefox",
+      "page": "webmail_668a3c17872f.html",
+      "pcap": "data/pcaps/round_02_20260807/firefox/webmail_668a3c17872f.pcap",
+      "packets": 20,
+      "bytes": 1980,
+      "ok": true,
+      "reason": null
+    },
+    {
+      "client": "firefox",
+      "page": "weiterbildung_4099573d485e.html",
+      "pcap": "data/pcaps/round_02_20260807/firefox/weiterbildung_4099573d485e.pcap",
+      "packets": 270,
+      "bytes": 26970,
+      "ok": true,
+      "reason": null
+    },
+    {
+      "client": "firefox",
+      "page": "weiterbildung_entwicklung-und-vernetzung_bc6aee59cc9d.html",
+      "pcap": "data/pcaps/round_02_20260807/firefox/weiterbildung_entwicklung-und-vernetzung_bc6aee59cc9d.pcap",
+      "packets": 203,
+      "bytes": 20306,
+      "ok": true,
+      "reason": null
+    },
+    {
+      "client": "firefox",
+      "page": "weiterbildung_wissenschaftliche-weiterbildung_profil_4e78ad6d4c84.html",
+      "pcap": "data/pcaps/round_02_20260807/firefox/weiterbildung_wissenschaftliche-weiterbildung_profil_4e78ad6d4c84.pcap",
+      "packets": 242,
+      "bytes": 24014,
+      "ok": true,
+      "reason": null
+    },
+    {
+      "client": "wget",
+      "page": "ag-wassertechnik_dvgw-hochschulgruppe_25757e923e63.html",
+      "pcap": "data/pcaps/round_02_20260807/wget/ag-wassertechnik_dvgw-hochschulgruppe_25757e923e63.pcap",
+      "packets": 225,
+      "bytes": 23992,
+      "ok": true,
+      "reason": null
+    },
+    {
+      "client": "wget",
+      "page": "barrierefreiheit_a8425c89b49a.html",
+      "pcap": "data/pcaps/round_02_20260807/wget/barrierefreiheit_a8425c89b49a.pcap",
+      "packets": 225,
+      "bytes": 23962,
+      "ok": true,
+      "reason": null
+    },
+    {
+      "client": "wget",
+      "page": "beschaeftigte_e7b3ce5b463e.html",
+      "pcap": "data/pcaps/round_02_20260807/wget/beschaeftigte_e7b3ce5b463e.pcap",
+      "packets": 231,
+      "bytes": 24544,
+      "ok": true,
+      "reason": null
+    },
+    {
+      "client": "wget",
+      "page": "bibliothek_15621acdde3d.html",
+      "pcap": "data/pcaps/round_02_20260807/wget/bibliothek_15621acdde3d.pcap",
+      "packets": 309,
+      "bytes": 32560,
+      "ok": true,
+      "reason": null
+    },
+    {
+      "client": "wget",
+      "page": "bibliothek_ausleihen_bibliotheksausweis_44c3aff9b753.html",
+      "pcap": "data/pcaps/round_02_20260807/wget/bibliothek_ausleihen_bibliotheksausweis_44c3aff9b753.pcap",
+      "packets": 229,
+      "bytes": 24410,
+      "ok": true,
+      "reason": null
+    },
+    {
+      "client": "wget",
+      "page": "bibliothek_neu-hier_alumni_e717f5a30e9d.html",
+      "pcap": "data/pcaps/round_02_20260807/wget/bibliothek_neu-hier_alumni_e717f5a30e9d.pcap",
+      "packets": 265,
+      "bytes": 27992,
+      "ok": true,
+      "reason": null
+    },
+    {
+      "client": "wget",
+      "page": "bibliothek_suchen_patente_6678299b0e76.html",
+      "pcap": "data/pcaps/round_02_20260807/wget/bibliothek_suchen_patente_6678299b0e76.pcap",
+      "packets": 243,
+      "bytes": 25978,
+      "ok": true,
+      "reason": null
+    },
+    {
+      "client": "wget",
+      "page": "bibliothek_wir-ueber-uns_zentralcampus-cottbus_b17c9d87669e.html",
+      "pcap": "data/pcaps/round_02_20260807/wget/bibliothek_wir-ueber-uns_zentralcampus-cottbus_b17c9d87669e.pcap",
+      "packets": 333,
+      "bytes": 34978,
+      "ok": true,
+      "reason": null
+    },
+    {
+      "client": "wget",
+      "page": "biotechnology-ms_d8d44f5f2f1c.html",
+      "pcap": "data/pcaps/round_02_20260807/wget/biotechnology-ms_d8d44f5f2f1c.pcap",
+      "packets": 260,
+      "bytes": 27822,
+      "ok": true,
+      "reason": null
+    },
+    {
+      "client": "wget",
+      "page": "bwl-ms_83c4f086e8be.html",
+      "pcap": "data/pcaps/round_02_20260807/wget/bwl-ms_83c4f086e8be.pcap",
+      "packets": 265,
+      "bytes": 28382,
+      "ok": true,
+      "reason": null
+    },
+    {
+      "client": "wget",
+      "page": "bwl-ms_detailinformationen_ziel-des-studiums_a3882763dbe1.html",
+      "pcap": "data/pcaps/round_02_20260807/wget/bwl-ms_detailinformationen_ziel-des-studiums_a3882763dbe1.pcap",
+      "packets": 224,
+      "bytes": 23910,
+      "ok": true,
+      "reason": null
+    },
+    {
+      "client": "wget",
+      "page": "bwl-ms_ersti-infos_praesentation-einfuehrungsveranstaltung_3ea008573328.html",
+      "pcap": "data/pcaps/round_02_20260807/wget/bwl-ms_ersti-infos_praesentation-einfuehrungsveranstaltung_3ea008573328.pcap",
+      "packets": 225,
+      "bytes": 23992,
+      "ok": true,
+      "reason": null
+    },
+    {
+      "client": "wget",
+      "page": "bwl-ms_kontakt_2917f1aa82f9.html",
+      "pcap": "data/pcaps/round_02_20260807/wget/bwl-ms_kontakt_2917f1aa82f9.pcap",
+      "packets": 258,
+      "bytes": 27598,
+      "ok": true,
+      "reason": null
+    },
+    {
+      "client": "wget",
+      "page": "careercenter_96072810526b.html",
+      "pcap": "data/pcaps/round_02_20260807/wget/careercenter_96072810526b.pcap",
+      "packets": 335,
+      "bytes": 35142,
+      "ok": true,
+      "reason": null
+    },
+    {
+      "client": "wget",
+      "page": "careercenter_fuer-studierende-alumni_matching-day_fb5230dcf2c2.html",
+      "pcap": "data/pcaps/round_02_20260807/wget/careercenter_fuer-studierende-alumni_matching-day_fb5230dcf2c2.pcap",
+      "packets": 284,
+      "bytes": 30060,
+      "ok": true,
+      "reason": null
+    },
+    {
+      "client": "wget",
+      "page": "chesco_infrastruktur_fertigung-1_593c88a9de22.html",
+      "pcap": "data/pcaps/round_02_20260807/wget/chesco_infrastruktur_fertigung-1_593c88a9de22.pcap",
+      "packets": 260,
+      "bytes": 27492,
+      "ok": true,
+      "reason": null
+    },
+    {
+      "client": "wget",
+      "page": "chesco_page_aef52c19d08f.html",
+      "pcap": "data/pcaps/round_02_20260807/wget/chesco_page_aef52c19d08f.pcap",
+      "packets": 361,
+      "bytes": 37694,
+      "ok": true,
+      "reason": null
+    },
+    {
+      "client": "wget",
+      "page": "chesco_team_beantragung-mitgliedschaft_bc615d57341d.html",
+      "pcap": "data/pcaps/round_02_20260807/wget/chesco_team_beantragung-mitgliedschaft_bc615d57341d.pcap",
+      "packets": 224,
+      "bytes": 23910,
+      "ok": true,
+      "reason": null
+    },
+    {
+      "client": "wget",
+      "page": "chesco_unser-angebot_5edcc13e833e.html",
+      "pcap": "data/pcaps/round_02_20260807/wget/chesco_unser-angebot_5edcc13e833e.pcap",
+      "packets": 295,
+      "bytes": 31082,
+      "ok": true,
+      "reason": null
+    },
+    {
+      "client": "wget",
+      "page": "datenschutz_cc5647a0f560.html",
+      "pcap": "data/pcaps/round_02_20260807/wget/datenschutz_cc5647a0f560.pcap",
+      "packets": 224,
+      "bytes": 23850,
+      "ok": true,
+      "reason": null
+    },
+    {
+      "client": "wget",
+      "page": "entwicklung-und-vernetzung_wandelbar_b2bb29311daf.html",
+      "pcap": "data/pcaps/round_02_20260807/wget/entwicklung-und-vernetzung_wandelbar_b2bb29311daf.pcap",
+      "packets": 306,
+      "bytes": 32164,
+      "ok": true,
+      "reason": null
+    },
+    {
+      "client": "wget",
+      "page": "fakultaet6_dad033cd788b.html",
+      "pcap": "data/pcaps/round_02_20260807/wget/fakultaet6_dad033cd788b.pcap",
+      "packets": 511,
+      "bytes": 53174,
+      "ok": true,
+      "reason": null
+    },
+    {
+      "client": "wget",
+      "page": "fg-kognitive-materialanalytik_6c1267b2f509.html",
+      "pcap": "data/pcaps/round_02_20260807/wget/fg-kognitive-materialanalytik_6c1267b2f509.pcap",
+      "packets": 240,
+      "bytes": 25642,
+      "ok": true,
+      "reason": null
+    },
+    {
+      "client": "wget",
+      "page": "fg-kognitive-materialanalytik_lehre_semesteruebersicht_5e436ed7c293.html",
+      "pcap": "data/pcaps/round_02_20260807/wget/fg-kognitive-materialanalytik_lehre_semesteruebersicht_5e436ed7c293.pcap",
+      "packets": 225,
+      "bytes": 23962,
+      "ok": true,
+      "reason": null
+    },
+    {
+      "client": "wget",
+      "page": "fg-kognitive-materialanalytik_publikationen_fcfd4f59c1f4.html",
+      "pcap": "data/pcaps/round_02_20260807/wget/fg-kognitive-materialanalytik_publikationen_fcfd4f59c1f4.pcap",
+      "packets": 225,
+      "bytes": 23962,
+      "ok": true,
+      "reason": null
+    },
+    {
+      "client": "wget",
+      "page": "fg-kognitive-materialanalytik_publikationen_publications-3_2bc09098cb22.html",
+      "pcap": "data/pcaps/round_02_20260807/wget/fg-kognitive-materialanalytik_publikationen_publications-3_2bc09098cb22.pcap",
+      "packets": 225,
+      "bytes": 23992,
+      "ok": true,
+      "reason": null
+    },
+    {
+      "client": "wget",
+      "page": "fg-stadtplanung_776d1018596d.html",
+      "pcap": "data/pcaps/round_02_20260807/wget/fg-stadtplanung_776d1018596d.pcap",
+      "packets": 254,
+      "bytes": 26940,
+      "ok": true,
+      "reason": null
+    },
+    {
+      "client": "wget",
+      "page": "fg-stadtplanung_team_lehrbeauftragte_nele-trautwein-ma_560d3656ab0f.html",
+      "pcap": "data/pcaps/round_02_20260807/wget/fg-stadtplanung_team_lehrbeauftragte_nele-trautwein-ma_560d3656ab0f.pcap",
+      "packets": 249,
+      "bytes": 26440,
+      "ok": true,
+      "reason": null
+    },
+    {
+      "client": "wget",
+      "page": "fg-stadtplanung_team_mitarbeiterinnen_sebastian-alexander-gruenwald_542ac133b87c.html",
+      "pcap": "data/pcaps/round_02_20260807/wget/fg-stadtplanung_team_mitarbeiterinnen_sebastian-alexander-gruenwald_542ac133b87c.pcap",
+      "packets": 234,
+      "bytes": 24850,
+      "ok": true,
+      "reason": null
+    },
+    {
+      "client": "wget",
+      "page": "forschung_7ecc03ec470f.html",
+      "pcap": "data/pcaps/round_02_20260807/wget/forschung_7ecc03ec470f.pcap",
+      "packets": 611,
+      "bytes": 63054,
+      "ok": true,
+      "reason": null
+    },
+    {
+      "client": "wget",
+      "page": "ikmz_xwiki_bdcf327373da.html",
+      "pcap": "data/pcaps/round_02_20260807/wget/ikmz_xwiki_bdcf327373da.pcap",
+      "packets": 17,
+      "bytes": 1656,
+      "ok": true,
+      "reason": null
+    },
+    {
+      "client": "wget",
+      "page": "impressum_cd2e27be5143.html",
+      "pcap": "data/pcaps/round_02_20260807/wget/impressum_cd2e27be5143.pcap",
+      "packets": 224,
+      "bytes": 23850,
+      "ok": true,
+      "reason": null
+    },
+    {
+      "client": "wget",
+      "page": "index.html",
+      "pcap": "data/pcaps/round_02_20260807/wget/index.pcap",
+      "packets": 660,
+      "bytes": 68152,
+      "ok": true,
+      "reason": null
+    },
+    {
+      "client": "wget",
+      "page": "international_729581c72210.html",
+      "pcap": "data/pcaps/round_02_20260807/wget/international_729581c72210.pcap",
+      "packets": 395,
+      "bytes": 41172,
+      "ok": true,
+      "reason": null
+    },
+    {
+      "client": "wget",
+      "page": "international_aus-dem-ausland-an-die-btu_studium-mit-abschluss_9c0577765ce9.html",
+      "pcap": "data/pcaps/round_02_20260807/wget/international_aus-dem-ausland-an-die-btu_studium-mit-abschluss_9c0577765ce9.pcap",
+      "packets": 397,
+      "bytes": 41366,
+      "ok": true,
+      "reason": null
+    },
+    {
+      "client": "wget",
+      "page": "it-services_btu-account_nutzerinformation_3d1b9ffd0399.html",
+      "pcap": "data/pcaps/round_02_20260807/wget/it-services_btu-account_nutzerinformation_3d1b9ffd0399.pcap",
+      "packets": 226,
+      "bytes": 24044,
+      "ok": true,
+      "reason": null
+    },
+    {
+      "client": "wget",
+      "page": "it-services_btu-account_passwort-vergessen_8f8d79c396b1.html",
+      "pcap": "data/pcaps/round_02_20260807/wget/it-services_btu-account_passwort-vergessen_8f8d79c396b1.pcap",
+      "packets": 227,
+      "bytes": 24186,
+      "ok": true,
+      "reason": null
+    },
+    {
+      "client": "wget",
+      "page": "it-services_c8a5bfd8a992.html",
+      "pcap": "data/pcaps/round_02_20260807/wget/it-services_c8a5bfd8a992.pcap",
+      "packets": 226,
+      "bytes": 24074,
+      "ok": true,
+      "reason": null
+    },
+    {
+      "client": "wget",
+      "page": "kontakt_deb236f39a4e.html",
+      "pcap": "data/pcaps/round_02_20260807/wget/kontakt_deb236f39a4e.pcap",
+      "packets": 249,
+      "bytes": 26410,
+      "ok": true,
+      "reason": null
+    },
+    {
+      "client": "wget",
+      "page": "kuenstlerische-ausbildung-das_776248a97f12.html",
+      "pcap": "data/pcaps/round_02_20260807/wget/kuenstlerische-ausbildung-das_776248a97f12.pcap",
+      "packets": 234,
+      "bytes": 24910,
+      "ok": true,
+      "reason": null
+    },
+    {
+      "client": "wget",
+      "page": "lausitz-science-park_be4c6c8dad5a.html",
+      "pcap": "data/pcaps/round_02_20260807/wget/lausitz-science-park_be4c6c8dad5a.pcap",
+      "packets": 419,
+      "bytes": 43800,
+      "ok": true,
+      "reason": null
+    },
+    {
+      "client": "wget",
+      "page": "mehrsprachigkeit_53cb3eb18368.html",
+      "pcap": "data/pcaps/round_02_20260807/wget/mehrsprachigkeit_53cb3eb18368.pcap",
+      "packets": 279,
+      "bytes": 29440,
+      "ok": true,
+      "reason": null
+    },
+    {
+      "client": "wget",
+      "page": "mehrsprachigkeit_vision-und-chance_c2e36f8adb65.html",
+      "pcap": "data/pcaps/round_02_20260807/wget/mehrsprachigkeit_vision-und-chance_c2e36f8adb65.pcap",
+      "packets": 289,
+      "bytes": 30530,
+      "ok": true,
+      "reason": null
+    },
+    {
+      "client": "wget",
+      "page": "multimediazentrum_aktuelles_ansicht_29920-webex-nutzt-den-zentralen-btu-login_51f259d7da28.html",
+      "pcap": "data/pcaps/round_02_20260807/wget/multimediazentrum_aktuelles_ansicht_29920-webex-nutzt-den-zentralen-btu-login_51f259d7da28.pcap",
+      "packets": 224,
+      "bytes": 23850,
+      "ok": true,
+      "reason": null
+    },
+    {
+      "client": "wget",
+      "page": "multimediazentrum_ewerkzeuge_lernplattform-moodle_451d3a4d960a.html",
+      "pcap": "data/pcaps/round_02_20260807/wget/multimediazentrum_ewerkzeuge_lernplattform-moodle_451d3a4d960a.pcap",
+      "packets": 240,
+      "bytes": 25522,
+      "ok": true,
+      "reason": null
+    },
+    {
+      "client": "wget",
+      "page": "multimediazentrum_projekte_da91c9c58695.html",
+      "pcap": "data/pcaps/round_02_20260807/wget/multimediazentrum_projekte_da91c9c58695.pcap",
+      "packets": 250,
+      "bytes": 26552,
+      "ok": true,
+      "reason": null
+    },
+    {
+      "client": "wget",
+      "page": "news_500820843cff.html",
+      "pcap": "data/pcaps/round_02_20260807/wget/news_500820843cff.pcap",
+      "packets": 276,
+      "bytes": 29044,
+      "ok": true,
+      "reason": null
+    },
+    {
+      "client": "wget",
+      "page": "news_artikel_31566-wie-veraenderung-entsteht_31f64c73ad1b.html",
+      "pcap": "data/pcaps/round_02_20260807/wget/news_artikel_31566-wie-veraenderung-entsteht_31f64c73ad1b.pcap",
+      "packets": 233,
+      "bytes": 24828,
+      "ok": true,
+      "reason": null
+    },
+    {
+      "client": "wget",
+      "page": "news_artikel_31694-europaeische-innovationspartnerschaft-btu-gestaltet-zukunft-d_55d843492a19.html",
+      "pcap": "data/pcaps/round_02_20260807/wget/news_artikel_31694-europaeische-innovationspartnerschaft-btu-gestaltet-zukunft-d_55d843492a19.pcap",
+      "packets": 234,
+      "bytes": 24910,
+      "ok": true,
+      "reason": null
+    },
+    {
+      "client": "wget",
+      "page": "news_artikel_31701-resiliente-gesundheitslogistik-bei-waldbraenden_87d31f2afb00.html",
+      "pcap": "data/pcaps/round_02_20260807/wget/news_artikel_31701-resiliente-gesundheitslogistik-bei-waldbraenden_87d31f2afb00.pcap",
+      "packets": 238,
+      "bytes": 25268,
+      "ok": true,
+      "reason": null
+    },
+    {
+      "client": "wget",
+      "page": "news_artikel_31837-dinkel-gemuese-kakao-co-gesund-geniessen-mit-allen-sinnen_5f01f16e784c.html",
+      "pcap": "data/pcaps/round_02_20260807/wget/news_artikel_31837-dinkel-gemuese-kakao-co-gesund-geniessen-mit-allen-sinnen_5f01f16e784c.pcap",
+      "packets": 228,
+      "bytes": 24328,
+      "ok": true,
+      "reason": null
+    },
+    {
+      "client": "wget",
+      "page": "news_artikel_31866-kultur-staerkt-demokratie-und-zusammenhalt-im-laendlichen-rau_2a1542aa4ea2.html",
+      "pcap": "data/pcaps/round_02_20260807/wget/news_artikel_31866-kultur-staerkt-demokratie-und-zusammenhalt-im-laendlichen-rau_2a1542aa4ea2.pcap",
+      "packets": 238,
+      "bytes": 25298,
+      "ok": true,
+      "reason": null
+    },
+    {
+      "client": "wget",
+      "page": "news_artikel_31927-ki-forschung-an-der-btu-entwickelt-loesungen-fuer-industrie-l_be9030f9e9ec.html",
+      "pcap": "data/pcaps/round_02_20260807/wget/news_artikel_31927-ki-forschung-an-der-btu-entwickelt-loesungen-fuer-industrie-l_be9030f9e9ec.pcap",
+      "packets": 237,
+      "bytes": 25156,
+      "ok": true,
+      "reason": null
+    },
+    {
+      "client": "wget",
+      "page": "news_artikel_31942-femlights_d0e7976a14a6.html",
+      "pcap": "data/pcaps/round_02_20260807/wget/news_artikel_31942-femlights_d0e7976a14a6.pcap",
+      "packets": 264,
+      "bytes": 27910,
+      "ok": true,
+      "reason": null
+    },
+    {
+      "client": "wget",
+      "page": "news_artikel_31951-das-war-der-kultur-campus-in-sachsendorf-mit-rekordbesucherza_bf1662c5edfa.html",
+      "pcap": "data/pcaps/round_02_20260807/wget/news_artikel_31951-das-war-der-kultur-campus-in-sachsendorf-mit-rekordbesucherza_bf1662c5edfa.pcap",
+      "packets": 332,
+      "bytes": 34836,
+      "ok": true,
+      "reason": null
+    },
+    {
+      "client": "wget",
+      "page": "news_artikel_31984-schlauer-als-der-arzt-erlaubt-ein-unterhaltsamer-quizabend-ru_8eac16af81e5.html",
+      "pcap": "data/pcaps/round_02_20260807/wget/news_artikel_31984-schlauer-als-der-arzt-erlaubt-ein-unterhaltsamer-quizabend-ru_8eac16af81e5.pcap",
+      "packets": 274,
+      "bytes": 28910,
+      "ok": true,
+      "reason": null
+    },
+    {
+      "client": "wget",
+      "page": "news_artikel_32002-info-veranstaltung-master-architektur-2108_e12685e25b3c.html",
+      "pcap": "data/pcaps/round_02_20260807/wget/news_artikel_32002-info-veranstaltung-master-architektur-2108_e12685e25b3c.pcap",
+      "packets": 237,
+      "bytes": 25186,
+      "ok": true,
+      "reason": null
+    },
+    {
+      "client": "wget",
+      "page": "news_artikel_32004-open-lab-btu-cottbus-senftenberg-smarte-produktion-zum-anfass_8d204dbe00f1.html",
+      "pcap": "data/pcaps/round_02_20260807/wget/news_artikel_32004-open-lab-btu-cottbus-senftenberg-smarte-produktion-zum-anfass_8d204dbe00f1.pcap",
+      "packets": 256,
+      "bytes": 27194,
+      "ok": true,
+      "reason": null
+    },
+    {
+      "client": "wget",
+      "page": "news_artikel_32009-btu-doktorand-bjoern-riedel-mit-physik-studienpreis-geehrt_f025a1cf0c74.html",
+      "pcap": "data/pcaps/round_02_20260807/wget/news_artikel_32009-btu-doktorand-bjoern-riedel-mit-physik-studienpreis-geehrt_f025a1cf0c74.pcap",
+      "packets": 225,
+      "bytes": 23962,
+      "ok": true,
+      "reason": null
+    },
+    {
+      "client": "wget",
+      "page": "news_artikel_32042-dinkel-gemuese-kakao-co-kinderuni-exkursion-zur-confiserie-fe_49688d4137d7.html",
+      "pcap": "data/pcaps/round_02_20260807/wget/news_artikel_32042-dinkel-gemuese-kakao-co-kinderuni-exkursion-zur-confiserie-fe_49688d4137d7.pcap",
+      "packets": 290,
+      "bytes": 30642,
+      "ok": true,
+      "reason": null
+    },
+    {
+      "client": "wget",
+      "page": "news_artikel_32051-nimm-dein-hobby-ernst-dirk-wiedenhaupt-ueber-gruendung-studiu_dfa53dc5bc47.html",
+      "pcap": "data/pcaps/round_02_20260807/wget/news_artikel_32051-nimm-dein-hobby-ernst-dirk-wiedenhaupt-ueber-gruendung-studiu_dfa53dc5bc47.pcap",
+      "packets": 753,
+      "bytes": 77788,
+      "ok": true,
+      "reason": null
+    },
+    {
+      "client": "wget",
+      "page": "orientierungsstudium_e66267cddea9.html",
+      "pcap": "data/pcaps/round_02_20260807/wget/orientierungsstudium_e66267cddea9.pcap",
+      "packets": 236,
+      "bytes": 25284,
+      "ok": true,
+      "reason": null
+    },
+    {
+      "client": "wget",
+      "page": "physics-ms_a75e7ca646aa.html",
+      "pcap": "data/pcaps/round_02_20260807/wget/physics-ms_a75e7ca646aa.pcap",
+      "packets": 269,
+      "bytes": 28770,
+      "ok": true,
+      "reason": null
+    },
+    {
+      "client": "wget",
+      "page": "physics-ms_fachgebiete_3c6dca0b465f.html",
+      "pcap": "data/pcaps/round_02_20260807/wget/physics-ms_fachgebiete_3c6dca0b465f.pcap",
+      "packets": 226,
+      "bytes": 24134,
+      "ok": true,
+      "reason": null
+    },
+    {
+      "client": "wget",
+      "page": "physics-ms_kontakt_87f706744595.html",
+      "pcap": "data/pcaps/round_02_20260807/wget/physics-ms_kontakt_87f706744595.pcap",
+      "packets": 254,
+      "bytes": 27270,
+      "ok": true,
+      "reason": null
+    },
+    {
+      "client": "wget",
+      "page": "sprachen_c908678766f9.html",
+      "pcap": "data/pcaps/round_02_20260807/wget/sprachen_c908678766f9.pcap",
+      "packets": 234,
+      "bytes": 24880,
+      "ok": true,
+      "reason": null
+    },
+    {
+      "client": "wget",
+      "page": "studieninteressierte_a680c3cafd7a.html",
+      "pcap": "data/pcaps/round_02_20260807/wget/studieninteressierte_a680c3cafd7a.pcap",
+      "packets": 301,
+      "bytes": 31904,
+      "ok": true,
+      "reason": null
+    },
+    {
+      "client": "wget",
+      "page": "studieninteressierte_studienorte-entdecken_senftenberg_74043dead5de.html",
+      "pcap": "data/pcaps/round_02_20260807/wget/studieninteressierte_studienorte-entdecken_senftenberg_74043dead5de.pcap",
+      "packets": 450,
+      "bytes": 47482,
+      "ok": true,
+      "reason": null
+    },
+    {
+      "client": "wget",
+      "page": "studium_8ad66ffab00c.html",
+      "pcap": "data/pcaps/round_02_20260807/wget/studium_8ad66ffab00c.pcap",
+      "packets": 385,
+      "bytes": 40142,
+      "ok": true,
+      "reason": null
+    },
+    {
+      "client": "wget",
+      "page": "studium_im-studium_studienorganisation_quicklinks_lehrangebote_a305aafc625e.html",
+      "pcap": "data/pcaps/round_02_20260807/wget/studium_im-studium_studienorganisation_quicklinks_lehrangebote_a305aafc625e.pcap",
+      "packets": 229,
+      "bytes": 24350,
+      "ok": true,
+      "reason": null
+    },
+    {
+      "client": "wget",
+      "page": "studium_nach-dem-studium_alumni_alumni-campusfuehrungen_d3ce47e251bb.html",
+      "pcap": "data/pcaps/round_02_20260807/wget/studium_nach-dem-studium_alumni_alumni-campusfuehrungen_d3ce47e251bb.pcap",
+      "packets": 227,
+      "bytes": 24216,
+      "ok": true,
+      "reason": null
+    },
+    {
+      "client": "wget",
+      "page": "studium_nach-dem-studium_alumni_c5e070a05a8e.html",
+      "pcap": "data/pcaps/round_02_20260807/wget/studium_nach-dem-studium_alumni_c5e070a05a8e.pcap",
+      "packets": 231,
+      "bytes": 24544,
+      "ok": true,
+      "reason": null
+    },
+    {
+      "client": "wget",
+      "page": "studium_nach-dem-studium_alumni_events-und-news_ansicht_31945-interview-mit-btu-_1b0575b44cd3.html",
+      "pcap": "data/pcaps/round_02_20260807/wget/studium_nach-dem-studium_alumni_events-und-news_ansicht_31945-interview-mit-btu-_1b0575b44cd3.pcap",
+      "packets": 229,
+      "bytes": 24380,
+      "ok": true,
+      "reason": null
+    },
+    {
+      "client": "wget",
+      "page": "studium_nach-dem-studium_alumni_kontakt_c4c024f27538.html",
+      "pcap": "data/pcaps/round_02_20260807/wget/studium_nach-dem-studium_alumni_kontakt_c4c024f27538.pcap",
+      "packets": 227,
+      "bytes": 24156,
+      "ok": true,
+      "reason": null
+    },
+    {
+      "client": "wget",
+      "page": "studium_studienangebot_3c015f21ec33.html",
+      "pcap": "data/pcaps/round_02_20260807/wget/studium_studienangebot_3c015f21ec33.pcap",
+      "packets": 224,
+      "bytes": 23880,
+      "ok": true,
+      "reason": null
+    },
+    {
+      "client": "wget",
+      "page": "studium_studienangebot_studiengaenge_16bd0c856415.html",
+      "pcap": "data/pcaps/round_02_20260807/wget/studium_studienangebot_studiengaenge_16bd0c856415.pcap",
+      "packets": 257,
+      "bytes": 27606,
+      "ok": true,
+      "reason": null
+    },
+    {
+      "client": "wget",
+      "page": "studium_studienangebot_zertifikatsstudium_91ad18860a0b.html",
+      "pcap": "data/pcaps/round_02_20260807/wget/studium_studienangebot_zertifikatsstudium_91ad18860a0b.pcap",
+      "packets": 254,
+      "bytes": 26940,
+      "ok": true,
+      "reason": null
+    },
+    {
+      "client": "wget",
+      "page": "studium_vor-dem-studium_angebote-fuer-schuelerinnen-schueler_b4a0bac81f92.html",
+      "pcap": "data/pcaps/round_02_20260807/wget/studium_vor-dem-studium_angebote-fuer-schuelerinnen-schueler_b4a0bac81f92.pcap",
+      "packets": 450,
+      "bytes": 46672,
+      "ok": true,
+      "reason": null
+    },
+    {
+      "client": "wget",
+      "page": "studium_vor-dem-studium_angebote-fuer-schuelerinnen-schueler_infotage_d859e69a2c13.html",
+      "pcap": "data/pcaps/round_02_20260807/wget/studium_vor-dem-studium_angebote-fuer-schuelerinnen-schueler_infotage_d859e69a2c13.pcap",
+      "packets": 248,
+      "bytes": 26268,
+      "ok": true,
+      "reason": null
+    },
+    {
+      "client": "wget",
+      "page": "studium_vor-dem-studium_beratung-hilfe_93d6e76f82d8.html",
+      "pcap": "data/pcaps/round_02_20260807/wget/studium_vor-dem-studium_beratung-hilfe_93d6e76f82d8.pcap",
+      "packets": 418,
+      "bytes": 43448,
+      "ok": true,
+      "reason": null
+    },
+    {
+      "client": "wget",
+      "page": "studium_vor-dem-studium_bewerbung-zulassung-immatrikulation_immatrikulation_13a39a5943eb.html",
+      "pcap": "data/pcaps/round_02_20260807/wget/studium_vor-dem-studium_bewerbung-zulassung-immatrikulation_immatrikulation_13a39a5943eb.pcap",
+      "packets": 227,
+      "bytes": 24156,
+      "ok": true,
+      "reason": null
+    },
+    {
+      "client": "wget",
+      "page": "transfer_4b0895c198f7.html",
+      "pcap": "data/pcaps/round_02_20260807/wget/transfer_4b0895c198f7.pcap",
+      "packets": 404,
+      "bytes": 42180,
+      "ok": true,
+      "reason": null
+    },
+    {
+      "client": "wget",
+      "page": "unileben_334ce1f641fd.html",
+      "pcap": "data/pcaps/round_02_20260807/wget/unileben_334ce1f641fd.pcap",
+      "packets": 464,
+      "bytes": 48210,
+      "ok": true,
+      "reason": null
+    },
+    {
+      "client": "wget",
+      "page": "unileben_btu-region-erleben_campusleben_c2d87c035ffd.html",
+      "pcap": "data/pcaps/round_02_20260807/wget/unileben_btu-region-erleben_campusleben_c2d87c035ffd.pcap",
+      "packets": 256,
+      "bytes": 27104,
+      "ok": true,
+      "reason": null
+    },
+    {
+      "client": "wget",
+      "page": "unileben_btu-region-erleben_mensaplaene_03eade7440e1.html",
+      "pcap": "data/pcaps/round_02_20260807/wget/unileben_btu-region-erleben_mensaplaene_03eade7440e1.pcap",
+      "packets": 222,
+      "bytes": 23656,
+      "ok": true,
+      "reason": null
+    },
+    {
+      "client": "wget",
+      "page": "universitaet_9f000ac62c68.html",
+      "pcap": "data/pcaps/round_02_20260807/wget/universitaet_9f000ac62c68.pcap",
+      "packets": 345,
+      "bytes": 36142,
+      "ok": true,
+      "reason": null
+    },
+    {
+      "client": "wget",
+      "page": "universitaet_die-btu_kommunikation-marketing_68e58553109e.html",
+      "pcap": "data/pcaps/round_02_20260807/wget/universitaet_die-btu_kommunikation-marketing_68e58553109e.pcap",
+      "packets": 300,
+      "bytes": 31552,
+      "ok": true,
+      "reason": null
+    },
+    {
+      "client": "wget",
+      "page": "universitaet_die-btu_kommunikation-marketing_medienservice-presse_e66d3fe667b9.html",
+      "pcap": "data/pcaps/round_02_20260807/wget/universitaet_die-btu_kommunikation-marketing_medienservice-presse_e66d3fe667b9.pcap",
+      "packets": 232,
+      "bytes": 24686,
+      "ok": true,
+      "reason": null
+    },
+    {
+      "client": "wget",
+      "page": "universitaet_die-btu_praesidium_kanzler_veranstaltungsformular_de374846dfaa.html",
+      "pcap": "data/pcaps/round_02_20260807/wget/universitaet_die-btu_praesidium_kanzler_veranstaltungsformular_de374846dfaa.pcap",
+      "packets": 223,
+      "bytes": 23798,
+      "ok": true,
+      "reason": null
+    },
+    {
+      "client": "wget",
+      "page": "universitaet_fakultaeten-einrichtungen_439c8b3b1601.html",
+      "pcap": "data/pcaps/round_02_20260807/wget/universitaet_fakultaeten-einrichtungen_439c8b3b1601.pcap",
+      "packets": 232,
+      "bytes": 24686,
+      "ok": true,
+      "reason": null
+    },
+    {
+      "client": "wget",
+      "page": "universitaet_fakultaeten-einrichtungen_college_a7453c918fdf.html",
+      "pcap": "data/pcaps/round_02_20260807/wget/universitaet_fakultaeten-einrichtungen_college_a7453c918fdf.pcap",
+      "packets": 235,
+      "bytes": 24962,
+      "ok": true,
+      "reason": null
+    },
+    {
+      "client": "wget",
+      "page": "universitaet_fakultaeten-einrichtungen_universitaet_fakultaeten-einrichtungen_co_2816f0efe277.html",
+      "pcap": "data/pcaps/round_02_20260807/wget/universitaet_fakultaeten-einrichtungen_universitaet_fakultaeten-einrichtungen_co_2816f0efe277.pcap",
+      "packets": 251,
+      "bytes": 26754,
+      "ok": true,
+      "reason": null
+    },
+    {
+      "client": "wget",
+      "page": "universitaet_karriere-engagement_karriere_5afdcedecacd.html",
+      "pcap": "data/pcaps/round_02_20260807/wget/universitaet_karriere-engagement_karriere_5afdcedecacd.pcap",
+      "packets": 268,
+      "bytes": 28328,
+      "ok": true,
+      "reason": null
+    },
+    {
+      "client": "wget",
+      "page": "universitaet_karriere-engagement_karriere_berufungsmanagement_6442da393a5c.html",
+      "pcap": "data/pcaps/round_02_20260807/wget/universitaet_karriere-engagement_karriere_berufungsmanagement_6442da393a5c.pcap",
+      "packets": 255,
+      "bytes": 27202,
+      "ok": true,
+      "reason": null
+    },
+    {
+      "client": "wget",
+      "page": "universitaet_stiften-und-foerdern_0751cd7e08b7.html",
+      "pcap": "data/pcaps/round_02_20260807/wget/universitaet_stiften-und-foerdern_0751cd7e08b7.pcap",
+      "packets": 235,
+      "bytes": 25022,
+      "ok": true,
+      "reason": null
+    },
+    {
+      "client": "wget",
+      "page": "universitaet_stiften-und-foerdern_stiftung-der-btu_448bd9d1db45.html",
+      "pcap": "data/pcaps/round_02_20260807/wget/universitaet_stiften-und-foerdern_stiftung-der-btu_448bd9d1db45.pcap",
+      "packets": 229,
+      "bytes": 24410,
+      "ok": true,
+      "reason": null
+    },
+    {
+      "client": "wget",
+      "page": "webmail_668a3c17872f.html",
+      "pcap": "data/pcaps/round_02_20260807/wget/webmail_668a3c17872f.pcap",
+      "packets": 17,
+      "bytes": 1656,
+      "ok": true,
+      "reason": null
+    },
+    {
+      "client": "wget",
+      "page": "weiterbildung_4099573d485e.html",
+      "pcap": "data/pcaps/round_02_20260807/wget/weiterbildung_4099573d485e.pcap",
+      "packets": 449,
+      "bytes": 46470,
+      "ok": true,
+      "reason": null
+    },
+    {
+      "client": "wget",
+      "page": "weiterbildung_entwicklung-und-vernetzung_bc6aee59cc9d.html",
+      "pcap": "data/pcaps/round_02_20260807/wget/weiterbildung_entwicklung-und-vernetzung_bc6aee59cc9d.pcap",
+      "packets": 253,
+      "bytes": 26948,
+      "ok": true,
+      "reason": null
+    },
+    {
+      "client": "wget",
+      "page": "weiterbildung_wissenschaftliche-weiterbildung_profil_4e78ad6d4c84.html",
+      "pcap": "data/pcaps/round_02_20260807/wget/weiterbildung_wissenschaftliche-weiterbildung_profil_4e78ad6d4c84.pcap",
+      "packets": 275,
+      "bytes": 29112,
+      "ok": true,
+      "reason": null
+    }
+  ],
+  "totals": {
+    "pages_available": 100,
+    "pages_attempted": 100,
+    "limit": null,
+    "traces_ok": 200,
+    "traces_failed": 0,
+    "per_client": {
+      "firefox": 100,
+      "wget": 100
+    },
+    "packets": 48098,
+    "bytes": 4965824
+  }
+}
