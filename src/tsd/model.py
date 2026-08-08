@@ -53,6 +53,7 @@ numbers that get published come from the held-out folds.
 from __future__ import annotations
 
 import json
+from collections.abc import Iterator
 from dataclasses import dataclass, field
 from pathlib import Path
 
@@ -115,6 +116,82 @@ class Dataset:
 
     def __len__(self) -> int:
         return len(self.y)
+
+
+# --------------------------------------------------------------
+# The split -- one definition, used by everything
+# --------------------------------------------------------------
+
+@dataclass(frozen=True)
+class RoundFold:
+    """One leave-one-round-out fold, as indices into the dataset."""
+
+    held_out_round: int
+    train_rounds: list[int]
+    train_index: np.ndarray
+    test_index: np.ndarray
+
+
+def iter_round_folds(dataset: Dataset) -> Iterator[RoundFold]:
+    """
+    Yield the leave-one-round-out folds. The only splitter in this
+    project.
+
+    Why it is a shared function rather than a loop written where it is
+    needed: step 7 computes SHAP values on held-out rounds, mirroring
+    this evaluation. If the SHAP module wrote its own
+    `LeaveOneGroupOut` loop and the two ever drifted apart, **nothing
+    would fail loudly**. The metrics would stay honest while the SHAP
+    plots quietly described training data, and the plots would look
+    entirely reasonable -- cleaner, in fact, because a model explaining
+    data it was fitted on gives tidier attributions. A leaked split
+    produces BETTER output, not worse. So there is exactly one place
+    that turns a Dataset into folds, and every consumer takes it from
+    here.
+
+    The per-fold assertions are redundant: `LeaveOneGroupOut` already
+    guarantees a single held-out group and no overlap. They are here
+    anyway, because this is the one invariant in the project whose
+    violation makes the numbers look better rather than worse -- the
+    class of bug that no amount of staring at results will reveal.
+
+    No shuffle and no `random_state`. Fold order follows the group
+    values, so the folds are reproducible without a seed at all. That
+    matters beyond tidiness: SHAP is computed per fold, and a published
+    plot that cannot be regenerated from the same inputs is not
+    evidence.
+    """
+    splitter = LeaveOneGroupOut()
+
+    for train_index, test_index in splitter.split(
+        dataset.X, dataset.y, groups=dataset.groups
+    ):
+        held_out_groups = {int(group) for group in dataset.groups[test_index]}
+        train_groups = {int(group) for group in dataset.groups[train_index]}
+
+        if len(held_out_groups) != 1:
+            raise DatasetError(
+                f"a fold held out {len(held_out_groups)} rounds "
+                f"({sorted(held_out_groups)}); leave-one-round-out must hold "
+                f"out exactly one, or the fold is not a round"
+            )
+
+        shared = held_out_groups & train_groups
+        if shared:
+            raise DatasetError(
+                f"round(s) {sorted(shared)} appear in both train and test of "
+                f"the same fold. Traces from one round share their "
+                f"conditions, so the model would be scored on conditions it "
+                f"has already seen -- and the score would come out higher, "
+                f"not lower, with nothing else to signal the problem."
+            )
+
+        yield RoundFold(
+            held_out_round=next(iter(held_out_groups)),
+            train_rounds=sorted(train_groups),
+            train_index=train_index,
+            test_index=test_index,
+        )
 
 
 # --------------------------------------------------------------
@@ -292,7 +369,6 @@ def evaluate_by_round(
     factory = pipeline_factory or (
         lambda: build_pipeline(model, **pipeline_kwargs)
     )
-    splitter = LeaveOneGroupOut()
     labels = dataset.classes
 
     folds: list[FoldResult] = []
@@ -300,10 +376,12 @@ def evaluate_by_round(
     pooled_predicted: list[str] = []
     pooled_misclassified: list[dict] = []
 
-    for train_index, test_index in splitter.split(
-        dataset.X, dataset.y, groups=dataset.groups
-    ):
-        held_out = int(dataset.groups[test_index][0])
+    # The folds come from iter_round_folds(), which is also what the
+    # step-7 SHAP module uses. One definition, so the explanations
+    # describe exactly the held-out predictions these metrics report.
+    for fold in iter_round_folds(dataset):
+        train_index, test_index = fold.train_index, fold.test_index
+        held_out = fold.held_out_round
 
         pipeline = factory()
         pipeline.fit(dataset.X[train_index], dataset.y[train_index])
@@ -323,7 +401,7 @@ def evaluate_by_round(
 
         folds.append(FoldResult(
             held_out_round=held_out,
-            train_rounds=sorted({int(g) for g in dataset.groups[train_index]}),
+            train_rounds=fold.train_rounds,
             n_train=len(train_index),
             n_test=len(test_index),
             accuracy=float(accuracy_score(truth, predicted)),

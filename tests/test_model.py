@@ -42,6 +42,7 @@ from tsd.model import (
     features_in_group,
     fit_final_model,
     group_of,
+    iter_round_folds,
     load_dataset,
     misclassified_pages,
     run_ablation,
@@ -212,6 +213,72 @@ def test_every_page_is_on_both_sides_and_that_is_correct(dataset):
             "every page should appear on both sides -- if this ever fails, "
             "the corpus or the capture changed, not the split"
         )
+
+
+def test_every_trace_is_held_out_exactly_once(dataset):
+    """
+    The pooled accuracy is only a pooled accuracy if every trace is
+    predicted once, by a model that never saw its round. A splitter that
+    skipped rows, or held some out twice, would still print a perfectly
+    plausible number -- the total would just quietly describe a
+    different dataset from the one that was loaded.
+    """
+    held_out = [
+        index
+        for fold in iter_round_folds(dataset)
+        for index in fold.test_index
+    ]
+
+    assert sorted(held_out) == list(range(len(dataset)))
+    assert len(held_out) == len(set(held_out)), "a trace was held out twice"
+
+
+def test_fold_train_and_test_never_share_a_round(dataset):
+    """
+    The invariant the whole evaluation rests on, checked on the shared
+    splitter itself rather than on one caller's copy of it.
+    """
+    for fold in iter_round_folds(dataset):
+        training_groups = sorted({int(g) for g in dataset.groups[fold.train_index]})
+
+        assert fold.held_out_round not in training_groups
+        assert fold.train_rounds == training_groups
+        assert set(dataset.groups[fold.test_index]) == {fold.held_out_round}
+
+
+def test_folds_are_stable_across_runs(dataset):
+    """
+    SHAP is computed per fold. Unstable folds would make the published
+    plots unreproducible, and there is no seed anywhere in this path to
+    pin them down after the fact -- the stability has to come from the
+    splitter having no randomness at all.
+    """
+    first = [
+        (fold.held_out_round, list(fold.test_index))
+        for fold in iter_round_folds(dataset)
+    ]
+    second = [
+        (fold.held_out_round, list(fold.test_index))
+        for fold in iter_round_folds(dataset)
+    ]
+
+    assert first == second
+
+
+def test_evaluation_folds_match_the_shared_splitter(dataset):
+    """
+    The refactor's point: the evaluation reports the folds the shared
+    splitter produces, so the step-7 SHAP module gets the same ones.
+    """
+    shared = list(iter_round_folds(dataset))
+    result = evaluate_by_round(dataset, model="random_forest", **small())
+
+    assert [fold.held_out_round for fold in result.folds] == \
+        [fold.held_out_round for fold in shared]
+    assert [fold.train_rounds for fold in result.folds] == \
+        [fold.train_rounds for fold in shared]
+    assert [fold.n_test for fold in result.folds] == \
+        [len(fold.test_index) for fold in shared]
 
 
 def test_every_trace_is_predicted_exactly_once(dataset):
