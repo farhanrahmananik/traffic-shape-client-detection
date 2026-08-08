@@ -1145,6 +1145,131 @@ reassuring is a reason to ask what it actually varies over.** Both come
 from the same habit — treating a comfortable number as a hypothesis
 rather than a result.
 
+### `scripts/explain_model.py`
+
+- **Three plots, not one, and they are one argument in order.**
+  Measured: re-fitting at `random_state=7` moves individual feature
+  ranks by up to **24 places** while accuracy stays **1.0000** — but the
+  top ten features are the same **set** under both seeds. Attribution is
+  **stable at family level and unstable at feature level**, so the
+  output is built to say exactly that and nothing stronger:
+  1. **family bar chart**, both seeds paired — the claim that survives
+  2. **feature beeswarm** — informative, but seed-dependent
+  3. **stability chart** — the measurement that bounds plot 2
+
+  A reader who stops after plot 1 has the honest headline. A reader who
+  reaches plot 2 sees plot 3 next to it.
+- **The family mapping has one owner.** The script uses
+  `model.FEATURE_GROUPS` and `model.group_of()` rather than defining
+  families again, and a test asserts the family totals sum to the
+  per-feature pooled total — nothing dropped, nothing double-counted.
+
+#### Captions are computed, not written — and that was a bug twice
+
+`stability_reading()` and `family_reading()` derive their text from the
+measured values. This is not a stylistic preference; hardcoded captions
+were wrong **twice**, in both directions:
+
+- **Plot 3's caption was hardcoded to "seed dominates".** On synthetic
+  data where `cross_day` (0.02816) exceeded `seed` (0.02448) it printed
+  the seed conclusion anyway. The number disagreed with the sentence and
+  **nothing failed**.
+- **Plot 1's title asserted "Attribution is stable at family level /
+  timing and upstream size carry most of it, under both seeds"** while
+  the bars underneath showed the two families **swapping order** between
+  seeds — seed 42: timing 0.21299 > sizes 0.20230; seed 7: sizes 0.21208
+  > timing 0.19919. **The figure contradicted its own headline.** That
+  title was written when only three rounds existed and was never
+  revisited when the fourth arrived.
+
+**The rule, next to the `fin_count` and stability-number entries: every
+other number in this project is measured rather than declared, and a
+caption is not exempt.** A stale caption is worse than a stale comment,
+because it ships **inside the published artefact** — the comment stays
+in the repository, the caption goes into someone's slide deck.
+
+#### What plot 1 may and may not say
+
+**Stable under both seeds:** timing + sizes together carry **81–82%** of
+total attribution (0.8246 at seed 42, 0.8126 at seed 7), and the other
+three families are far behind.
+
+**Not stable:** which of the two leads. The subtitle **states the
+seed-dependence** rather than leaving the reader to notice it from the
+bars.
+
+The range is written **81–82%, not ~82%**: the two shares are different
+numbers, and rounding them into one would be declaring a figure that was
+never measured.
+
+#### Captions are wrapped, and the figure grows to fit
+
+Plot 1's subtitle clipped at the right edge, losing **"dependent"** from
+"seed-dependent" — the caveat the title had just been rewritten to
+carry.
+
+Fixed by **wrapping before render, not by shortening the wording**:
+shorter text fits today and clips silently on the next dataset, and what
+gets cut is the **end** of the sentence, which is exactly where the
+qualifying clause lives. Figure height grows per wrapped line, so the
+fix does not take space from the bars — otherwise the caption would stop
+clipping at the data's expense.
+
+All **five** caption branches (two from `family_reading()`, three from
+`stability_reading()`) are rendered and measured against the figure
+bounds in a parametrized test, **including branches the current data
+does not trigger**. The longest plot 3 branch — *"Cross-day spread
+exceeds both the same-day and the seed spread — the rig, not just the
+method"*, 93 characters — **would have clipped**, and that branch is
+precisely the one that fires when there **is** a finding about the
+capture rig to report.
+
+#### Deterministic output
+
+shap's beeswarm jitters overlapping points using the **global numpy
+RNG**, so the PNG differed byte-for-byte between runs on identical
+input. `np.random.seed()` is set before the plot, and a test compares
+the sha256 of all three PNGs across two runs.
+
+Without it, "regenerate everything by running the scripts" would have
+been false for the figures — quietly, since the plots looked the same.
+
+#### The published artefacts
+
+`results/shap_family_importance.png`, `shap_feature_beeswarm.png`,
+`shap_stability.png`, `shap_summary.json`. All publishable: feature
+names and numbers only, and no payload was ever captured.
+
+Measured family importance, pooled mean |SHAP| summed per family:
+
+| family | seed 42 | seed 7 |
+|---|---|---|
+| timing | **0.21299** | 0.19919 |
+| sizes | 0.20230 | **0.21208** |
+| bursts | 0.04493 | 0.04038 |
+| connections | 0.04079 | 0.04904 |
+| counts | 0.00458 | 0.00545 |
+
+**Zero-importance features are now six, not three**, and the JSON keeps
+the two findings apart:
+
+- **constant** (*uninformative* — never varies): `size_up_min`,
+  `size_up_p25`, `size_down_min`
+- **varying but unused** (*unnecessary* — a correlated neighbour was
+  always split on instead): `size_down_median`, `burst_gap_max`,
+  `iat_down_min`
+
+**The second list grew from one to three when the fourth round was
+added.** More data made the trees rely on **fewer** features — further
+evidence of redundancy, arriving from a direction neither SHAP nor the
+ablation supplies. The list is **detected from the dataset, never
+hardcoded**, so a future round can change it again.
+
+The summary JSON records the direction explicitly — `positive_class`
+`wget`, `classes_` `['firefox', 'wget']`, `base_value` **0.4983** — so a
+reader knows which way a positive SHAP value points **without opening an
+image**.
+
 ---
 
 ## Reusing my earlier scripts
@@ -1311,15 +1436,18 @@ concern now, so the flaw and its fix can be read together.
       scores 1.0000 — removing a family *improves* it. Full numbers
       under "MEASURED: step 6" below. `results/metrics.json` and
       `models/client_classifier.joblib` regenerated over four rounds.
-- [x] **Step 7 — SHAP**, library layer: `src/tsd/shap_explain.py`,
-      computed per fold on held-out rounds only. Attribution is
-      **stable at family level, unstable at feature level**: the top ten
-      features are the same set under seed 42 and seed 7, reordered by
-      up to 24 places, while the capture day has no measurable effect.
-      See "Round 4, and what it answered" and "MEASURED: what SHAP
-      measured". `scripts/explain_model.py` (plots) is the remaining
-      piece and is **no longer blocked** — the dataset is now final at
-      four rounds.
+- [x] **Step 7 — SHAP**, complete: `src/tsd/shap_explain.py` (library,
+      computed per fold on held-out rounds only) +
+      `scripts/explain_model.py` (three plots + `shap_summary.json`).
+      Attribution is **stable at family level, unstable at feature
+      level**: the top ten features are the same set under seed 42 and
+      seed 7, reordered by up to 24 places, while the capture day has no
+      measurable effect. Timing + sizes carry **81–82%** of attribution
+      under both seeds, but **which of the two leads is seed-dependent**.
+      Every plot caption is **computed from the measured values**, not
+      written — hardcoded ones were wrong twice. See "Round 4, and what
+      it answered", "MEASURED: what SHAP measured", and the
+      `explain_model.py` decisions.
 - [ ] **Step 8** — CLI
 - [ ] **Step 9** — README + case-study page
 
