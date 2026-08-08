@@ -618,7 +618,7 @@ it leaves little for a model to learn about the page rather than the
 client, which is the whole point of loading the same pages with both
 clients.
 
-#### MEASURED: only two distinct days across three rounds
+#### MEASURED: four rounds across three distinct days
 
 Read from `results/capture_rounds/*.json` and cross-checked against the
 `date` column of `data/features/features.csv`; the two sources agree.
@@ -628,102 +628,155 @@ Read from `results/capture_rounds/*.json` and cross-checked against the
 | 1 | 20260807 | 2026-08-06T22:46:56+00:00 |
 | 2 | 20260807 | 2026-08-07T08:51:09+00:00 |
 | 3 | 20260808 | 2026-08-08T03:04:24+00:00 |
+| 4 | 20260809 | 2026-08-08T22:09:39+00:00 |
 
 **`date` is local time (UTC+2) while `started_at` is UTC**, which is why
-round 1's filename says 07 against a UTC date of 06. Confusing, but not
-a bug — and **do not "fix" the field or rename the directories**. Both
-are already referenced by `extract_features.py`'s metadata cross-check
-and by committed metadata; renaming them would make the published record
-disagree with the data it describes, which is the exact failure that
-cross-check exists to catch.
+round 1's filename says 07 against a UTC date of 06, and round 4's says
+09 against a UTC date of 08. Confusing, but not a bug — and **do not
+"fix" the field or rename the directories**. Both are already referenced
+by `extract_features.py`'s metadata cross-check and by committed
+metadata; renaming them would make the published record disagree with
+the data it describes, which is the exact failure that cross-check
+exists to catch.
 
-**The finding: rounds 1 and 2 are the same local day, about 10 hours
-apart.** Only two distinct days are represented across three rounds. The
-scope statement in this file requires "several capture rounds on
-different days" — the round is supposed to be a *different condition*,
-not a second name for one. **That requirement is only partly met.**
+**The README must print the timestamp, not just the phrase "a different
+day".** A reader looking at the UTC column will otherwise ask the
+question themselves and have no answer in front of them.
 
-**The evaluation is not invalid.** `LeaveOneGroupOut` ran over three
-genuine groups with no leak, and the metrics stand as measured. What is
-weakened is what the group *means*: two of the three folds hold out
-conditions that are nearly identical to each other.
+**The finding, and it still stands: rounds 1 and 2 are the same local
+day, about 10 hours apart.** Four rounds span **three** distinct days,
+not four. The scope statement in this file requires "several capture
+rounds on different days" — the round is supposed to be a *different
+condition*, not a second name for one. Round 4 does not erase that
+limitation for rounds 1 and 2; it adds a genuinely independent day
+alongside them.
 
-It also **retroactively explains the near-zero per-fold SHAP spread**
-recorded under `shap_explain.py`. That section called the three rounds
-"near replicates" — an inference at the time, now a measurement: two of
-them are literally the same day, the same uptime, the same machine
-state.
+**The evaluation was never invalid.** `LeaveOneGroupOut` ran over
+genuine groups with no leak, and the metrics stand as measured. What was
+weakened is what the group *meant*: two of the folds hold out conditions
+nearly identical to each other. Round 4 is what makes that statement
+testable rather than merely admitted — see "Round 4, and what it
+answered" below.
 
-#### Pending: round 4
+It also **retroactively explained the near-zero per-fold SHAP spread**
+recorded under `shap_explain.py`. That section called the rounds "near
+replicates" — an inference at the time, then a measurement: two of them
+are literally the same day, the same uptime, the same machine state.
 
-Capture a fourth round on a genuinely different day (2026-08-09 or
-later).
+#### Round 4 — captured 2026-08-09 (local)
 
-**Not for accuracy.** The classifier is already at 1.0000 and a fourth
-round will not move it. Adding data to improve a number that is already
-at ceiling would be the wrong reason, and the wrong reason produces the
-wrong write-up.
+`started_at` 2026-08-08T22:09:39+00:00 = local 2026-08-09 00:09.
+**200 traces, 0 failures, 47,906 packets.** Metadata:
+`results/capture_rounds/round_04_20260809.json`.
 
-**For the open question the seed experiment created.** Re-running the
-explanation with `random_state=7` moved the feature ranking by up to 21
-places while accuracy stayed 1.0000. Whether the ranking also moves
-across a genuinely different **day** cannot be answered with the current
-data, because no two of the three rounds are far enough apart. With
-round 4 the case study can say whether attribution instability is a
-property of **the model fitting** or of **the capture conditions** — two
-different findings, with two different implications for a reader
-deciding whether to trust a SHAP ranking of their own.
+Taken ~19 hours after round 3, **after a machine restart and a fresh WSL
+session** — a different calendar day *and* a different machine state,
+which is what the requirement was actually about. A round taken an hour
+later on the same uptime would satisfy the calendar and none of the
+intent.
 
-**Comparability is preserved by construction**: same corpus, same
-certificate (the overwrite guard in `make_cert.sh` enforces identical
-certificate bytes across rounds), same harness. Round 4 is comparable
-with rounds 1–3 without any special handling.
+**Why it was taken, recorded because the reason shapes the write-up:**
+not for accuracy. The classifier was already at 1.0000 and a fourth
+round was never going to move it; adding data to improve a number
+already at ceiling would have been the wrong reason, and the wrong
+reason produces the wrong write-up. It was taken for the open question
+the seed experiment created — whether attribution instability is a
+property of **the model fitting** or of **the capture conditions**.
 
-`scripts/explain_model.py` is deferred until round 4 exists — not
-because the library is unfinished, but because that script writes
-**publishable plots**, and a published plot would be stale the moment
-the dataset changes.
+**Comparability was verified, not assumed.** Before any of round 4's
+numbers were trusted:
 
-#### After round 4 — checklist
+- `server_cert_sha256` **identical to round 3** — the certificate is
+  transmitted in every handshake, so a different one would change the
+  first bytes of every trace
+- the full `versions` dict **identical**: Firefox 153.0.3, Wget 1.21.4,
+  tcpdump 4.99.4, OpenSSL 3.0.13, Python 3.12.3
+- all capture parameters unchanged: snaplen 96, same filter,
+  `quiet_seconds` 3.0, `max_load_seconds` 90.0, port 8443, same
+  `web_root`
 
-1. **`scripts/extract_features.py --force`** — re-extract all four
-   rounds. The metadata cross-check must pass; a mismatch is an error,
-   not a warning.
-2. **`scripts/train_model.py --force --ablate-groups`** — re-run the
-   `LeaveOneGroupOut` evaluation and the ablation sweep over four folds.
-   Report the headline numbers as measured, whatever they are. **If
-   accuracy drops below 1.0000 that is a result, not a regression to
-   fix.**
-3. **Re-run the explanation and compare THREE quantities, not two.**
+Packet count is **135 above round 3 (~0.3%)** — the same order of
+variation already seen between rounds 1 and 3, so nothing about the
+round asks for an explanation.
 
-**Step 3 is the point of round 4**, and the obvious version of it does
-not answer the question. Re-running under seed 42 and seed 7 again is
-not enough: with four rounds every fold trains on three rounds and
-therefore mixes days, so **no fold represents a single day's
-conditions**.
+This is the check the overwrite guard in `make_cert.sh` exists to make
+possible: identical certificate bytes across rounds by construction, and
+verified here rather than trusted.
 
-What answers it — all from `fold_importance_table()` /
-`importance_spread()`:
+#### After round 4 — checklist, all done
 
-| | quantity | source |
-|---|---|---|
-| **(a)** | **same-day** spread | rounds 1 vs 2 — same local day, ~10 h apart. The baseline: variation when nothing about the conditions changed. |
-| **(b)** | **cross-day** spread | any pair spanning different days, e.g. round 3 vs round 4. This is what round 4 exists to make measurable. |
-| **(c)** | **seed** spread | already measured: `random_state=7` moved the ranking by up to 21 places while accuracy stayed 1.0000. |
+1. [x] **`scripts/extract_features.py --force`** — all four rounds
+   re-extracted, metadata cross-check passed.
+2. [x] **`scripts/train_model.py --force --ablate-groups`** —
+   `LeaveOneGroupOut` and the ablation sweep re-run over four folds.
+   Numbers under "MEASURED: step 6" below.
+3. [x] **Explanation re-run, three quantities compared, not two.**
 
-The reading:
+**Step 3 was the point of round 4.** The obvious version of it would not
+have answered the question: with four rounds every fold trains on three
+rounds and therefore mixes days, so **no fold represents a single day's
+conditions**. Re-running under two seeds alone measures the seed and
+nothing else. The comparison had to be between round *pairs*.
 
-- **(b) ≈ (a)** → the capture day does not affect attribution.
-- **(b) ≫ (a)** → it does, and the case study must say so.
-- **(a) and (b) both small next to (c)** → the instability belongs to
-  Shapley credit allocation among redundant features, not to the
-  environment. That is the more favourable outcome for the write-up,
-  because the limitation then attaches to **the explanation method**
-  rather than to **the measurement rig** — and it must be reported
-  because it was measured, not because it reads better.
+#### Round 4, and what it answered — MEASURED
 
-Seed 7 stays in the comparison as the **yardstick** for (a) and (b), not
-as the answer itself.
+All from `fold_importance_table()` / `importance_spread()`, seed 42
+unless stated.
+
+| | quantity | pair | max spread |
+|---|---|---|---|
+| **(a)** | same-day | r1 vs r2 | **0.00335** (`iat_down_std`) |
+| **(b)** | cross-day | r3 vs r4 | **0.00308** (`count_ratio_up_down`) |
+| **(c)** | seed | 42 vs 7 | **0.02128** (`iat_down_max`) |
+
+Largest rank movement from seed 42 to seed 7: **24 places** across the
+53 features, with **accuracy 1.0000 under both seeds**.
+
+**The reading, following the checklist's own third branch.** (b) is if
+anything *slightly smaller* than (a): the capture day has **no
+measurable effect** on attribution. Both are six to seven times smaller
+than (c). **The instability belongs to Shapley credit allocation among
+redundant features, not to the capture rig.**
+
+That is the more favourable of the possible outcomes for the write-up —
+the limitation attaches to **the explanation method** rather than to
+**the measurement apparatus** — and it is recorded because it was
+measured, not because it reads better. The experiment was set up to be
+able to say the opposite.
+
+**Refinement of the earlier seed finding, and it sharpens the claim.**
+The top **ten** features are the **same set** under both seeds, only
+reordered, and `iat_max` is rank 0 under both:
+
+| seed 42 | seed 7 |
+|---|---|
+| `iat_max` | `iat_max` |
+| `iat_down_max` | `size_up_std` |
+| `size_up_max` | `iat_up_max` |
+| `iat_up_max` | `size_up_p90` |
+| `size_up_p90` | `size_up_max` |
+| `size_up_std` | `iat_down_max` |
+| `burst_len_mean` | `syn_ack_count` |
+| `iat_median` | `ack_down_count` |
+| `ack_down_count` | `burst_len_mean` |
+| `syn_count` | `syn_count` |
+
+So attribution is **stable at family level and unstable at feature
+level**. That is a sharper and more useful statement than the
+three-round version, which could only say that the ranking moved.
+
+**What the README and case study MAY claim:**
+
+- the timing and upstream-size families together carry most of the
+  attribution, across four rounds and both seeds
+- which individual feature receives credit within a family is
+  seed-dependent, moving up to **24 places** while accuracy stays at
+  **1.0000**
+- the capture day affects none of this — measured by comparing a
+  same-day round pair against a cross-day pair, not asserted
+
+**What they MAY NOT claim:** that any single feature is the strongest
+discriminator.
 
 #### Loopback is not the wire — for the README limitations
 
@@ -880,16 +933,23 @@ guarding the thing it was written for.
   whose failure mode is invisible in the output, compare against the old
   implementation directly instead of inspecting the new one's results.
 
-#### MEASURED: step 6, `LeaveOneGroupOut` on `round`
+#### MEASURED: step 6, `LeaveOneGroupOut` on `round` — four rounds
 
-3 rounds, 600 traces, 53 features.
+**800 traces, 4 rounds, 53 features.** Constant features unchanged
+(`size_up_min`, `size_up_p25`, `size_down_min`) — round 4 introduced no
+new ones, which is itself a small check that the fourth round is the
+same kind of data as the first three.
 
 | model | pooled accuracy | notes |
 |---|---|---|
-| random_forest | **1.0000** | per fold r1/r2/r3 all 1.000 |
-| logistic_regression | 0.9933 | 4 errors |
+| random_forest | **1.0000** | per fold r1/r2/r3/r4 all 1.000; **no page misclassified at all** |
+| logistic_regression | 0.9950 | 4 errors, **all in the round-2 fold** |
 
-Ablation, same protocol:
+The linear model's four errors are `bibliothek`,
+`lausitz-science-park`, `studieninteressierte` (senftenberg) and
+`universitaet`.
+
+Ablation, random_forest, same protocol:
 
 | configuration | accuracy |
 |---|---|
@@ -904,11 +964,13 @@ Ablation, same protocol:
 **No single family carries the result.** The signal is redundant:
 several families would do the job alone.
 
-`only syn_count` misses 6 traces, and all 6 are **`ikmz_xwiki` and
-`webmail`, across all three rounds**. Those two pages reference no
-assets, so Firefox opens no parallel connections — SYN = 1, the same as
-wget. **CLAUDE.md predicted these would be the hardest pages, and the
-prediction held**; it was checked rather than assumed.
+`only syn_count` now scores **0.990 in every one of the four folds**,
+and the failures are the same two pages every time: **`ikmz_xwiki` and
+`webmail`**. Those two reference no assets, so Firefox opens no parallel
+connections — SYN = 1, exactly as wget. CLAUDE.md predicted these would
+be the hardest pages; the prediction has now **held four times,
+including on an independent day**. Record it as **established**, not as
+a pattern that might be coincidence.
 
 On those two pages the difference is a constant **3 packets** (firefox
 20/12/8, wget 17/10/7) — 2 extra upstream requests, most likely
@@ -916,9 +978,29 @@ Firefox's `/favicon.ico`, which is deliberately not suppressed because
 the browser issues it unasked.
 
 The teardown residual recorded under `features.py` left **no visible
-trace**: parity 149/300 against 151/300.
+trace**: parity 149/300 against 151/300 on the three-round run.
 
-279 tests passing at that point.
+##### The one result the forest could not show
+
+For **logistic_regression**, `without timing` scores **1.0000** while
+`all features` scores **0.9950**. **Removing the timing family improves
+the linear model.** The forest cannot show this, because it is already
+at ceiling with everything included — a model at 1.0000 has no room to
+get better, so an ablation on it can only ever detect harm.
+
+Offered as a reading rather than a claim: a few outlying `iat_*` values
+pull a linear decision boundary while leaving tree splits unaffected,
+which is what one would expect from a family whose distribution has a
+long tail.
+
+**This is the same story as the SHAP result, from the opposite end.**
+The family the forest leans on hardest — `iat_*` holds the top SHAP
+ranks — is the family that costs the linear model its only errors. And
+this file already records that on loopback, `iat_*` measures
+**client-side processing rather than network latency**. Three separate
+observations pointing at one family, from three different directions.
+**This belongs in the case study**, and it is a better story than the
+headline 1.0000.
 
 ### `src/tsd/shap_explain.py`
 
@@ -1017,28 +1099,31 @@ redundancy, and it **must not be listed alongside the constants** —
 
 #### STABILITY — the important negative result
 
-Per-fold spread of mean |SHAP| is tiny: max **0.00327**, and **0.00042**
-on the top feature. **That does not mean the attributions are robust.**
-`random_state` is fixed at 42 in every fold, so the spread measures data
-variation only — and the three rounds are near replicates: same 100
-pages, same server, same machine.
+Per-fold spread of mean |SHAP| is tiny — on the original three-round
+run, max **0.00327** and **0.00042** on the top feature. **That does not
+mean the attributions are robust.** `random_state` is fixed at 42 in
+every fold, so the spread measures data variation only, and the rounds
+are near replicates of each other: same 100 pages, same server, same
+machine.
 
-**"Near replicates" is now measured rather than inferred.** Rounds 1 and
-2 fall on the same local day, about 10 hours apart; only two distinct
-days exist across the three rounds — see "MEASURED: only two distinct
-days across three rounds" under `capture.py`. The conclusion here does
-not change, but its basis is stronger: the per-fold spread is small
-partly *because* two of the three folds hold out nearly the same
-conditions. Round 4, on a genuinely different day, is what would let
-this section say whether the ordering moves across days as well as
-across seeds.
+**"Near replicates" was measured rather than inferred.** Rounds 1 and 2
+fall on the same local day, about 10 hours apart — see "MEASURED: four
+rounds across three distinct days" under `capture.py`. The per-fold
+spread was small partly *because* two folds hold out nearly the same
+conditions, which is exactly why round 4 was taken.
 
 Re-running the whole explanation with `random_state=7` moves the ranking
-substantially. Largest rank movement across the 53 features: **21
-places**. `iat_down_max` drops from rank 0 to rank 5 and its value
-nearly halves (0.05977 → 0.03807); `size_up_std` rises from 5 to 1;
-`size_down_median` moves 13 to 19. **Accuracy stays 1.0000 under both
-seeds.** The model is stable; the explanation's ordering is not.
+substantially. **Accuracy stays 1.0000 under both seeds.** The model is
+stable; the explanation's ordering is not.
+
+**Round 4 settled what the spread was actually varying over.** The
+three-round version of this section could only say the ranking moved.
+With a same-day pair and a cross-day pair to compare, the numbers say
+where the movement comes from — seed, not capture day — and the top ten
+features turn out to be the same set under both seeds, only reordered.
+The measured comparison, and the sharper claim it licenses, is under
+**"Round 4, and what it answered"** in the `capture.py` section. Read
+that before quoting any ranking from here.
 
 **Therefore the README and case study MAY NOT claim that any single
 feature is "the strongest discriminator".** What they may claim: the
@@ -1187,41 +1272,54 @@ concern now, so the flaw and its fix can be read together.
       Firefox 62 requests vs wget 116 for the same page; Firefox resumes
       sessions, wget never does.
 - [x] **Step 4 — capture harness**, `src/tsd/capture.py` +
-      `scripts/capture_round.py`. **Three rounds captured**, 100 pages ×
-      2 clients each = **600 traces total, 0 failures**:
+      `scripts/capture_round.py`. **Four rounds captured**, 100 pages ×
+      2 clients each = **800 traces total, 0 failures**:
 
       | round | `date` (local) | `started_at` (UTC) |
       |---|---|---|
       | 1 | 20260807 | 2026-08-06T22:46:56+00:00 |
       | 2 | 20260807 | 2026-08-07T08:51:09+00:00 |
       | 3 | 20260808 | 2026-08-08T03:04:24+00:00 |
+      | 4 | 20260809 | 2026-08-08T22:09:39+00:00 |
 
       Metadata in `results/capture_rounds/`. Round 1 per trace: firefox
       6 SYNs / ~159–170 packets, wget 1 SYN / ~222–228 packets.
-      **Rounds 1 and 2 fall on the same local day** — see "Pending:
-      round 4" under the `capture.py` decisions.
-- [ ] **Round 4** — capture on a genuinely different day (2026-08-09 or
-      later). **Not for accuracy**, which is already at ceiling; for the
-      open question the seed experiment created. Reasoning under
-      "Pending: round 4".
+      **Four rounds span three distinct days**: rounds 1 and 2 are the
+      same local day, and that limitation stands. See "MEASURED: four
+      rounds across three distinct days" under the `capture.py`
+      decisions.
+- [x] **Round 4 captured 2026-08-09** (local; `started_at`
+      2026-08-08T22:09:39+00:00): 200 traces, 0 failures, 47,906
+      packets, taken ~19 h after round 3 after a machine restart and a
+      fresh WSL session. Comparability **verified before use** —
+      identical `server_cert_sha256` and identical `versions` dict.
+      Taken **not for accuracy** but for the seed question; what it
+      answered is under "Round 4, and what it answered".
 - [x] **Step 5 — feature extraction** — `src/tsd/features.py` (53
-      features, 30 tests) + `scripts/extract_features.py`. All three
-      rounds extracted to `data/features/features.csv`: **600 rows, 57
+      features, 30 tests) + `scripts/extract_features.py`. All four
+      rounds extracted to `data/features/features.csv`: **800 rows, 57
       columns** (4 labels + 53 features), metadata cross-check passed,
-      0 parse failures.
+      0 parse failures. Round 4 introduced **no new constant features**.
 - [x] **Step 6 — classifier with round-based split** —
       `src/tsd/model.py` + `scripts/train_model.py`.
-      `LeaveOneGroupOut` on `round`, 3 rounds, 600 traces.
-      **random_forest 1.0000 pooled** (r1/r2/r3 all 1.000),
-      logistic_regression 0.9933. Ablation: removing **any** single
-      feature family still gives 1.0000; `syn_count` alone gives
-      0.9900. Full numbers under "MEASURED: step 6" below.
-      `results/metrics.json` committed.
+      `LeaveOneGroupOut` on `round`, **4 rounds, 800 traces**.
+      **random_forest 1.0000 pooled** (r1/r2/r3/r4 all 1.000, no page
+      misclassified), logistic_regression 0.9950 (4 errors, all in the
+      round-2 fold). Ablation: removing **any** single feature family
+      still gives 1.0000 for the forest; `syn_count` alone gives 0.9900
+      in every fold. **New:** for the linear model, `without timing`
+      scores 1.0000 — removing a family *improves* it. Full numbers
+      under "MEASURED: step 6" below. `results/metrics.json` and
+      `models/client_classifier.joblib` regenerated over four rounds.
 - [x] **Step 7 — SHAP**, library layer: `src/tsd/shap_explain.py`,
-      computed per fold on held-out rounds only.
-      `scripts/explain_model.py` (plots, published artefacts) is still
-      to come. Measured findings, and what they forbid the README from
-      claiming, under "MEASURED: what SHAP measured" below.
+      computed per fold on held-out rounds only. Attribution is
+      **stable at family level, unstable at feature level**: the top ten
+      features are the same set under seed 42 and seed 7, reordered by
+      up to 24 places, while the capture day has no measurable effect.
+      See "Round 4, and what it answered" and "MEASURED: what SHAP
+      measured". `scripts/explain_model.py` (plots) is the remaining
+      piece and is **no longer blocked** — the dataset is now final at
+      four rounds.
 - [ ] **Step 8** — CLI
 - [ ] **Step 9** — README + case-study page
 
