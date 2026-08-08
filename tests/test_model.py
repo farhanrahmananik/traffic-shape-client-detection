@@ -29,17 +29,23 @@ from sklearn.pipeline import Pipeline
 from sklearn.utils.validation import check_is_fitted
 
 from tsd.model import (
+    FEATURE_GROUPS,
     GROUP_COLUMN,
     LABEL_COLUMNS,
     MODEL_NAMES,
     Dataset,
     DatasetError,
+    ablation_configurations,
     build_metrics,
     build_pipeline,
     evaluate_by_round,
+    features_in_group,
     fit_final_model,
+    group_of,
     load_dataset,
     misclassified_pages,
+    run_ablation,
+    select_features,
     write_metrics,
 )
 
@@ -402,6 +408,220 @@ def test_metrics_record_the_split_rationale(dataset):
     note = metrics["split"]["note"]
     assert "every round" in note
     assert "client" in note
+
+
+# --------------------------------------------------------------
+# Ablation -- what is carrying the result
+# --------------------------------------------------------------
+
+def test_every_real_feature_belongs_to_exactly_one_group():
+    """
+    A feature in no group would sit outside every ablation and never be
+    questioned -- which is the opposite of what the ablation is for.
+    Checked against the real feature list, not the synthetic one.
+    """
+    from tsd.features import feature_names
+
+    ungrouped = [name for name in feature_names() if group_of(name) is None]
+    assert not ungrouped, f"features in no ablation group: {ungrouped}"
+
+    counted = sum(
+        len(features_in_group(feature_names(), group)) for group in FEATURE_GROUPS
+    )
+    assert counted == len(feature_names()), "a feature is in two groups"
+
+
+def test_group_membership_of_the_real_features():
+    from tsd.features import feature_names
+
+    names = feature_names()
+
+    assert "syn_count" in features_in_group(names, "connections")
+    assert "syn_ack_count" in features_in_group(names, "connections")
+    assert "burst_count" in features_in_group(names, "bursts")
+    assert "ack_up_count" in features_in_group(names, "sizes")
+    assert "duration" in features_in_group(names, "timing")
+    assert "count_total" in features_in_group(names, "counts")
+
+
+def test_select_features_drops_and_keeps(dataset):
+    dropped = select_features(dataset, drop=["syn_count"])
+    kept = select_features(dataset, keep=["syn_count"])
+
+    assert "syn_count" not in dropped.features
+    assert len(dropped.features) == len(dataset.features) - 1
+    assert dropped.X.shape == (len(dataset), len(dataset.features) - 1)
+
+    assert kept.features == ["syn_count"]
+    assert kept.X.shape == (len(dataset), 1)
+    # The labels and groups travel with the subset, or the split breaks.
+    assert list(kept.groups) == list(dataset.groups)
+    assert list(kept.y) == list(dataset.y)
+
+
+def test_select_features_preserves_column_order(dataset):
+    subset = select_features(dataset, keep=["burst_count", "size_up_mean"])
+
+    assert subset.features == ["size_up_mean", "burst_count"], (
+        "order must follow the dataset, not the argument"
+    )
+
+
+def test_unknown_feature_name_is_refused(dataset):
+    """
+    An ablation that silently dropped nothing would report the headline
+    accuracy under the label of an experiment that never ran.
+    """
+    with pytest.raises(DatasetError) as raised:
+        select_features(dataset, drop=["syn_kount"])
+
+    assert "syn_kount" in str(raised.value)
+
+    with pytest.raises(DatasetError):
+        select_features(dataset, keep=["not_a_feature"])
+
+
+def test_dropping_everything_is_refused(dataset):
+    with pytest.raises(DatasetError):
+        select_features(dataset, drop=list(dataset.features))
+
+
+def test_preset_sweep_covers_the_expected_configurations(dataset):
+    labels = [label for label, _ in ablation_configurations(dataset.features)]
+
+    assert labels[0] == "all features"
+    assert "without syn_count" in labels
+    assert "without connections" in labels
+    assert "without sizes" in labels
+    assert "without timing" in labels
+    assert "without bursts" in labels
+    assert labels[-1] == "only syn_count"
+
+
+def test_preset_sweep_feature_sets_are_correct(dataset):
+    configurations = dict(ablation_configurations(dataset.features))
+
+    assert configurations["all features"] == dataset.features
+    assert "syn_count" not in configurations["without syn_count"]
+    assert configurations["only syn_count"] == ["syn_count"]
+    assert not features_in_group(configurations["without sizes"], "sizes")
+
+
+def test_ablation_runs_the_same_split_protocol(dataset):
+    """
+    An ablation evaluated any other way would not be comparable with the
+    headline number, and the comparison is the entire point.
+    """
+    configurations = ablation_configurations(dataset.features)
+    results = run_ablation(dataset, configurations, model="random_forest", **small())
+
+    assert len(results) == len(configurations)
+    for result in results:
+        assert len(result.fold_accuracies) == len(dataset.rounds)
+        assert 0.0 <= result.accuracy <= 1.0
+
+
+def test_ablation_isolates_a_single_carrying_feature():
+    """
+    The question the ablation exists to answer, on data where the answer
+    is known: here the signal lives ONLY in syn_count, so dropping it
+    must collapse the score while keeping it alone must not.
+
+    On the real dataset this is what decides which sentence the README
+    is allowed to write.
+    """
+    generator = np.random.default_rng(11)
+    rows = []
+    for round_number in (1, 2, 3):
+        for page in range(10):
+            for client in ("firefox", "wget"):
+                rows.append({
+                    "round": round_number,
+                    "date": "20260807",
+                    "client": client,
+                    "page": f"page_{page:02d}",
+                    # noise only
+                    "size_up_mean": generator.normal(100, 10),
+                    "iat_down_p90": generator.normal(0.001, 0.0002),
+                    "burst_count": generator.normal(50, 5),
+                    # the entire signal
+                    "syn_count": 6.0 if client == "firefox" else 1.0,
+                })
+
+    dataset = Dataset(
+        features=["size_up_mean", "iat_down_p90", "burst_count", "syn_count"],
+        X=pd.DataFrame(rows)[
+            ["size_up_mean", "iat_down_p90", "burst_count", "syn_count"]
+        ].to_numpy(dtype=float),
+        y=pd.DataFrame(rows)["client"].to_numpy(),
+        groups=pd.DataFrame(rows)["round"].to_numpy(),
+        pages=pd.DataFrame(rows)["page"].to_numpy(),
+    )
+
+    results = {
+        result.label: result.accuracy
+        for result in run_ablation(
+            dataset, ablation_configurations(dataset.features),
+            model="random_forest", **small(),
+        )
+    }
+
+    assert results["all features"] == 1.0
+    assert results["only syn_count"] == 1.0
+    assert results["without syn_count"] < 0.75
+    assert results["without connections"] < 0.75
+
+
+def test_ablation_does_not_change_the_headline_evaluation(dataset):
+    """The ablation is additional evidence, not a replacement."""
+    before = evaluate_by_round(dataset, model="random_forest", **small()).to_dict()
+
+    run_ablation(dataset, ablation_configurations(dataset.features),
+                 model="random_forest", **small())
+
+    after = evaluate_by_round(dataset, model="random_forest", **small()).to_dict()
+
+    assert before == after
+
+
+def test_ablation_section_is_separate_in_the_metrics(dataset):
+    evaluations = {"random_forest": evaluate_by_round(dataset, **small())}
+    ablation = {
+        "random_forest": run_ablation(
+            dataset, ablation_configurations(dataset.features), **small()
+        )
+    }
+
+    metrics = build_metrics(dataset, evaluations, {}, "now", ablation=ablation)
+
+    assert metrics["models"]["random_forest"]["accuracy"] == \
+        evaluations["random_forest"].accuracy
+    assert "ablation" in metrics
+    assert "does not replace" in metrics["ablation"]["note"]
+    assert metrics["ablation"]["groups"]["connections"] == ["syn_"]
+
+    labels = [
+        entry["configuration"]
+        for entry in metrics["ablation"]["models"]["random_forest"]
+    ]
+    assert "only syn_count" in labels
+
+
+def test_metrics_without_ablation_records_none(dataset):
+    evaluations = {"random_forest": evaluate_by_round(dataset, **small())}
+
+    metrics = build_metrics(dataset, evaluations, {}, "now")
+
+    assert metrics["ablation"] is None
+
+
+def test_ablation_is_deterministic(dataset):
+    configurations = ablation_configurations(dataset.features)
+
+    first = [r.to_dict() for r in run_ablation(dataset, configurations, **small())]
+    second = [r.to_dict() for r in run_ablation(dataset, configurations, **small())]
+
+    assert first == second
 
 
 # --------------------------------------------------------------

@@ -1,0 +1,1337 @@
+{
+  "generated_at": "2026-08-08T03:45:42+00:00",
+  "split": {
+    "method": "LeaveOneGroupOut",
+    "group_column": "round",
+    "rounds": [
+      1,
+      2,
+      3
+    ],
+    "n_folds": 3,
+    "note": "Every page appears in every round and therefore on both sides of every fold. That is by design: the claim under test is about the client, not the page, and the same page on both sides is what forces the model to separate the clients. What is never shared across a fold is the round."
+  },
+  "dataset": {
+    "traces": 600,
+    "rounds": 3,
+    "classes": [
+      "firefox",
+      "wget"
+    ],
+    "per_class": {
+      "firefox": 300,
+      "wget": 300
+    },
+    "n_features": 53,
+    "features": [
+      "count_total",
+      "count_up",
+      "count_down",
+      "count_ratio_up_down",
+      "bytes_up_total",
+      "size_up_mean",
+      "size_up_std",
+      "size_up_min",
+      "size_up_max",
+      "size_up_p25",
+      "size_up_median",
+      "size_up_p75",
+      "size_up_p90",
+      "ack_up_count",
+      "bytes_down_total",
+      "size_down_mean",
+      "size_down_std",
+      "size_down_min",
+      "size_down_max",
+      "size_down_p25",
+      "size_down_median",
+      "size_down_p75",
+      "size_down_p90",
+      "ack_down_count",
+      "bytes_ratio_up_down",
+      "duration",
+      "iat_mean",
+      "iat_std",
+      "iat_min",
+      "iat_max",
+      "iat_median",
+      "iat_p90",
+      "iat_up_mean",
+      "iat_up_std",
+      "iat_up_min",
+      "iat_up_max",
+      "iat_up_median",
+      "iat_up_p90",
+      "iat_down_mean",
+      "iat_down_std",
+      "iat_down_min",
+      "iat_down_max",
+      "iat_down_median",
+      "iat_down_p90",
+      "burst_count",
+      "burst_len_mean",
+      "burst_len_max",
+      "burst_bytes_mean",
+      "burst_bytes_max",
+      "burst_gap_mean",
+      "burst_gap_max",
+      "syn_count",
+      "syn_ack_count"
+    ]
+  },
+  "hyperparameters": {
+    "random_state": 42,
+    "n_estimators": 300,
+    "models": [
+      "random_forest",
+      "logistic_regression"
+    ]
+  },
+  "models": {
+    "random_forest": {
+      "model": "random_forest",
+      "accuracy": 1.0,
+      "per_class": {
+        "firefox": {
+          "precision": 1.0,
+          "recall": 1.0,
+          "f1": 1.0,
+          "support": 300
+        },
+        "wget": {
+          "precision": 1.0,
+          "recall": 1.0,
+          "f1": 1.0,
+          "support": 300
+        }
+      },
+      "confusion_matrix": [
+        [
+          300,
+          0
+        ],
+        [
+          0,
+          300
+        ]
+      ],
+      "labels": [
+        "firefox",
+        "wget"
+      ],
+      "n_folds": 3,
+      "fold_accuracies": [
+        1.0,
+        1.0,
+        1.0
+      ],
+      "folds": [
+        {
+          "held_out_round": 1,
+          "train_rounds": [
+            2,
+            3
+          ],
+          "n_train": 400,
+          "n_test": 200,
+          "accuracy": 1.0,
+          "per_class": {
+            "firefox": {
+              "precision": 1.0,
+              "recall": 1.0,
+              "f1": 1.0,
+              "support": 100
+            },
+            "wget": {
+              "precision": 1.0,
+              "recall": 1.0,
+              "f1": 1.0,
+              "support": 100
+            }
+          },
+          "confusion_matrix": [
+            [
+              100,
+              0
+            ],
+            [
+              0,
+              100
+            ]
+          ],
+          "labels": [
+            "firefox",
+            "wget"
+          ],
+          "misclassified": []
+        },
+        {
+          "held_out_round": 2,
+          "train_rounds": [
+            1,
+            3
+          ],
+          "n_train": 400,
+          "n_test": 200,
+          "accuracy": 1.0,
+          "per_class": {
+            "firefox": {
+              "precision": 1.0,
+              "recall": 1.0,
+              "f1": 1.0,
+              "support": 100
+            },
+            "wget": {
+              "precision": 1.0,
+              "recall": 1.0,
+              "f1": 1.0,
+              "support": 100
+            }
+          },
+          "confusion_matrix": [
+            [
+              100,
+              0
+            ],
+            [
+              0,
+              100
+            ]
+          ],
+          "labels": [
+            "firefox",
+            "wget"
+          ],
+          "misclassified": []
+        },
+        {
+          "held_out_round": 3,
+          "train_rounds": [
+            1,
+            2
+          ],
+          "n_train": 400,
+          "n_test": 200,
+          "accuracy": 1.0,
+          "per_class": {
+            "firefox": {
+              "precision": 1.0,
+              "recall": 1.0,
+              "f1": 1.0,
+              "support": 100
+            },
+            "wget": {
+              "precision": 1.0,
+              "recall": 1.0,
+              "f1": 1.0,
+              "support": 100
+            }
+          },
+          "confusion_matrix": [
+            [
+              100,
+              0
+            ],
+            [
+              0,
+              100
+            ]
+          ],
+          "labels": [
+            "firefox",
+            "wget"
+          ],
+          "misclassified": []
+        }
+      ],
+      "misclassified": []
+    },
+    "logistic_regression": {
+      "model": "logistic_regression",
+      "accuracy": 0.9933333333333333,
+      "per_class": {
+        "firefox": {
+          "precision": 0.9868421052631579,
+          "recall": 1.0,
+          "f1": 0.9933774834437086,
+          "support": 300
+        },
+        "wget": {
+          "precision": 1.0,
+          "recall": 0.9866666666666667,
+          "f1": 0.9932885906040269,
+          "support": 300
+        }
+      },
+      "confusion_matrix": [
+        [
+          300,
+          0
+        ],
+        [
+          4,
+          296
+        ]
+      ],
+      "labels": [
+        "firefox",
+        "wget"
+      ],
+      "n_folds": 3,
+      "fold_accuracies": [
+        1.0,
+        0.98,
+        1.0
+      ],
+      "folds": [
+        {
+          "held_out_round": 1,
+          "train_rounds": [
+            2,
+            3
+          ],
+          "n_train": 400,
+          "n_test": 200,
+          "accuracy": 1.0,
+          "per_class": {
+            "firefox": {
+              "precision": 1.0,
+              "recall": 1.0,
+              "f1": 1.0,
+              "support": 100
+            },
+            "wget": {
+              "precision": 1.0,
+              "recall": 1.0,
+              "f1": 1.0,
+              "support": 100
+            }
+          },
+          "confusion_matrix": [
+            [
+              100,
+              0
+            ],
+            [
+              0,
+              100
+            ]
+          ],
+          "labels": [
+            "firefox",
+            "wget"
+          ],
+          "misclassified": []
+        },
+        {
+          "held_out_round": 2,
+          "train_rounds": [
+            1,
+            3
+          ],
+          "n_train": 400,
+          "n_test": 200,
+          "accuracy": 0.98,
+          "per_class": {
+            "firefox": {
+              "precision": 0.9615384615384616,
+              "recall": 1.0,
+              "f1": 0.9803921568627451,
+              "support": 100
+            },
+            "wget": {
+              "precision": 1.0,
+              "recall": 0.96,
+              "f1": 0.9795918367346939,
+              "support": 100
+            }
+          },
+          "confusion_matrix": [
+            [
+              100,
+              0
+            ],
+            [
+              4,
+              96
+            ]
+          ],
+          "labels": [
+            "firefox",
+            "wget"
+          ],
+          "misclassified": [
+            {
+              "round": 2,
+              "page": "bibliothek_15621acdde3d",
+              "true": "wget",
+              "predicted": "firefox"
+            },
+            {
+              "round": 2,
+              "page": "lausitz-science-park_be4c6c8dad5a",
+              "true": "wget",
+              "predicted": "firefox"
+            },
+            {
+              "round": 2,
+              "page": "studieninteressierte_studienorte-entdecken_senftenberg_74043dead5de",
+              "true": "wget",
+              "predicted": "firefox"
+            },
+            {
+              "round": 2,
+              "page": "universitaet_9f000ac62c68",
+              "true": "wget",
+              "predicted": "firefox"
+            }
+          ]
+        },
+        {
+          "held_out_round": 3,
+          "train_rounds": [
+            1,
+            2
+          ],
+          "n_train": 400,
+          "n_test": 200,
+          "accuracy": 1.0,
+          "per_class": {
+            "firefox": {
+              "precision": 1.0,
+              "recall": 1.0,
+              "f1": 1.0,
+              "support": 100
+            },
+            "wget": {
+              "precision": 1.0,
+              "recall": 1.0,
+              "f1": 1.0,
+              "support": 100
+            }
+          },
+          "confusion_matrix": [
+            [
+              100,
+              0
+            ],
+            [
+              0,
+              100
+            ]
+          ],
+          "labels": [
+            "firefox",
+            "wget"
+          ],
+          "misclassified": []
+        }
+      ],
+      "misclassified": [
+        {
+          "round": 2,
+          "page": "bibliothek_15621acdde3d",
+          "true": "wget",
+          "predicted": "firefox"
+        },
+        {
+          "round": 2,
+          "page": "lausitz-science-park_be4c6c8dad5a",
+          "true": "wget",
+          "predicted": "firefox"
+        },
+        {
+          "round": 2,
+          "page": "studieninteressierte_studienorte-entdecken_senftenberg_74043dead5de",
+          "true": "wget",
+          "predicted": "firefox"
+        },
+        {
+          "round": 2,
+          "page": "universitaet_9f000ac62c68",
+          "true": "wget",
+          "predicted": "firefox"
+        }
+      ]
+    }
+  },
+  "hardest_pages": {
+    "random_forest": [],
+    "logistic_regression": [
+      {
+        "page": "bibliothek_15621acdde3d",
+        "errors": 1
+      },
+      {
+        "page": "lausitz-science-park_be4c6c8dad5a",
+        "errors": 1
+      },
+      {
+        "page": "studieninteressierte_studienorte-entdecken_senftenberg_74043dead5de",
+        "errors": 1
+      },
+      {
+        "page": "universitaet_9f000ac62c68",
+        "errors": 1
+      }
+    ]
+  },
+  "final_model_note": "models/ holds a model fitted on ALL rounds, for the step-8 CLI. Its training accuracy is not reported anywhere and is not a result: the accuracies above come from held-out rounds.",
+  "ablation": {
+    "note": "Same LeaveOneGroupOut protocol, re-run with feature families removed. This does not replace the headline evaluation above; it says which features carry it. A score that survives without the connections family supports the claim 'traffic shape separates the classes'. A score that collapses to chance without syn_count supports only the narrower claim 'connection parallelism separates the classes'.",
+    "groups": {
+      "counts": [
+        "count_"
+      ],
+      "sizes": [
+        "size_",
+        "bytes_",
+        "ack_"
+      ],
+      "timing": [
+        "duration",
+        "iat_"
+      ],
+      "bursts": [
+        "burst_"
+      ],
+      "connections": [
+        "syn_"
+      ]
+    },
+    "models": {
+      "random_forest": [
+        {
+          "configuration": "all features",
+          "n_features": 53,
+          "features": [
+            "count_total",
+            "count_up",
+            "count_down",
+            "count_ratio_up_down",
+            "bytes_up_total",
+            "size_up_mean",
+            "size_up_std",
+            "size_up_min",
+            "size_up_max",
+            "size_up_p25",
+            "size_up_median",
+            "size_up_p75",
+            "size_up_p90",
+            "ack_up_count",
+            "bytes_down_total",
+            "size_down_mean",
+            "size_down_std",
+            "size_down_min",
+            "size_down_max",
+            "size_down_p25",
+            "size_down_median",
+            "size_down_p75",
+            "size_down_p90",
+            "ack_down_count",
+            "bytes_ratio_up_down",
+            "duration",
+            "iat_mean",
+            "iat_std",
+            "iat_min",
+            "iat_max",
+            "iat_median",
+            "iat_p90",
+            "iat_up_mean",
+            "iat_up_std",
+            "iat_up_min",
+            "iat_up_max",
+            "iat_up_median",
+            "iat_up_p90",
+            "iat_down_mean",
+            "iat_down_std",
+            "iat_down_min",
+            "iat_down_max",
+            "iat_down_median",
+            "iat_down_p90",
+            "burst_count",
+            "burst_len_mean",
+            "burst_len_max",
+            "burst_bytes_mean",
+            "burst_bytes_max",
+            "burst_gap_mean",
+            "burst_gap_max",
+            "syn_count",
+            "syn_ack_count"
+          ],
+          "accuracy": 1.0,
+          "fold_accuracies": [
+            1.0,
+            1.0,
+            1.0
+          ]
+        },
+        {
+          "configuration": "without syn_count",
+          "n_features": 52,
+          "features": [
+            "count_total",
+            "count_up",
+            "count_down",
+            "count_ratio_up_down",
+            "bytes_up_total",
+            "size_up_mean",
+            "size_up_std",
+            "size_up_min",
+            "size_up_max",
+            "size_up_p25",
+            "size_up_median",
+            "size_up_p75",
+            "size_up_p90",
+            "ack_up_count",
+            "bytes_down_total",
+            "size_down_mean",
+            "size_down_std",
+            "size_down_min",
+            "size_down_max",
+            "size_down_p25",
+            "size_down_median",
+            "size_down_p75",
+            "size_down_p90",
+            "ack_down_count",
+            "bytes_ratio_up_down",
+            "duration",
+            "iat_mean",
+            "iat_std",
+            "iat_min",
+            "iat_max",
+            "iat_median",
+            "iat_p90",
+            "iat_up_mean",
+            "iat_up_std",
+            "iat_up_min",
+            "iat_up_max",
+            "iat_up_median",
+            "iat_up_p90",
+            "iat_down_mean",
+            "iat_down_std",
+            "iat_down_min",
+            "iat_down_max",
+            "iat_down_median",
+            "iat_down_p90",
+            "burst_count",
+            "burst_len_mean",
+            "burst_len_max",
+            "burst_bytes_mean",
+            "burst_bytes_max",
+            "burst_gap_mean",
+            "burst_gap_max",
+            "syn_ack_count"
+          ],
+          "accuracy": 1.0,
+          "fold_accuracies": [
+            1.0,
+            1.0,
+            1.0
+          ]
+        },
+        {
+          "configuration": "without counts",
+          "n_features": 49,
+          "features": [
+            "bytes_up_total",
+            "size_up_mean",
+            "size_up_std",
+            "size_up_min",
+            "size_up_max",
+            "size_up_p25",
+            "size_up_median",
+            "size_up_p75",
+            "size_up_p90",
+            "ack_up_count",
+            "bytes_down_total",
+            "size_down_mean",
+            "size_down_std",
+            "size_down_min",
+            "size_down_max",
+            "size_down_p25",
+            "size_down_median",
+            "size_down_p75",
+            "size_down_p90",
+            "ack_down_count",
+            "bytes_ratio_up_down",
+            "duration",
+            "iat_mean",
+            "iat_std",
+            "iat_min",
+            "iat_max",
+            "iat_median",
+            "iat_p90",
+            "iat_up_mean",
+            "iat_up_std",
+            "iat_up_min",
+            "iat_up_max",
+            "iat_up_median",
+            "iat_up_p90",
+            "iat_down_mean",
+            "iat_down_std",
+            "iat_down_min",
+            "iat_down_max",
+            "iat_down_median",
+            "iat_down_p90",
+            "burst_count",
+            "burst_len_mean",
+            "burst_len_max",
+            "burst_bytes_mean",
+            "burst_bytes_max",
+            "burst_gap_mean",
+            "burst_gap_max",
+            "syn_count",
+            "syn_ack_count"
+          ],
+          "accuracy": 1.0,
+          "fold_accuracies": [
+            1.0,
+            1.0,
+            1.0
+          ]
+        },
+        {
+          "configuration": "without sizes",
+          "n_features": 32,
+          "features": [
+            "count_total",
+            "count_up",
+            "count_down",
+            "count_ratio_up_down",
+            "duration",
+            "iat_mean",
+            "iat_std",
+            "iat_min",
+            "iat_max",
+            "iat_median",
+            "iat_p90",
+            "iat_up_mean",
+            "iat_up_std",
+            "iat_up_min",
+            "iat_up_max",
+            "iat_up_median",
+            "iat_up_p90",
+            "iat_down_mean",
+            "iat_down_std",
+            "iat_down_min",
+            "iat_down_max",
+            "iat_down_median",
+            "iat_down_p90",
+            "burst_count",
+            "burst_len_mean",
+            "burst_len_max",
+            "burst_bytes_mean",
+            "burst_bytes_max",
+            "burst_gap_mean",
+            "burst_gap_max",
+            "syn_count",
+            "syn_ack_count"
+          ],
+          "accuracy": 1.0,
+          "fold_accuracies": [
+            1.0,
+            1.0,
+            1.0
+          ]
+        },
+        {
+          "configuration": "without timing",
+          "n_features": 34,
+          "features": [
+            "count_total",
+            "count_up",
+            "count_down",
+            "count_ratio_up_down",
+            "bytes_up_total",
+            "size_up_mean",
+            "size_up_std",
+            "size_up_min",
+            "size_up_max",
+            "size_up_p25",
+            "size_up_median",
+            "size_up_p75",
+            "size_up_p90",
+            "ack_up_count",
+            "bytes_down_total",
+            "size_down_mean",
+            "size_down_std",
+            "size_down_min",
+            "size_down_max",
+            "size_down_p25",
+            "size_down_median",
+            "size_down_p75",
+            "size_down_p90",
+            "ack_down_count",
+            "bytes_ratio_up_down",
+            "burst_count",
+            "burst_len_mean",
+            "burst_len_max",
+            "burst_bytes_mean",
+            "burst_bytes_max",
+            "burst_gap_mean",
+            "burst_gap_max",
+            "syn_count",
+            "syn_ack_count"
+          ],
+          "accuracy": 1.0,
+          "fold_accuracies": [
+            1.0,
+            1.0,
+            1.0
+          ]
+        },
+        {
+          "configuration": "without bursts",
+          "n_features": 46,
+          "features": [
+            "count_total",
+            "count_up",
+            "count_down",
+            "count_ratio_up_down",
+            "bytes_up_total",
+            "size_up_mean",
+            "size_up_std",
+            "size_up_min",
+            "size_up_max",
+            "size_up_p25",
+            "size_up_median",
+            "size_up_p75",
+            "size_up_p90",
+            "ack_up_count",
+            "bytes_down_total",
+            "size_down_mean",
+            "size_down_std",
+            "size_down_min",
+            "size_down_max",
+            "size_down_p25",
+            "size_down_median",
+            "size_down_p75",
+            "size_down_p90",
+            "ack_down_count",
+            "bytes_ratio_up_down",
+            "duration",
+            "iat_mean",
+            "iat_std",
+            "iat_min",
+            "iat_max",
+            "iat_median",
+            "iat_p90",
+            "iat_up_mean",
+            "iat_up_std",
+            "iat_up_min",
+            "iat_up_max",
+            "iat_up_median",
+            "iat_up_p90",
+            "iat_down_mean",
+            "iat_down_std",
+            "iat_down_min",
+            "iat_down_max",
+            "iat_down_median",
+            "iat_down_p90",
+            "syn_count",
+            "syn_ack_count"
+          ],
+          "accuracy": 1.0,
+          "fold_accuracies": [
+            1.0,
+            1.0,
+            1.0
+          ]
+        },
+        {
+          "configuration": "without connections",
+          "n_features": 51,
+          "features": [
+            "count_total",
+            "count_up",
+            "count_down",
+            "count_ratio_up_down",
+            "bytes_up_total",
+            "size_up_mean",
+            "size_up_std",
+            "size_up_min",
+            "size_up_max",
+            "size_up_p25",
+            "size_up_median",
+            "size_up_p75",
+            "size_up_p90",
+            "ack_up_count",
+            "bytes_down_total",
+            "size_down_mean",
+            "size_down_std",
+            "size_down_min",
+            "size_down_max",
+            "size_down_p25",
+            "size_down_median",
+            "size_down_p75",
+            "size_down_p90",
+            "ack_down_count",
+            "bytes_ratio_up_down",
+            "duration",
+            "iat_mean",
+            "iat_std",
+            "iat_min",
+            "iat_max",
+            "iat_median",
+            "iat_p90",
+            "iat_up_mean",
+            "iat_up_std",
+            "iat_up_min",
+            "iat_up_max",
+            "iat_up_median",
+            "iat_up_p90",
+            "iat_down_mean",
+            "iat_down_std",
+            "iat_down_min",
+            "iat_down_max",
+            "iat_down_median",
+            "iat_down_p90",
+            "burst_count",
+            "burst_len_mean",
+            "burst_len_max",
+            "burst_bytes_mean",
+            "burst_bytes_max",
+            "burst_gap_mean",
+            "burst_gap_max"
+          ],
+          "accuracy": 1.0,
+          "fold_accuracies": [
+            1.0,
+            1.0,
+            1.0
+          ]
+        },
+        {
+          "configuration": "only syn_count",
+          "n_features": 1,
+          "features": [
+            "syn_count"
+          ],
+          "accuracy": 0.99,
+          "fold_accuracies": [
+            0.99,
+            0.99,
+            0.99
+          ]
+        }
+      ],
+      "logistic_regression": [
+        {
+          "configuration": "all features",
+          "n_features": 53,
+          "features": [
+            "count_total",
+            "count_up",
+            "count_down",
+            "count_ratio_up_down",
+            "bytes_up_total",
+            "size_up_mean",
+            "size_up_std",
+            "size_up_min",
+            "size_up_max",
+            "size_up_p25",
+            "size_up_median",
+            "size_up_p75",
+            "size_up_p90",
+            "ack_up_count",
+            "bytes_down_total",
+            "size_down_mean",
+            "size_down_std",
+            "size_down_min",
+            "size_down_max",
+            "size_down_p25",
+            "size_down_median",
+            "size_down_p75",
+            "size_down_p90",
+            "ack_down_count",
+            "bytes_ratio_up_down",
+            "duration",
+            "iat_mean",
+            "iat_std",
+            "iat_min",
+            "iat_max",
+            "iat_median",
+            "iat_p90",
+            "iat_up_mean",
+            "iat_up_std",
+            "iat_up_min",
+            "iat_up_max",
+            "iat_up_median",
+            "iat_up_p90",
+            "iat_down_mean",
+            "iat_down_std",
+            "iat_down_min",
+            "iat_down_max",
+            "iat_down_median",
+            "iat_down_p90",
+            "burst_count",
+            "burst_len_mean",
+            "burst_len_max",
+            "burst_bytes_mean",
+            "burst_bytes_max",
+            "burst_gap_mean",
+            "burst_gap_max",
+            "syn_count",
+            "syn_ack_count"
+          ],
+          "accuracy": 0.9933333333333333,
+          "fold_accuracies": [
+            1.0,
+            0.98,
+            1.0
+          ]
+        },
+        {
+          "configuration": "without syn_count",
+          "n_features": 52,
+          "features": [
+            "count_total",
+            "count_up",
+            "count_down",
+            "count_ratio_up_down",
+            "bytes_up_total",
+            "size_up_mean",
+            "size_up_std",
+            "size_up_min",
+            "size_up_max",
+            "size_up_p25",
+            "size_up_median",
+            "size_up_p75",
+            "size_up_p90",
+            "ack_up_count",
+            "bytes_down_total",
+            "size_down_mean",
+            "size_down_std",
+            "size_down_min",
+            "size_down_max",
+            "size_down_p25",
+            "size_down_median",
+            "size_down_p75",
+            "size_down_p90",
+            "ack_down_count",
+            "bytes_ratio_up_down",
+            "duration",
+            "iat_mean",
+            "iat_std",
+            "iat_min",
+            "iat_max",
+            "iat_median",
+            "iat_p90",
+            "iat_up_mean",
+            "iat_up_std",
+            "iat_up_min",
+            "iat_up_max",
+            "iat_up_median",
+            "iat_up_p90",
+            "iat_down_mean",
+            "iat_down_std",
+            "iat_down_min",
+            "iat_down_max",
+            "iat_down_median",
+            "iat_down_p90",
+            "burst_count",
+            "burst_len_mean",
+            "burst_len_max",
+            "burst_bytes_mean",
+            "burst_bytes_max",
+            "burst_gap_mean",
+            "burst_gap_max",
+            "syn_ack_count"
+          ],
+          "accuracy": 0.9933333333333333,
+          "fold_accuracies": [
+            1.0,
+            0.98,
+            1.0
+          ]
+        },
+        {
+          "configuration": "without counts",
+          "n_features": 49,
+          "features": [
+            "bytes_up_total",
+            "size_up_mean",
+            "size_up_std",
+            "size_up_min",
+            "size_up_max",
+            "size_up_p25",
+            "size_up_median",
+            "size_up_p75",
+            "size_up_p90",
+            "ack_up_count",
+            "bytes_down_total",
+            "size_down_mean",
+            "size_down_std",
+            "size_down_min",
+            "size_down_max",
+            "size_down_p25",
+            "size_down_median",
+            "size_down_p75",
+            "size_down_p90",
+            "ack_down_count",
+            "bytes_ratio_up_down",
+            "duration",
+            "iat_mean",
+            "iat_std",
+            "iat_min",
+            "iat_max",
+            "iat_median",
+            "iat_p90",
+            "iat_up_mean",
+            "iat_up_std",
+            "iat_up_min",
+            "iat_up_max",
+            "iat_up_median",
+            "iat_up_p90",
+            "iat_down_mean",
+            "iat_down_std",
+            "iat_down_min",
+            "iat_down_max",
+            "iat_down_median",
+            "iat_down_p90",
+            "burst_count",
+            "burst_len_mean",
+            "burst_len_max",
+            "burst_bytes_mean",
+            "burst_bytes_max",
+            "burst_gap_mean",
+            "burst_gap_max",
+            "syn_count",
+            "syn_ack_count"
+          ],
+          "accuracy": 0.9933333333333333,
+          "fold_accuracies": [
+            1.0,
+            0.98,
+            1.0
+          ]
+        },
+        {
+          "configuration": "without sizes",
+          "n_features": 32,
+          "features": [
+            "count_total",
+            "count_up",
+            "count_down",
+            "count_ratio_up_down",
+            "duration",
+            "iat_mean",
+            "iat_std",
+            "iat_min",
+            "iat_max",
+            "iat_median",
+            "iat_p90",
+            "iat_up_mean",
+            "iat_up_std",
+            "iat_up_min",
+            "iat_up_max",
+            "iat_up_median",
+            "iat_up_p90",
+            "iat_down_mean",
+            "iat_down_std",
+            "iat_down_min",
+            "iat_down_max",
+            "iat_down_median",
+            "iat_down_p90",
+            "burst_count",
+            "burst_len_mean",
+            "burst_len_max",
+            "burst_bytes_mean",
+            "burst_bytes_max",
+            "burst_gap_mean",
+            "burst_gap_max",
+            "syn_count",
+            "syn_ack_count"
+          ],
+          "accuracy": 0.9933333333333333,
+          "fold_accuracies": [
+            1.0,
+            0.98,
+            1.0
+          ]
+        },
+        {
+          "configuration": "without timing",
+          "n_features": 34,
+          "features": [
+            "count_total",
+            "count_up",
+            "count_down",
+            "count_ratio_up_down",
+            "bytes_up_total",
+            "size_up_mean",
+            "size_up_std",
+            "size_up_min",
+            "size_up_max",
+            "size_up_p25",
+            "size_up_median",
+            "size_up_p75",
+            "size_up_p90",
+            "ack_up_count",
+            "bytes_down_total",
+            "size_down_mean",
+            "size_down_std",
+            "size_down_min",
+            "size_down_max",
+            "size_down_p25",
+            "size_down_median",
+            "size_down_p75",
+            "size_down_p90",
+            "ack_down_count",
+            "bytes_ratio_up_down",
+            "burst_count",
+            "burst_len_mean",
+            "burst_len_max",
+            "burst_bytes_mean",
+            "burst_bytes_max",
+            "burst_gap_mean",
+            "burst_gap_max",
+            "syn_count",
+            "syn_ack_count"
+          ],
+          "accuracy": 1.0,
+          "fold_accuracies": [
+            1.0,
+            1.0,
+            1.0
+          ]
+        },
+        {
+          "configuration": "without bursts",
+          "n_features": 46,
+          "features": [
+            "count_total",
+            "count_up",
+            "count_down",
+            "count_ratio_up_down",
+            "bytes_up_total",
+            "size_up_mean",
+            "size_up_std",
+            "size_up_min",
+            "size_up_max",
+            "size_up_p25",
+            "size_up_median",
+            "size_up_p75",
+            "size_up_p90",
+            "ack_up_count",
+            "bytes_down_total",
+            "size_down_mean",
+            "size_down_std",
+            "size_down_min",
+            "size_down_max",
+            "size_down_p25",
+            "size_down_median",
+            "size_down_p75",
+            "size_down_p90",
+            "ack_down_count",
+            "bytes_ratio_up_down",
+            "duration",
+            "iat_mean",
+            "iat_std",
+            "iat_min",
+            "iat_max",
+            "iat_median",
+            "iat_p90",
+            "iat_up_mean",
+            "iat_up_std",
+            "iat_up_min",
+            "iat_up_max",
+            "iat_up_median",
+            "iat_up_p90",
+            "iat_down_mean",
+            "iat_down_std",
+            "iat_down_min",
+            "iat_down_max",
+            "iat_down_median",
+            "iat_down_p90",
+            "syn_count",
+            "syn_ack_count"
+          ],
+          "accuracy": 0.9933333333333333,
+          "fold_accuracies": [
+            1.0,
+            0.98,
+            1.0
+          ]
+        },
+        {
+          "configuration": "without connections",
+          "n_features": 51,
+          "features": [
+            "count_total",
+            "count_up",
+            "count_down",
+            "count_ratio_up_down",
+            "bytes_up_total",
+            "size_up_mean",
+            "size_up_std",
+            "size_up_min",
+            "size_up_max",
+            "size_up_p25",
+            "size_up_median",
+            "size_up_p75",
+            "size_up_p90",
+            "ack_up_count",
+            "bytes_down_total",
+            "size_down_mean",
+            "size_down_std",
+            "size_down_min",
+            "size_down_max",
+            "size_down_p25",
+            "size_down_median",
+            "size_down_p75",
+            "size_down_p90",
+            "ack_down_count",
+            "bytes_ratio_up_down",
+            "duration",
+            "iat_mean",
+            "iat_std",
+            "iat_min",
+            "iat_max",
+            "iat_median",
+            "iat_p90",
+            "iat_up_mean",
+            "iat_up_std",
+            "iat_up_min",
+            "iat_up_max",
+            "iat_up_median",
+            "iat_up_p90",
+            "iat_down_mean",
+            "iat_down_std",
+            "iat_down_min",
+            "iat_down_max",
+            "iat_down_median",
+            "iat_down_p90",
+            "burst_count",
+            "burst_len_mean",
+            "burst_len_max",
+            "burst_bytes_mean",
+            "burst_bytes_max",
+            "burst_gap_mean",
+            "burst_gap_max"
+          ],
+          "accuracy": 0.9933333333333333,
+          "fold_accuracies": [
+            1.0,
+            0.98,
+            1.0
+          ]
+        },
+        {
+          "configuration": "only syn_count",
+          "n_features": 1,
+          "features": [
+            "syn_count"
+          ],
+          "accuracy": 0.99,
+          "fold_accuracies": [
+            0.99,
+            0.99,
+            0.99
+          ]
+        }
+      ]
+    }
+  }
+}

@@ -78,6 +78,18 @@ N_ESTIMATORS = 300
 
 MODEL_NAMES = ("random_forest", "logistic_regression")
 
+# Feature families, for ablation. Prefix-based so a new feature joins
+# its family automatically -- and a new family that matches none of
+# these is caught by a test, because a feature that belongs to no group
+# would quietly sit outside every ablation and never be questioned.
+FEATURE_GROUPS: dict[str, tuple[str, ...]] = {
+    "counts": ("count_",),
+    "sizes": ("size_", "bytes_", "ack_"),
+    "timing": ("duration", "iat_"),
+    "bursts": ("burst_",),
+    "connections": ("syn_",),
+}
+
 
 class DatasetError(RuntimeError):
     """The feature table cannot be used for a round-based evaluation."""
@@ -354,6 +366,155 @@ def _per_class(truth, predicted, labels: list[str]) -> dict[str, dict[str, float
     }
 
 
+# --------------------------------------------------------------
+# Ablation -- what is actually carrying the result
+# --------------------------------------------------------------
+#
+# A perfect score is a hypothesis about the rig, not a result. This
+# repo has already thrown one feature away for that reason: fin_count
+# and rst_count separated the classes 100/100 and were measuring how
+# the harness stops each client, not how the clients behave.
+#
+# syn_count is NOT that situation. Six connections against one happens
+# during the load, it is the parallelism the threaded server exists to
+# allow, and it is what a browser does that a sequential fetcher does
+# not. It is client behaviour and it belongs in the data.
+#
+# But "this feature is legitimate" and "this feature is the only thing
+# carrying the result" are different statements, and only the second
+# one decides what the README may claim. If the score survives without
+# the connection family, the claim is "traffic shape separates the
+# classes". If it collapses to chance, the honest claim is narrower:
+# "connection parallelism separates the classes, and the remaining
+# shape features add little". The ablation is how that gets decided by
+# measurement rather than by preference.
+
+def select_features(
+    dataset: Dataset,
+    keep: list[str] | None = None,
+    drop: list[str] | None = None,
+) -> Dataset:
+    """
+    A view of the dataset with some feature columns removed.
+
+    Unknown names raise rather than being ignored: an ablation that
+    silently dropped nothing would report the headline accuracy under
+    the label of an experiment that never ran.
+    """
+    known = set(dataset.features)
+
+    for label, names in (("keep", keep), ("drop", drop)):
+        unknown = sorted(set(names or []) - known)
+        if unknown:
+            raise DatasetError(
+                f"unknown feature(s) in --{label}: {', '.join(unknown)}"
+            )
+
+    if keep is not None:
+        chosen = [name for name in dataset.features if name in set(keep)]
+    else:
+        excluded = set(drop or [])
+        chosen = [name for name in dataset.features if name not in excluded]
+
+    if not chosen:
+        raise DatasetError("no features left after selection")
+
+    indices = [dataset.features.index(name) for name in chosen]
+
+    return Dataset(
+        features=chosen,
+        X=dataset.X[:, indices],
+        y=dataset.y,
+        groups=dataset.groups,
+        pages=dataset.pages,
+    )
+
+
+def group_of(feature: str) -> str | None:
+    """Which family a feature belongs to, or None if it belongs to none."""
+    for group, prefixes in FEATURE_GROUPS.items():
+        if any(feature.startswith(prefix) for prefix in prefixes):
+            return group
+    return None
+
+
+def features_in_group(features: list[str], group: str) -> list[str]:
+    return [name for name in features if group_of(name) == group]
+
+
+def ablation_configurations(features: list[str]) -> list[tuple[str, list[str]]]:
+    """
+    The preset sweep, as (label, features to use).
+
+    Ordered from "everything" to "one feature", so the table reads as a
+    single question getting narrower: how much of the result survives
+    when each family is taken away, and how much does the single
+    strongest feature explain on its own?
+    """
+    configurations: list[tuple[str, list[str]]] = [("all features", list(features))]
+
+    if "syn_count" in features:
+        configurations.append(
+            ("without syn_count", [f for f in features if f != "syn_count"])
+        )
+
+    for group in FEATURE_GROUPS:
+        remaining = [name for name in features if group_of(name) != group]
+        if remaining and len(remaining) != len(features):
+            configurations.append((f"without {group}", remaining))
+
+    if "syn_count" in features:
+        configurations.append(("only syn_count", ["syn_count"]))
+
+    return configurations
+
+
+@dataclass
+class AblationResult:
+    label: str
+    features: list[str]
+    accuracy: float
+    fold_accuracies: list[float]
+
+    def to_dict(self) -> dict:
+        return {
+            "configuration": self.label,
+            "n_features": len(self.features),
+            "features": self.features,
+            "accuracy": self.accuracy,
+            "fold_accuracies": self.fold_accuracies,
+        }
+
+
+def run_ablation(
+    dataset: Dataset,
+    configurations: list[tuple[str, list[str]]],
+    model: str = "random_forest",
+    **pipeline_kwargs,
+) -> list[AblationResult]:
+    """
+    Re-run the identical LeaveOneGroupOut protocol per configuration.
+
+    Identical on purpose: an ablation evaluated any other way would not
+    be comparable with the headline number, and the comparison is the
+    entire point.
+    """
+    results: list[AblationResult] = []
+
+    for label, features in configurations:
+        subset = select_features(dataset, keep=features)
+        evaluation = evaluate_by_round(subset, model=model, **pipeline_kwargs)
+
+        results.append(AblationResult(
+            label=label,
+            features=list(subset.features),
+            accuracy=evaluation.accuracy,
+            fold_accuracies=[fold.accuracy for fold in evaluation.folds],
+        ))
+
+    return results
+
+
 def misclassified_pages(result: EvaluationResult) -> list[tuple[str, int]]:
     """
     Pages that were got wrong, most often first.
@@ -400,6 +561,7 @@ def build_metrics(
     evaluations: dict[str, EvaluationResult],
     hyperparameters: dict,
     generated_at: str,
+    ablation: dict[str, list[AblationResult]] | None = None,
 ) -> dict:
     """
     The published metrics document.
@@ -450,6 +612,40 @@ def build_metrics(
             "Its training accuracy is not reported anywhere and is not a "
             "result: the accuracies above come from held-out rounds."
         ),
+        "ablation": _ablation_document(ablation),
+    }
+
+
+def _ablation_document(ablation) -> dict | None:
+    """
+    The ablation section: additional evidence, never a replacement.
+
+    Kept under its own key and clearly labelled, because the headline
+    number and the ablation answer different questions. The headline
+    says how well the classifier does; the ablation says what the
+    classifier is doing it with, and therefore which sentence the README
+    is entitled to write.
+    """
+    if not ablation:
+        return None
+
+    return {
+        "note": (
+            "Same LeaveOneGroupOut protocol, re-run with feature families "
+            "removed. This does not replace the headline evaluation above; "
+            "it says which features carry it. A score that survives without "
+            "the connections family supports the claim 'traffic shape "
+            "separates the classes'. A score that collapses to chance "
+            "without syn_count supports only the narrower claim "
+            "'connection parallelism separates the classes'."
+        ),
+        "groups": {
+            group: list(prefixes) for group, prefixes in FEATURE_GROUPS.items()
+        },
+        "models": {
+            name: [result.to_dict() for result in results]
+            for name, results in ablation.items()
+        },
     }
 
 

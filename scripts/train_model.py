@@ -48,11 +48,14 @@ from tsd.model import (
     N_ESTIMATORS,
     RANDOM_STATE,
     DatasetError,
+    ablation_configurations,
     build_metrics,
     evaluate_by_round,
     fit_final_model,
     load_dataset,
     misclassified_pages,
+    run_ablation,
+    select_features,
     write_metrics,
 )
 
@@ -82,6 +85,20 @@ def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
                         help="fixed so a re-run reproduces the same numbers")
     parser.add_argument("--force", action="store_true",
                         help="overwrite existing metrics and model")
+    parser.add_argument(
+        "--drop", nargs="+", default=None, metavar="FEATURE",
+        help=(
+            "additionally evaluate with these features removed; the headline "
+            "evaluation is unaffected"
+        ),
+    )
+    parser.add_argument(
+        "--ablate-groups", action="store_true",
+        help=(
+            "run the preset sweep -- all features, then each family removed "
+            "in turn, then syn_count alone -- and report a table"
+        ),
+    )
     return parser.parse_args(argv)
 
 
@@ -119,6 +136,15 @@ def main(argv: list[str] | None = None) -> int:
             n_estimators=args.n_estimators,
         )
 
+    # Ablation: additional evidence about WHAT is carrying the headline
+    # number, never a replacement for it. The headline evaluation above
+    # is already computed and is not touched by anything below.
+    try:
+        ablation = run_requested_ablations(dataset, args)
+    except DatasetError as error:
+        print(f"ABORT: {error}", file=sys.stderr)
+        return EXIT_CANNOT_SPLIT
+
     metrics = build_metrics(
         dataset=dataset,
         evaluations=evaluations,
@@ -128,6 +154,7 @@ def main(argv: list[str] | None = None) -> int:
             "models": list(MODEL_NAMES),
         },
         generated_at=datetime.now(timezone.utc).isoformat(timespec="seconds"),
+        ablation=ablation,
     )
     write_metrics(args.metrics, metrics)
 
@@ -147,7 +174,45 @@ def main(argv: list[str] | None = None) -> int:
     )
 
     print_summary(args, dataset, evaluations)
+
+    if ablation:
+        print_ablation(ablation)
+
     return EXIT_OK
+
+
+def run_requested_ablations(dataset, args) -> dict:
+    """
+    Build and run whatever ablations were asked for.
+
+    `--drop` names are validated against the real feature list before
+    anything runs: an ablation that silently dropped nothing would
+    report the headline accuracy under the label of an experiment that
+    never happened.
+    """
+    configurations: list[tuple[str, list[str]]] = []
+
+    if args.ablate_groups:
+        configurations.extend(ablation_configurations(dataset.features))
+
+    if args.drop:
+        # Raises on an unknown name, before any evaluation runs.
+        remaining = select_features(dataset, drop=args.drop).features
+        configurations.append((f"without {', '.join(args.drop)}", remaining))
+
+    if not configurations:
+        return {}
+
+    return {
+        name: run_ablation(
+            dataset,
+            configurations,
+            model=name,
+            random_state=args.seed,
+            n_estimators=args.n_estimators,
+        )
+        for name in MODEL_NAMES
+    }
 
 
 def print_summary(args, dataset, evaluations) -> None:
@@ -184,6 +249,31 @@ def print_summary(args, dataset, evaluations) -> None:
     print(f"  model         : {args.model_out}")
     print("  NOTE: the saved model is fitted on ALL rounds for the step-8 CLI.")
     print("        Its accuracy is not the number above and is not reported.")
+
+
+def print_ablation(ablation: dict) -> None:
+    """
+    The ablation table.
+
+    It answers a different question from the headline: not "how well
+    does it do" but "what is it doing it with". If the accuracy holds up
+    without the connections family, the README may claim that traffic
+    shape separates the clients. If it collapses without syn_count, the
+    honest claim is the narrower one -- that connection parallelism
+    does, and the rest of the shape adds little.
+    """
+    print()
+    print("  ABLATION -- same split, features removed. Evidence about what")
+    print("  carries the result, not a replacement for the number above.")
+
+    for model, results in ablation.items():
+        print(f"\n    {model}")
+        print(f"      {'configuration':<26} {'features':>8}  {'accuracy':>8}   per fold")
+
+        for result in results:
+            folds = " ".join(f"{value:.3f}" for value in result.fold_accuracies)
+            print(f"      {result.label:<26} {len(result.features):>8}  "
+                  f"{result.accuracy:>8.4f}   {folds}")
 
 
 if __name__ == "__main__":
