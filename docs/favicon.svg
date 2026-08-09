@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" role="img" aria-labelledby="mark-title">
+  <title id="mark-title">Traffic shape — packet bursts up and down</title>
+  <rect width="16" height="16" rx="3" fill="#15171a"/>
+  <rect x="2.5" y="4.2" width="2.0" height="3.0" fill="#8ecbf0"/>
+  <rect x="5.5" y="2.6" width="2.0" height="4.6" fill="#8ecbf0"/>
+  <rect x="8.5" y="8.8" width="2.0" height="4.2" fill="#8ecbf0"/>
+  <rect x="11.5" y="8.8" width="2.0" height="2.4" fill="#8ecbf0"/>
+</svg>

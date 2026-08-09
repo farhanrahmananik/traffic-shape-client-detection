@@ -25,6 +25,7 @@ from __future__ import annotations
 
 import json
 import re
+import struct
 from html.parser import HTMLParser
 from pathlib import Path
 
@@ -363,6 +364,122 @@ def test_the_chart_can_be_built_from_the_site_data():
                     assert isinstance(value, (int, float)), f"{family} is not a number"
 
             assert max(max(values.values()) for values in series) > 0
+
+
+def test_the_social_card_exists_and_is_the_size_it_claims():
+    """
+    A crawler reads the dimensions from the markup and the pixels from
+    the file. If they disagree the card is cropped or letterboxed, and
+    nothing in this repository would have said so — the page renders
+    perfectly either way.
+    """
+    html = INDEX_HTML.read_text(encoding="utf-8")
+
+    url = re.search(r'property="og:image" content="([^"]+)"', html)
+    assert url, "no og:image in docs/index.html"
+    assert url.group(1).startswith("https://"), "og:image must be absolute"
+
+    png = INDEX_HTML.parent / url.group(1).rsplit("/", 1)[-1]
+    assert png.is_file(), f"{png.name} is referenced but not present"
+    assert png.suffix == ".png", "crawlers will not rasterise an SVG"
+
+    header = png.read_bytes()[:24]
+    assert header[:8] == b"\x89PNG\r\n\x1a\n"
+    width, height = struct.unpack(">II", header[16:24])
+
+    declared = {
+        name: int(re.search(f'property="og:image:{name}" content="(\\d+)"', html).group(1))
+        for name in ("width", "height")
+    }
+    assert (width, height) == (declared["width"], declared["height"]) == (1200, 630)
+
+    assert re.search(r'property="og:image:alt" content="[^"]{40,}"', html), (
+        "og:image:alt must describe the image, not name it"
+    )
+    assert html.count(url.group(1)) == 2, "twitter:image must use the same URL"
+
+
+def test_the_social_card_carries_the_measured_figures():
+    """
+    The card is generated from the same site data the page binds. If it
+    were ever hand-edited, the numbers on it would keep looking right
+    while meaning nothing — so the generator is re-run here and compared.
+    """
+    svg = (INDEX_HTML.parent / "og-image.svg")
+    assert svg.is_file()
+
+    data = json.loads(SITE_DATA.read_text(encoding="utf-8"))
+    text = svg.read_text(encoding="utf-8")
+
+    for path in ("dataset.traces", "dataset.rounds", "dataset.n_features"):
+        value, error = resolve(data, path)
+        assert error is None, path
+        assert f">{value:,}<" in text, f"{path} ({value}) is not on the card"
+
+    method, error = resolve(data, "split.method")
+    assert error is None
+    assert f">{method}<" in text
+
+
+def test_every_icon_the_page_declares_is_present_and_the_size_it_claims():
+    """
+    A missing favicon is invisible in the source and nearly invisible in
+    the browser — the tab just shows the generic page glyph, which looks
+    like a page that has not finished loading.
+
+    The declared `sizes` is checked against the file's own header for the
+    same reason the social card's dimensions are: a browser picks an icon
+    by what the markup claims, and only the file knows the truth.
+    """
+    html = INDEX_HTML.read_text(encoding="utf-8")
+    icons = re.findall(r'<link rel="(?:apple-touch-)?icon"[^>]*>', html)
+    assert icons, "docs/index.html declares no icon"
+
+    seen = []
+    for tag in icons:
+        href = re.search(r'href="([^"]+)"', tag).group(1)
+        path = INDEX_HTML.parent / href
+        assert path.is_file(), f"{href} is declared but not present"
+        seen.append(href)
+
+        declared = re.search(r'sizes="(\d+)x(\d+)"', tag)
+        if declared is None or path.suffix == ".svg":
+            continue
+
+        header = path.read_bytes()
+        assert header[:8] == b"\x89PNG\r\n\x1a\n", f"{href} is not a PNG"
+        assert struct.unpack(">II", header[16:24]) == (
+            int(declared.group(1)), int(declared.group(2))
+        ), f"{href} is not the size the markup claims"
+
+    assert "favicon.svg" in seen, "no SVG icon — the only one that stays sharp"
+    assert seen.index("favicon.svg") == 0, (
+        "the SVG must be declared first; a browser takes the first it "
+        "understands"
+    )
+    assert "favicon.png" in seen, "no raster fallback"
+
+
+def test_the_mark_uses_the_stylesheet_s_own_colours():
+    """
+    The mark is generated from the dark palette in docs/style.css. Typing
+    a colour into it would produce an icon that still looks fine and no
+    longer matches the site.
+    """
+    svg = (INDEX_HTML.parent / "favicon.svg").read_text(encoding="utf-8")
+    css = (INDEX_HTML.parent / "style.css").read_text(encoding="utf-8")
+
+    dark = re.search(
+        r"@media \(prefers-color-scheme: dark\) \{\s*:root \{(.*?)\}", css, re.S
+    ).group(1)
+    palette = dict(re.findall(r"--([a-z\-]+):\s*(#[0-9a-fA-F]{3,8});", dark))
+
+    used = set(re.findall(r'fill="(#[0-9a-fA-F]{3,8})"', svg))
+    assert used, "the mark has no fills"
+    assert used <= set(palette.values()), (
+        f"colours not in the dark palette: {sorted(used - set(palette.values()))}"
+    )
+    assert palette["bg"] in used and palette["accent"] in used
 
 
 def test_the_page_loads_the_binder_and_the_binder_reads_the_site_data():

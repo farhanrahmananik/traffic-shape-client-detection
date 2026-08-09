@@ -1,6 +1,10 @@
 #!/usr/bin/env python3
 """
-Generate docs/og-image.svg — the social preview card for the case study.
+Generate the case study's two images: docs/og-image.svg, the social
+preview card, and docs/favicon.svg, the mark.
+
+Both live here because both read their colours out of docs/style.css, and
+one file reading a source is one file to fix when that source moves.
 
 Two things in this file are not typed, and both for the same reason as the
 page itself: a figure written into a graphic is a figure that was true
@@ -35,6 +39,7 @@ REPO_ROOT = Path(__file__).resolve().parent.parent
 SITE_DATA = REPO_ROOT / "docs" / "data" / "case_study.json"
 STYLESHEET = REPO_ROOT / "docs" / "style.css"
 DEFAULT_OUT = REPO_ROOT / "docs" / "og-image.svg"
+DEFAULT_FAVICON = REPO_ROOT / "docs" / "favicon.svg"
 
 WIDTH, HEIGHT = 1200, 630
 
@@ -271,6 +276,80 @@ def build_svg(colour: dict[str, str], figures, split: str) -> str:
     return "\n".join(parts) + "\n"
 
 
+# ---------------------------------------------------------------------
+# The mark
+# ---------------------------------------------------------------------
+
+# Four bars on a 16-unit grid, drawn about an implicit horizontal axis:
+# two rising from it and two falling. That is the project in one shape —
+# packets have a size and a direction, and they arrive in bursts, which is
+# the whole feature set.
+#
+# Everything here is sized for 16 pixels, where roughly nothing survives:
+#
+#   bars are 2 units wide with 1 unit between them, so at 16px each bar
+#   is a solid 2-pixel column with a clean gap — one pixel narrower and
+#   antialiasing turns the group into a grey smear
+#
+#   the axis is NOT drawn. A 0.8-unit rule would render as a half-lit row
+#   of pixels; the 1.6-unit gap between the rising and falling groups
+#   says the same thing in negative space, and negative space does not
+#   antialias
+#
+#   the bars are square-ended, not rounded. A radius small enough to see
+#   at 512px is invisible at 16px and only softens the ends
+#
+#   two up then two down, rather than alternating: a zigzag of four bars
+#   reads as a chart line, while two groups read as a request burst and
+#   the answer to it
+FAVICON_SIZE = 16
+FAVICON_RADIUS = 3
+AXIS_TOP, AXIS_BOTTOM = 7.2, 8.8
+BAR_WIDTH = 2.0
+
+#            x     up?    length from the axis
+BARS = (
+    (2.5,  True,  3.0),
+    (5.5,  True,  4.6),
+    (8.5,  False, 4.2),
+    (11.5, False, 2.4),
+)
+
+
+def build_favicon(colour: dict[str, str]) -> str:
+    """
+    Compose the mark.
+
+    No width or height attribute, only a viewBox: the file is used at a
+    tab's 16px, at a bookmark's 32px and as the source of the touch
+    icon's 180px, and an intrinsic size would fight all three.
+
+    It carries its own background tile, because a favicon sits on browser
+    chrome this project does not control — light on one theme, dark on
+    another. A mark that relied on the page's background would vanish on
+    half the machines that render it.
+    """
+    parts = [
+        f'<svg xmlns="http://www.w3.org/2000/svg" '
+        f'viewBox="0 0 {FAVICON_SIZE} {FAVICON_SIZE}" role="img" '
+        f'aria-labelledby="mark-title">',
+        "  <title id=\"mark-title\">Traffic shape — packet bursts up and "
+        "down</title>",
+        f'  <rect width="{FAVICON_SIZE}" height="{FAVICON_SIZE}" '
+        f'rx="{FAVICON_RADIUS}" fill="{colour["bg"]}"/>',
+    ]
+
+    for x, upward, length in BARS:
+        y = AXIS_TOP - length if upward else AXIS_BOTTOM
+        parts.append(
+            f'  <rect x="{x}" y="{y:.1f}" width="{BAR_WIDTH}" '
+            f'height="{length}" fill="{colour["accent"]}"/>'
+        )
+
+    parts.append("</svg>")
+    return "\n".join(parts) + "\n"
+
+
 def parse_args(argv=None):
     parser = argparse.ArgumentParser(
         description=__doc__,
@@ -287,9 +366,10 @@ def parse_args(argv=None):
     parser.add_argument("--site-data", type=Path, default=SITE_DATA)
     parser.add_argument("--stylesheet", type=Path, default=STYLESHEET)
     parser.add_argument("--out", type=Path, default=DEFAULT_OUT)
+    parser.add_argument("--favicon-out", type=Path, default=DEFAULT_FAVICON)
     parser.add_argument(
         "--check", action="store_true",
-        help="fail if the file on disk is not what would be generated now",
+        help="fail if either file on disk is not what would be generated now",
     )
     return parser.parse_args(argv)
 
@@ -300,28 +380,32 @@ def main(argv=None) -> int:
     try:
         colour = read_tokens(args.stylesheet)
         figures, split = read_figures(args.site_data)
+        written = {
+            args.out: build_svg(colour, figures, split),
+            args.favicon_out: build_favicon(colour),
+        }
     except (BuildError, OSError, json.JSONDecodeError) as error:
         print(f"error: {error}", file=sys.stderr)
         return 1
 
-    svg = build_svg(colour, figures, split)
-
     if args.check:
-        if not args.out.is_file():
-            print(f"error: {args.out} does not exist", file=sys.stderr)
-            return 1
-        if args.out.read_text(encoding="utf-8") != svg:
-            print(
-                f"error: {args.out} is not what the current sources produce; "
-                f"re-run without --check, then re-export the PNG",
-                file=sys.stderr,
-            )
-            return 1
-        print(f"{args.out} is in sync with {args.site_data.name}")
+        for path, content in written.items():
+            if not path.is_file():
+                print(f"error: {path} does not exist", file=sys.stderr)
+                return 1
+            if path.read_text(encoding="utf-8") != content:
+                print(
+                    f"error: {path} is not what the current sources produce; "
+                    f"re-run without --check, then re-export the PNGs",
+                    file=sys.stderr,
+                )
+                return 1
+        print(f"{len(written)} SVGs are in sync with their sources")
         return 0
 
-    args.out.write_text(svg, encoding="utf-8")
-    print(f"wrote {args.out} ({WIDTH}x{HEIGHT})")
+    for path, content in written.items():
+        path.write_text(content, encoding="utf-8")
+        print(f"wrote {path}")
     return 0
 
 
