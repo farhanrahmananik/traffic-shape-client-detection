@@ -1,0 +1,20 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="630" viewBox="0 0 1200 630" role="img" aria-labelledby="og-title">
+  <title id="og-title">Browser or bot, from traffic shape alone — 800 traces over 4 capture rounds, 53 shape features, LeaveOneGroupOut validation</title>
+  <rect width="1200" height="630" fill="#15171a"/>
+  <rect width="1200" height="6" fill="#8ecbf0"/>
+  <text x="90" y="142" fill="#8a8a81" font-family="ui-monospace, 'DejaVu Sans Mono', Menlo, Consolas, monospace" font-size="25" letter-spacing="4">PORTFOLIO PROJECT</text>
+  <text x="90" y="232" fill="#f0f0eb" font-family="system-ui, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif" font-size="76" font-weight="650" letter-spacing="-1.5">Browser or bot,</text>
+  <text x="90" y="310" fill="#f0f0eb" font-family="system-ui, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif" font-size="76" font-weight="650" letter-spacing="-1.5">from traffic shape alone</text>
+  <text x="90" y="368" fill="#9d9d94" font-family="system-ui, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif" font-size="30">Deciding a real browser from an automated tool using</text>
+  <text x="90" y="406" fill="#9d9d94" font-family="system-ui, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif" font-size="30">traffic shape alone. Never payload.</text>
+  <rect x="90" y="442" width="1020" height="118" rx="10" fill="#1c1f23" stroke="#2f3439" stroke-width="2"/>
+  <text x="124" y="512" fill="#8ecbf0" font-family="system-ui, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif" font-size="54" font-weight="650" letter-spacing="-1">800</text>
+  <text x="124" y="544" fill="#9d9d94" font-family="ui-monospace, 'DejaVu Sans Mono', Menlo, Consolas, monospace" font-size="21">traces</text>
+  <text x="352" y="512" fill="#8ecbf0" font-family="system-ui, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif" font-size="54" font-weight="650" letter-spacing="-1">4</text>
+  <text x="352" y="544" fill="#9d9d94" font-family="ui-monospace, 'DejaVu Sans Mono', Menlo, Consolas, monospace" font-size="21">capture rounds</text>
+  <text x="580" y="512" fill="#8ecbf0" font-family="system-ui, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif" font-size="54" font-weight="650" letter-spacing="-1">53</text>
+  <text x="580" y="544" fill="#9d9d94" font-family="ui-monospace, 'DejaVu Sans Mono', Menlo, Consolas, monospace" font-size="21">shape features</text>
+  <text x="808" y="506" fill="#f0f0eb" font-family="system-ui, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif" font-size="24" font-weight="650">LeaveOneGroupOut</text>
+  <text x="808" y="544" fill="#9d9d94" font-family="ui-monospace, 'DejaVu Sans Mono', Menlo, Consolas, monospace" font-size="21">validation split</text>
+  <text x="90" y="604" fill="#8a8a81" font-family="ui-monospace, 'DejaVu Sans Mono', Menlo, Consolas, monospace" font-size="24">Md Farhan Rahman Anik</text>
+</svg>

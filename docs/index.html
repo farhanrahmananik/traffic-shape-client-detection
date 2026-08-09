@@ -20,10 +20,24 @@
 <meta property="og:title" content="Browser or bot, from traffic shape alone">
 <meta property="og:description" content="Classifying an encrypted HTTPS page load as a browser or an automated client from traffic shape alone — packet sizes, directions, timings, bursts. Never payload. Split by capture round, never randomly.">
 
-<!-- No og:image yet. A tag pointing at a file that does not exist is
-     worse than no tag: it renders as a broken card rather than a plain
-     one. -->
+<!--
+  The card image is a PNG, not the SVG it is generated from: LinkedIn and
+  most crawlers will not rasterise an SVG, so an SVG here is a card that
+  renders blank on exactly the surfaces the tag exists for. Absolute URL
+  for the same reason — a crawler resolves it without the page's base.
+
+  docs/og-image.svg is written by scripts/build_og_image.py, which reads
+  the figures from docs/data/case_study.json and the colours from
+  docs/style.css. The numbers on the card are therefore the numbers on
+  the page, and cannot drift from them.
+-->
+<meta property="og:image" content="https://farhanrahmananik.github.io/traffic-shape-client-detection/og-image.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta property="og:image:alt" content="Dark card titled &quot;Browser or bot, from traffic shape alone&quot;, with the key figures of the study — traces, capture rounds, shape features and the validation split — set out beneath a one-line description.">
+
 <meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:image" content="https://farhanrahmananik.github.io/traffic-shape-client-detection/og-image.png">
 <meta name="twitter:title" content="Browser or bot, from traffic shape alone">
 <meta name="twitter:description" content="Classifying an encrypted HTTPS page load as a browser or an automated client from traffic shape alone — packet sizes, directions, timings, bursts. Never payload. Split by capture round, never randomly.">
 
