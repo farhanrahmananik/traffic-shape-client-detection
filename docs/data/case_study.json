@@ -1,0 +1,1949 @@
+{
+  "provenance": {
+    "metrics": {
+      "path": "results/metrics.json",
+      "sha256": "1934b45a6fa9cd768f3fa8370100bba61619af47c118a3bd4724c86c22d55c80",
+      "generated_at": "2026-08-08T22:28:44+00:00"
+    },
+    "shap": {
+      "path": "results/shap_summary.json",
+      "sha256": "f9dd9d6ed1eb8c767c2109cc9cdb1565037675acb62a7cbf444a33d94f728cb7",
+      "generated_at": "2026-08-08T23:35:28+00:00"
+    },
+    "cli_parity": {
+      "path": "results/cli_parity.json",
+      "sha256": "6f2b5a31f5f1141d4fb628fc03be9634ddca48eaf1fbe641d76f65f25eed1c3d"
+    },
+    "corpus_manifest": {
+      "path": "results/corpus_manifest.json",
+      "sha256": "e9d4e14eb81d526455bfa888cacff981205d949d06a1ad1c0e0b730d8e3444fa",
+      "generated_at": "2026-08-06T16:35:28+00:00"
+    },
+    "capture_rounds": [
+      {
+        "path": "results/capture_rounds/round_01_20260807.json",
+        "sha256": "b498c6a4ecfc3910a3ad94a30c60b70d4e31d509b756d2499b152a1e465d9b66"
+      },
+      {
+        "path": "results/capture_rounds/round_02_20260807.json",
+        "sha256": "d1916007caa62b863f13b0d80ab7d03bdb3568a91fc7322c414e8b7152db236b"
+      },
+      {
+        "path": "results/capture_rounds/round_03_20260808.json",
+        "sha256": "d84b76b13df12f2242648862efca3939bf854c7b17b8f7406cae08c0061cc6ad"
+      },
+      {
+        "path": "results/capture_rounds/round_04_20260809.json",
+        "sha256": "d997d1c4575a7ea4059786a6ca4b7e0f8eaf560f2988520fc6d3e6e87858837d"
+      }
+    ]
+  },
+  "dataset": {
+    "traces": 800,
+    "rounds": 4,
+    "classes": [
+      "firefox",
+      "wget"
+    ],
+    "per_class": {
+      "firefox": 400,
+      "wget": 400
+    },
+    "n_features": 53,
+    "features": [
+      "count_total",
+      "count_up",
+      "count_down",
+      "count_ratio_up_down",
+      "bytes_up_total",
+      "size_up_mean",
+      "size_up_std",
+      "size_up_min",
+      "size_up_max",
+      "size_up_p25",
+      "size_up_median",
+      "size_up_p75",
+      "size_up_p90",
+      "ack_up_count",
+      "bytes_down_total",
+      "size_down_mean",
+      "size_down_std",
+      "size_down_min",
+      "size_down_max",
+      "size_down_p25",
+      "size_down_median",
+      "size_down_p75",
+      "size_down_p90",
+      "ack_down_count",
+      "bytes_ratio_up_down",
+      "duration",
+      "iat_mean",
+      "iat_std",
+      "iat_min",
+      "iat_max",
+      "iat_median",
+      "iat_p90",
+      "iat_up_mean",
+      "iat_up_std",
+      "iat_up_min",
+      "iat_up_max",
+      "iat_up_median",
+      "iat_up_p90",
+      "iat_down_mean",
+      "iat_down_std",
+      "iat_down_min",
+      "iat_down_max",
+      "iat_down_median",
+      "iat_down_p90",
+      "burst_count",
+      "burst_len_mean",
+      "burst_len_max",
+      "burst_bytes_mean",
+      "burst_bytes_max",
+      "burst_gap_mean",
+      "burst_gap_max",
+      "syn_count",
+      "syn_ack_count"
+    ]
+  },
+  "split": {
+    "method": "LeaveOneGroupOut",
+    "group_column": "round",
+    "rounds": [
+      1,
+      2,
+      3,
+      4
+    ],
+    "n_folds": 4,
+    "note": "Every page appears in every round and therefore on both sides of every fold. That is by design: the claim under test is about the client, not the page, and the same page on both sides is what forces the model to separate the clients. What is never shared across a fold is the round."
+  },
+  "models": {
+    "random_forest": {
+      "accuracy": 1.0,
+      "fold_accuracies": [
+        1.0,
+        1.0,
+        1.0,
+        1.0
+      ],
+      "confusion_matrix": [
+        [
+          400,
+          0
+        ],
+        [
+          0,
+          400
+        ]
+      ],
+      "labels": [
+        "firefox",
+        "wget"
+      ],
+      "n_folds": 4,
+      "misclassified": [],
+      "per_class": {
+        "firefox": {
+          "precision": 1.0,
+          "recall": 1.0,
+          "f1": 1.0,
+          "support": 400
+        },
+        "wget": {
+          "precision": 1.0,
+          "recall": 1.0,
+          "f1": 1.0,
+          "support": 400
+        }
+      }
+    },
+    "logistic_regression": {
+      "accuracy": 0.995,
+      "fold_accuracies": [
+        1.0,
+        0.98,
+        1.0,
+        1.0
+      ],
+      "confusion_matrix": [
+        [
+          400,
+          0
+        ],
+        [
+          4,
+          396
+        ]
+      ],
+      "labels": [
+        "firefox",
+        "wget"
+      ],
+      "n_folds": 4,
+      "misclassified": [
+        {
+          "round": 2,
+          "page": "bibliothek_15621acdde3d",
+          "true": "wget",
+          "predicted": "firefox"
+        },
+        {
+          "round": 2,
+          "page": "lausitz-science-park_be4c6c8dad5a",
+          "true": "wget",
+          "predicted": "firefox"
+        },
+        {
+          "round": 2,
+          "page": "studieninteressierte_studienorte-entdecken_senftenberg_74043dead5de",
+          "true": "wget",
+          "predicted": "firefox"
+        },
+        {
+          "round": 2,
+          "page": "universitaet_9f000ac62c68",
+          "true": "wget",
+          "predicted": "firefox"
+        }
+      ],
+      "per_class": {
+        "firefox": {
+          "precision": 0.9900990099009901,
+          "recall": 1.0,
+          "f1": 0.9950248756218906,
+          "support": 400
+        },
+        "wget": {
+          "precision": 1.0,
+          "recall": 0.99,
+          "f1": 0.9949748743718593,
+          "support": 400
+        }
+      }
+    },
+    "hardest_pages": {
+      "random_forest": [],
+      "logistic_regression": [
+        {
+          "page": "bibliothek_15621acdde3d",
+          "errors": 1
+        },
+        {
+          "page": "lausitz-science-park_be4c6c8dad5a",
+          "errors": 1
+        },
+        {
+          "page": "studieninteressierte_studienorte-entdecken_senftenberg_74043dead5de",
+          "errors": 1
+        },
+        {
+          "page": "universitaet_9f000ac62c68",
+          "errors": 1
+        }
+      ]
+    }
+  },
+  "ablation": {
+    "note": "Same LeaveOneGroupOut protocol, re-run with feature families removed. This does not replace the headline evaluation above; it says which features carry it. A score that survives without the connections family supports the claim 'traffic shape separates the classes'. A score that collapses to chance without syn_count supports only the narrower claim 'connection parallelism separates the classes'.",
+    "groups": {
+      "counts": [
+        "count_"
+      ],
+      "sizes": [
+        "size_",
+        "bytes_",
+        "ack_"
+      ],
+      "timing": [
+        "duration",
+        "iat_"
+      ],
+      "bursts": [
+        "burst_"
+      ],
+      "connections": [
+        "syn_"
+      ]
+    },
+    "models": {
+      "random_forest": [
+        {
+          "configuration": "all features",
+          "n_features": 53,
+          "features": [
+            "count_total",
+            "count_up",
+            "count_down",
+            "count_ratio_up_down",
+            "bytes_up_total",
+            "size_up_mean",
+            "size_up_std",
+            "size_up_min",
+            "size_up_max",
+            "size_up_p25",
+            "size_up_median",
+            "size_up_p75",
+            "size_up_p90",
+            "ack_up_count",
+            "bytes_down_total",
+            "size_down_mean",
+            "size_down_std",
+            "size_down_min",
+            "size_down_max",
+            "size_down_p25",
+            "size_down_median",
+            "size_down_p75",
+            "size_down_p90",
+            "ack_down_count",
+            "bytes_ratio_up_down",
+            "duration",
+            "iat_mean",
+            "iat_std",
+            "iat_min",
+            "iat_max",
+            "iat_median",
+            "iat_p90",
+            "iat_up_mean",
+            "iat_up_std",
+            "iat_up_min",
+            "iat_up_max",
+            "iat_up_median",
+            "iat_up_p90",
+            "iat_down_mean",
+            "iat_down_std",
+            "iat_down_min",
+            "iat_down_max",
+            "iat_down_median",
+            "iat_down_p90",
+            "burst_count",
+            "burst_len_mean",
+            "burst_len_max",
+            "burst_bytes_mean",
+            "burst_bytes_max",
+            "burst_gap_mean",
+            "burst_gap_max",
+            "syn_count",
+            "syn_ack_count"
+          ],
+          "accuracy": 1.0,
+          "fold_accuracies": [
+            1.0,
+            1.0,
+            1.0,
+            1.0
+          ]
+        },
+        {
+          "configuration": "without syn_count",
+          "n_features": 52,
+          "features": [
+            "count_total",
+            "count_up",
+            "count_down",
+            "count_ratio_up_down",
+            "bytes_up_total",
+            "size_up_mean",
+            "size_up_std",
+            "size_up_min",
+            "size_up_max",
+            "size_up_p25",
+            "size_up_median",
+            "size_up_p75",
+            "size_up_p90",
+            "ack_up_count",
+            "bytes_down_total",
+            "size_down_mean",
+            "size_down_std",
+            "size_down_min",
+            "size_down_max",
+            "size_down_p25",
+            "size_down_median",
+            "size_down_p75",
+            "size_down_p90",
+            "ack_down_count",
+            "bytes_ratio_up_down",
+            "duration",
+            "iat_mean",
+            "iat_std",
+            "iat_min",
+            "iat_max",
+            "iat_median",
+            "iat_p90",
+            "iat_up_mean",
+            "iat_up_std",
+            "iat_up_min",
+            "iat_up_max",
+            "iat_up_median",
+            "iat_up_p90",
+            "iat_down_mean",
+            "iat_down_std",
+            "iat_down_min",
+            "iat_down_max",
+            "iat_down_median",
+            "iat_down_p90",
+            "burst_count",
+            "burst_len_mean",
+            "burst_len_max",
+            "burst_bytes_mean",
+            "burst_bytes_max",
+            "burst_gap_mean",
+            "burst_gap_max",
+            "syn_ack_count"
+          ],
+          "accuracy": 1.0,
+          "fold_accuracies": [
+            1.0,
+            1.0,
+            1.0,
+            1.0
+          ]
+        },
+        {
+          "configuration": "without counts",
+          "n_features": 49,
+          "features": [
+            "bytes_up_total",
+            "size_up_mean",
+            "size_up_std",
+            "size_up_min",
+            "size_up_max",
+            "size_up_p25",
+            "size_up_median",
+            "size_up_p75",
+            "size_up_p90",
+            "ack_up_count",
+            "bytes_down_total",
+            "size_down_mean",
+            "size_down_std",
+            "size_down_min",
+            "size_down_max",
+            "size_down_p25",
+            "size_down_median",
+            "size_down_p75",
+            "size_down_p90",
+            "ack_down_count",
+            "bytes_ratio_up_down",
+            "duration",
+            "iat_mean",
+            "iat_std",
+            "iat_min",
+            "iat_max",
+            "iat_median",
+            "iat_p90",
+            "iat_up_mean",
+            "iat_up_std",
+            "iat_up_min",
+            "iat_up_max",
+            "iat_up_median",
+            "iat_up_p90",
+            "iat_down_mean",
+            "iat_down_std",
+            "iat_down_min",
+            "iat_down_max",
+            "iat_down_median",
+            "iat_down_p90",
+            "burst_count",
+            "burst_len_mean",
+            "burst_len_max",
+            "burst_bytes_mean",
+            "burst_bytes_max",
+            "burst_gap_mean",
+            "burst_gap_max",
+            "syn_count",
+            "syn_ack_count"
+          ],
+          "accuracy": 1.0,
+          "fold_accuracies": [
+            1.0,
+            1.0,
+            1.0,
+            1.0
+          ]
+        },
+        {
+          "configuration": "without sizes",
+          "n_features": 32,
+          "features": [
+            "count_total",
+            "count_up",
+            "count_down",
+            "count_ratio_up_down",
+            "duration",
+            "iat_mean",
+            "iat_std",
+            "iat_min",
+            "iat_max",
+            "iat_median",
+            "iat_p90",
+            "iat_up_mean",
+            "iat_up_std",
+            "iat_up_min",
+            "iat_up_max",
+            "iat_up_median",
+            "iat_up_p90",
+            "iat_down_mean",
+            "iat_down_std",
+            "iat_down_min",
+            "iat_down_max",
+            "iat_down_median",
+            "iat_down_p90",
+            "burst_count",
+            "burst_len_mean",
+            "burst_len_max",
+            "burst_bytes_mean",
+            "burst_bytes_max",
+            "burst_gap_mean",
+            "burst_gap_max",
+            "syn_count",
+            "syn_ack_count"
+          ],
+          "accuracy": 1.0,
+          "fold_accuracies": [
+            1.0,
+            1.0,
+            1.0,
+            1.0
+          ]
+        },
+        {
+          "configuration": "without timing",
+          "n_features": 34,
+          "features": [
+            "count_total",
+            "count_up",
+            "count_down",
+            "count_ratio_up_down",
+            "bytes_up_total",
+            "size_up_mean",
+            "size_up_std",
+            "size_up_min",
+            "size_up_max",
+            "size_up_p25",
+            "size_up_median",
+            "size_up_p75",
+            "size_up_p90",
+            "ack_up_count",
+            "bytes_down_total",
+            "size_down_mean",
+            "size_down_std",
+            "size_down_min",
+            "size_down_max",
+            "size_down_p25",
+            "size_down_median",
+            "size_down_p75",
+            "size_down_p90",
+            "ack_down_count",
+            "bytes_ratio_up_down",
+            "burst_count",
+            "burst_len_mean",
+            "burst_len_max",
+            "burst_bytes_mean",
+            "burst_bytes_max",
+            "burst_gap_mean",
+            "burst_gap_max",
+            "syn_count",
+            "syn_ack_count"
+          ],
+          "accuracy": 1.0,
+          "fold_accuracies": [
+            1.0,
+            1.0,
+            1.0,
+            1.0
+          ]
+        },
+        {
+          "configuration": "without bursts",
+          "n_features": 46,
+          "features": [
+            "count_total",
+            "count_up",
+            "count_down",
+            "count_ratio_up_down",
+            "bytes_up_total",
+            "size_up_mean",
+            "size_up_std",
+            "size_up_min",
+            "size_up_max",
+            "size_up_p25",
+            "size_up_median",
+            "size_up_p75",
+            "size_up_p90",
+            "ack_up_count",
+            "bytes_down_total",
+            "size_down_mean",
+            "size_down_std",
+            "size_down_min",
+            "size_down_max",
+            "size_down_p25",
+            "size_down_median",
+            "size_down_p75",
+            "size_down_p90",
+            "ack_down_count",
+            "bytes_ratio_up_down",
+            "duration",
+            "iat_mean",
+            "iat_std",
+            "iat_min",
+            "iat_max",
+            "iat_median",
+            "iat_p90",
+            "iat_up_mean",
+            "iat_up_std",
+            "iat_up_min",
+            "iat_up_max",
+            "iat_up_median",
+            "iat_up_p90",
+            "iat_down_mean",
+            "iat_down_std",
+            "iat_down_min",
+            "iat_down_max",
+            "iat_down_median",
+            "iat_down_p90",
+            "syn_count",
+            "syn_ack_count"
+          ],
+          "accuracy": 1.0,
+          "fold_accuracies": [
+            1.0,
+            1.0,
+            1.0,
+            1.0
+          ]
+        },
+        {
+          "configuration": "without connections",
+          "n_features": 51,
+          "features": [
+            "count_total",
+            "count_up",
+            "count_down",
+            "count_ratio_up_down",
+            "bytes_up_total",
+            "size_up_mean",
+            "size_up_std",
+            "size_up_min",
+            "size_up_max",
+            "size_up_p25",
+            "size_up_median",
+            "size_up_p75",
+            "size_up_p90",
+            "ack_up_count",
+            "bytes_down_total",
+            "size_down_mean",
+            "size_down_std",
+            "size_down_min",
+            "size_down_max",
+            "size_down_p25",
+            "size_down_median",
+            "size_down_p75",
+            "size_down_p90",
+            "ack_down_count",
+            "bytes_ratio_up_down",
+            "duration",
+            "iat_mean",
+            "iat_std",
+            "iat_min",
+            "iat_max",
+            "iat_median",
+            "iat_p90",
+            "iat_up_mean",
+            "iat_up_std",
+            "iat_up_min",
+            "iat_up_max",
+            "iat_up_median",
+            "iat_up_p90",
+            "iat_down_mean",
+            "iat_down_std",
+            "iat_down_min",
+            "iat_down_max",
+            "iat_down_median",
+            "iat_down_p90",
+            "burst_count",
+            "burst_len_mean",
+            "burst_len_max",
+            "burst_bytes_mean",
+            "burst_bytes_max",
+            "burst_gap_mean",
+            "burst_gap_max"
+          ],
+          "accuracy": 1.0,
+          "fold_accuracies": [
+            1.0,
+            1.0,
+            1.0,
+            1.0
+          ]
+        },
+        {
+          "configuration": "only syn_count",
+          "n_features": 1,
+          "features": [
+            "syn_count"
+          ],
+          "accuracy": 0.99,
+          "fold_accuracies": [
+            0.99,
+            0.99,
+            0.99,
+            0.99
+          ]
+        }
+      ],
+      "logistic_regression": [
+        {
+          "configuration": "all features",
+          "n_features": 53,
+          "features": [
+            "count_total",
+            "count_up",
+            "count_down",
+            "count_ratio_up_down",
+            "bytes_up_total",
+            "size_up_mean",
+            "size_up_std",
+            "size_up_min",
+            "size_up_max",
+            "size_up_p25",
+            "size_up_median",
+            "size_up_p75",
+            "size_up_p90",
+            "ack_up_count",
+            "bytes_down_total",
+            "size_down_mean",
+            "size_down_std",
+            "size_down_min",
+            "size_down_max",
+            "size_down_p25",
+            "size_down_median",
+            "size_down_p75",
+            "size_down_p90",
+            "ack_down_count",
+            "bytes_ratio_up_down",
+            "duration",
+            "iat_mean",
+            "iat_std",
+            "iat_min",
+            "iat_max",
+            "iat_median",
+            "iat_p90",
+            "iat_up_mean",
+            "iat_up_std",
+            "iat_up_min",
+            "iat_up_max",
+            "iat_up_median",
+            "iat_up_p90",
+            "iat_down_mean",
+            "iat_down_std",
+            "iat_down_min",
+            "iat_down_max",
+            "iat_down_median",
+            "iat_down_p90",
+            "burst_count",
+            "burst_len_mean",
+            "burst_len_max",
+            "burst_bytes_mean",
+            "burst_bytes_max",
+            "burst_gap_mean",
+            "burst_gap_max",
+            "syn_count",
+            "syn_ack_count"
+          ],
+          "accuracy": 0.995,
+          "fold_accuracies": [
+            1.0,
+            0.98,
+            1.0,
+            1.0
+          ]
+        },
+        {
+          "configuration": "without syn_count",
+          "n_features": 52,
+          "features": [
+            "count_total",
+            "count_up",
+            "count_down",
+            "count_ratio_up_down",
+            "bytes_up_total",
+            "size_up_mean",
+            "size_up_std",
+            "size_up_min",
+            "size_up_max",
+            "size_up_p25",
+            "size_up_median",
+            "size_up_p75",
+            "size_up_p90",
+            "ack_up_count",
+            "bytes_down_total",
+            "size_down_mean",
+            "size_down_std",
+            "size_down_min",
+            "size_down_max",
+            "size_down_p25",
+            "size_down_median",
+            "size_down_p75",
+            "size_down_p90",
+            "ack_down_count",
+            "bytes_ratio_up_down",
+            "duration",
+            "iat_mean",
+            "iat_std",
+            "iat_min",
+            "iat_max",
+            "iat_median",
+            "iat_p90",
+            "iat_up_mean",
+            "iat_up_std",
+            "iat_up_min",
+            "iat_up_max",
+            "iat_up_median",
+            "iat_up_p90",
+            "iat_down_mean",
+            "iat_down_std",
+            "iat_down_min",
+            "iat_down_max",
+            "iat_down_median",
+            "iat_down_p90",
+            "burst_count",
+            "burst_len_mean",
+            "burst_len_max",
+            "burst_bytes_mean",
+            "burst_bytes_max",
+            "burst_gap_mean",
+            "burst_gap_max",
+            "syn_ack_count"
+          ],
+          "accuracy": 0.995,
+          "fold_accuracies": [
+            1.0,
+            0.98,
+            1.0,
+            1.0
+          ]
+        },
+        {
+          "configuration": "without counts",
+          "n_features": 49,
+          "features": [
+            "bytes_up_total",
+            "size_up_mean",
+            "size_up_std",
+            "size_up_min",
+            "size_up_max",
+            "size_up_p25",
+            "size_up_median",
+            "size_up_p75",
+            "size_up_p90",
+            "ack_up_count",
+            "bytes_down_total",
+            "size_down_mean",
+            "size_down_std",
+            "size_down_min",
+            "size_down_max",
+            "size_down_p25",
+            "size_down_median",
+            "size_down_p75",
+            "size_down_p90",
+            "ack_down_count",
+            "bytes_ratio_up_down",
+            "duration",
+            "iat_mean",
+            "iat_std",
+            "iat_min",
+            "iat_max",
+            "iat_median",
+            "iat_p90",
+            "iat_up_mean",
+            "iat_up_std",
+            "iat_up_min",
+            "iat_up_max",
+            "iat_up_median",
+            "iat_up_p90",
+            "iat_down_mean",
+            "iat_down_std",
+            "iat_down_min",
+            "iat_down_max",
+            "iat_down_median",
+            "iat_down_p90",
+            "burst_count",
+            "burst_len_mean",
+            "burst_len_max",
+            "burst_bytes_mean",
+            "burst_bytes_max",
+            "burst_gap_mean",
+            "burst_gap_max",
+            "syn_count",
+            "syn_ack_count"
+          ],
+          "accuracy": 0.995,
+          "fold_accuracies": [
+            1.0,
+            0.98,
+            1.0,
+            1.0
+          ]
+        },
+        {
+          "configuration": "without sizes",
+          "n_features": 32,
+          "features": [
+            "count_total",
+            "count_up",
+            "count_down",
+            "count_ratio_up_down",
+            "duration",
+            "iat_mean",
+            "iat_std",
+            "iat_min",
+            "iat_max",
+            "iat_median",
+            "iat_p90",
+            "iat_up_mean",
+            "iat_up_std",
+            "iat_up_min",
+            "iat_up_max",
+            "iat_up_median",
+            "iat_up_p90",
+            "iat_down_mean",
+            "iat_down_std",
+            "iat_down_min",
+            "iat_down_max",
+            "iat_down_median",
+            "iat_down_p90",
+            "burst_count",
+            "burst_len_mean",
+            "burst_len_max",
+            "burst_bytes_mean",
+            "burst_bytes_max",
+            "burst_gap_mean",
+            "burst_gap_max",
+            "syn_count",
+            "syn_ack_count"
+          ],
+          "accuracy": 0.995,
+          "fold_accuracies": [
+            1.0,
+            0.98,
+            1.0,
+            1.0
+          ]
+        },
+        {
+          "configuration": "without timing",
+          "n_features": 34,
+          "features": [
+            "count_total",
+            "count_up",
+            "count_down",
+            "count_ratio_up_down",
+            "bytes_up_total",
+            "size_up_mean",
+            "size_up_std",
+            "size_up_min",
+            "size_up_max",
+            "size_up_p25",
+            "size_up_median",
+            "size_up_p75",
+            "size_up_p90",
+            "ack_up_count",
+            "bytes_down_total",
+            "size_down_mean",
+            "size_down_std",
+            "size_down_min",
+            "size_down_max",
+            "size_down_p25",
+            "size_down_median",
+            "size_down_p75",
+            "size_down_p90",
+            "ack_down_count",
+            "bytes_ratio_up_down",
+            "burst_count",
+            "burst_len_mean",
+            "burst_len_max",
+            "burst_bytes_mean",
+            "burst_bytes_max",
+            "burst_gap_mean",
+            "burst_gap_max",
+            "syn_count",
+            "syn_ack_count"
+          ],
+          "accuracy": 1.0,
+          "fold_accuracies": [
+            1.0,
+            1.0,
+            1.0,
+            1.0
+          ]
+        },
+        {
+          "configuration": "without bursts",
+          "n_features": 46,
+          "features": [
+            "count_total",
+            "count_up",
+            "count_down",
+            "count_ratio_up_down",
+            "bytes_up_total",
+            "size_up_mean",
+            "size_up_std",
+            "size_up_min",
+            "size_up_max",
+            "size_up_p25",
+            "size_up_median",
+            "size_up_p75",
+            "size_up_p90",
+            "ack_up_count",
+            "bytes_down_total",
+            "size_down_mean",
+            "size_down_std",
+            "size_down_min",
+            "size_down_max",
+            "size_down_p25",
+            "size_down_median",
+            "size_down_p75",
+            "size_down_p90",
+            "ack_down_count",
+            "bytes_ratio_up_down",
+            "duration",
+            "iat_mean",
+            "iat_std",
+            "iat_min",
+            "iat_max",
+            "iat_median",
+            "iat_p90",
+            "iat_up_mean",
+            "iat_up_std",
+            "iat_up_min",
+            "iat_up_max",
+            "iat_up_median",
+            "iat_up_p90",
+            "iat_down_mean",
+            "iat_down_std",
+            "iat_down_min",
+            "iat_down_max",
+            "iat_down_median",
+            "iat_down_p90",
+            "syn_count",
+            "syn_ack_count"
+          ],
+          "accuracy": 0.995,
+          "fold_accuracies": [
+            1.0,
+            0.98,
+            1.0,
+            1.0
+          ]
+        },
+        {
+          "configuration": "without connections",
+          "n_features": 51,
+          "features": [
+            "count_total",
+            "count_up",
+            "count_down",
+            "count_ratio_up_down",
+            "bytes_up_total",
+            "size_up_mean",
+            "size_up_std",
+            "size_up_min",
+            "size_up_max",
+            "size_up_p25",
+            "size_up_median",
+            "size_up_p75",
+            "size_up_p90",
+            "ack_up_count",
+            "bytes_down_total",
+            "size_down_mean",
+            "size_down_std",
+            "size_down_min",
+            "size_down_max",
+            "size_down_p25",
+            "size_down_median",
+            "size_down_p75",
+            "size_down_p90",
+            "ack_down_count",
+            "bytes_ratio_up_down",
+            "duration",
+            "iat_mean",
+            "iat_std",
+            "iat_min",
+            "iat_max",
+            "iat_median",
+            "iat_p90",
+            "iat_up_mean",
+            "iat_up_std",
+            "iat_up_min",
+            "iat_up_max",
+            "iat_up_median",
+            "iat_up_p90",
+            "iat_down_mean",
+            "iat_down_std",
+            "iat_down_min",
+            "iat_down_max",
+            "iat_down_median",
+            "iat_down_p90",
+            "burst_count",
+            "burst_len_mean",
+            "burst_len_max",
+            "burst_bytes_mean",
+            "burst_bytes_max",
+            "burst_gap_mean",
+            "burst_gap_max"
+          ],
+          "accuracy": 0.995,
+          "fold_accuracies": [
+            1.0,
+            0.98,
+            1.0,
+            1.0
+          ]
+        },
+        {
+          "configuration": "only syn_count",
+          "n_features": 1,
+          "features": [
+            "syn_count"
+          ],
+          "accuracy": 0.99,
+          "fold_accuracies": [
+            0.99,
+            0.99,
+            0.99,
+            0.99
+          ]
+        }
+      ]
+    }
+  },
+  "shap": {
+    "model": "random_forest",
+    "seeds": {
+      "primary": 42,
+      "comparison": 7
+    },
+    "split": "LeaveOneGroupOut on capture round; SHAP computed per fold on the held-out round only, never on training rows",
+    "n_folds": 4,
+    "n_traces": 800,
+    "n_features": 53,
+    "direction": {
+      "positive_class": "wget",
+      "classes_": [
+        "firefox",
+        "wget"
+      ],
+      "note": "A positive SHAP value pushes the prediction toward 'wget'. The class order is read from the fitted classifier, never assumed.",
+      "base_value": 0.498272222222222
+    },
+    "family_importance": {
+      "seed_42": {
+        "counts": 0.0045809102500916285,
+        "sizes": 0.20229960501088046,
+        "timing": 0.2129886906373528,
+        "bursts": 0.04492561847265604,
+        "connections": 0.040791726295256785
+      },
+      "seed_7": {
+        "counts": 0.00545068180536237,
+        "sizes": 0.21207585090003728,
+        "timing": 0.1991948640858693,
+        "bursts": 0.040379609228728006,
+        "connections": 0.04904101196373764
+      }
+    },
+    "spreads": {
+      "note": "same_day compares rounds 1 and 2 (the same local day, ~10 h apart); cross_day compares rounds 3 and 4 (different days); seed compares the two random_state values on the same data.",
+      "same_day_rounds": [
+        1,
+        2
+      ],
+      "cross_day_rounds": [
+        3,
+        4
+      ],
+      "per_feature": {
+        "count_total": {
+          "same_day": 5.216524658169406e-05,
+          "cross_day": 6.396831328518254e-05,
+          "seed": 0.0010061727799776181
+        },
+        "count_up": {
+          "same_day": 1.9341191363474766e-05,
+          "cross_day": 7.977935170726006e-05,
+          "seed": 0.0001511402237206977
+        },
+        "count_down": {
+          "same_day": 0.00029681110671884395,
+          "cross_day": 0.00015151720325951457,
+          "seed": 0.0009055444085934023
+        },
+        "count_ratio_up_down": {
+          "same_day": 0.0023133603353241235,
+          "cross_day": 0.0030807860107159263,
+          "seed": 0.0008908054095795926
+        },
+        "bytes_up_total": {
+          "same_day": 3.029647206912977e-05,
+          "cross_day": 0.00010965091514409617,
+          "seed": 3.4986846803306485e-05
+        },
+        "size_up_mean": {
+          "same_day": 0.000815074191860863,
+          "cross_day": 2.8911311757954042e-05,
+          "seed": 0.0016628591538970384
+        },
+        "size_up_std": {
+          "same_day": 0.0006261549739353944,
+          "cross_day": 0.00047093937005815434,
+          "seed": 0.01712465804882505
+        },
+        "size_up_min": {
+          "same_day": 0.0,
+          "cross_day": 0.0,
+          "seed": 0.0
+        },
+        "size_up_max": {
+          "same_day": 0.0003134417448642651,
+          "cross_day": 0.0006057784510786063,
+          "seed": 0.009682335951431281
+        },
+        "size_up_p25": {
+          "same_day": 0.0,
+          "cross_day": 0.0,
+          "seed": 0.0
+        },
+        "size_up_median": {
+          "same_day": 0.0003780759893386946,
+          "cross_day": 0.0018757017537065898,
+          "seed": 0.004848214210342582
+        },
+        "size_up_p75": {
+          "same_day": 0.00034159453266736917,
+          "cross_day": 5.260064039414253e-05,
+          "seed": 0.0021803772630445677
+        },
+        "size_up_p90": {
+          "same_day": 0.00031791068667726824,
+          "cross_day": 0.00041876488078135266,
+          "seed": 0.00047308802059415483
+        },
+        "ack_up_count": {
+          "same_day": 1.0766015908644463e-08,
+          "cross_day": 6.031892570221981e-07,
+          "seed": 0.0006127118984418356
+        },
+        "bytes_down_total": {
+          "same_day": 5.3817047475955326e-05,
+          "cross_day": 1.4692545779205942e-05,
+          "seed": 8.506100674172615e-06
+        },
+        "size_down_mean": {
+          "same_day": 7.852812671923747e-05,
+          "cross_day": 0.0,
+          "seed": 2.3832226253959658e-05
+        },
+        "size_down_std": {
+          "same_day": 7.534345311854595e-05,
+          "cross_day": 8.508131837656793e-07,
+          "seed": 1.8476402325626933e-05
+        },
+        "size_down_min": {
+          "same_day": 0.0,
+          "cross_day": 0.0,
+          "seed": 0.0
+        },
+        "size_down_max": {
+          "same_day": 5.2222222222220594e-05,
+          "cross_day": 4.8867762322678905e-05,
+          "seed": 0.00011266338178159626
+        },
+        "size_down_p25": {
+          "same_day": 0.00033850651817856573,
+          "cross_day": 8.903965103787266e-05,
+          "seed": 0.003948245573848686
+        },
+        "size_down_median": {
+          "same_day": 0.0,
+          "cross_day": 0.0,
+          "seed": 0.0
+        },
+        "size_down_p75": {
+          "same_day": 9.46177968807346e-06,
+          "cross_day": 9.530345312530264e-06,
+          "seed": 0.00041044996316316144
+        },
+        "size_down_p90": {
+          "same_day": 6.154506169679137e-07,
+          "cross_day": 5.249716440975543e-05,
+          "seed": 0.0005918154182626203
+        },
+        "ack_down_count": {
+          "same_day": 5.425442198172051e-05,
+          "cross_day": 0.0001450468946797845,
+          "seed": 0.001207967021422264
+        },
+        "bytes_ratio_up_down": {
+          "same_day": 3.798736113501221e-05,
+          "cross_day": 2.796420581655608e-07,
+          "seed": 0.0005522137148512391
+        },
+        "duration": {
+          "same_day": 0.00013029170167372744,
+          "cross_day": 1.7573180787457923e-05,
+          "seed": 5.3406446434541444e-05
+        },
+        "iat_mean": {
+          "same_day": 5.8273343114577775e-05,
+          "cross_day": 6.056542825009233e-05,
+          "seed": 5.8296398694278816e-05
+        },
+        "iat_std": {
+          "same_day": 0.00023902103451490294,
+          "cross_day": 0.0002715930852219086,
+          "seed": 0.00020010627584661576
+        },
+        "iat_min": {
+          "same_day": 0.0,
+          "cross_day": 8.31054810332345e-07,
+          "seed": 7.430920709499413e-06
+        },
+        "iat_max": {
+          "same_day": 0.0007716025098261498,
+          "cross_day": 0.00011183690643177396,
+          "seed": 0.011867965464545258
+        },
+        "iat_median": {
+          "same_day": 0.0007984242226377301,
+          "cross_day": 0.0013892987629459917,
+          "seed": 0.0070101168791714755
+        },
+        "iat_p90": {
+          "same_day": 0.0004343676759935093,
+          "cross_day": 0.00030213176997959703,
+          "seed": 0.00012927651909262164
+        },
+        "iat_up_mean": {
+          "same_day": 1.4862201365189206e-05,
+          "cross_day": 1.1114547537228884e-05,
+          "seed": 0.00016049031117630069
+        },
+        "iat_up_std": {
+          "same_day": 0.0002691519937307815,
+          "cross_day": 1.2170251100808698e-06,
+          "seed": 0.0008809047657372545
+        },
+        "iat_up_min": {
+          "same_day": 0.001710458611138761,
+          "cross_day": 1.7681556755319008e-05,
+          "seed": 0.0003687984620594733
+        },
+        "iat_up_max": {
+          "same_day": 0.0013118709089056865,
+          "cross_day": 0.0006364478171844504,
+          "seed": 0.003562043959214403
+        },
+        "iat_up_median": {
+          "same_day": 1.4149656347750187e-05,
+          "cross_day": 0.0,
+          "seed": 0.0009947799384809426
+        },
+        "iat_up_p90": {
+          "same_day": 4.318455622583828e-05,
+          "cross_day": 1.2312558514637235e-05,
+          "seed": 0.00013819498725995848
+        },
+        "iat_down_mean": {
+          "same_day": 0.0,
+          "cross_day": 0.0,
+          "seed": 0.00011420389905781556
+        },
+        "iat_down_std": {
+          "same_day": 0.003349088317957786,
+          "cross_day": 0.001847322250903713,
+          "seed": 0.00010265631212574844
+        },
+        "iat_down_min": {
+          "same_day": 0.0,
+          "cross_day": 0.0,
+          "seed": 4.082279320522544e-05
+        },
+        "iat_down_max": {
+          "same_day": 0.00043553178362602113,
+          "cross_day": 0.0003938321248163276,
+          "seed": 0.021280643327979784
+        },
+        "iat_down_median": {
+          "same_day": 0.00017390046190246555,
+          "cross_day": 9.177536703133823e-05,
+          "seed": 0.00011193294986899148
+        },
+        "iat_down_p90": {
+          "same_day": 0.0,
+          "cross_day": 0.0,
+          "seed": 8.062977376472653e-05
+        },
+        "burst_count": {
+          "same_day": 0.000362849679838074,
+          "cross_day": 0.0007397727224666669,
+          "seed": 0.003688865076943974
+        },
+        "burst_len_mean": {
+          "same_day": 0.0015167298549226688,
+          "cross_day": 0.0007988552499661149,
+          "seed": 0.007127032030571575
+        },
+        "burst_len_max": {
+          "same_day": 0.0017721555827173272,
+          "cross_day": 0.00030159171046514953,
+          "seed": 0.0019187840247552675
+        },
+        "burst_bytes_mean": {
+          "same_day": 0.0,
+          "cross_day": 0.00012659207957564227,
+          "seed": 0.000855661558034248
+        },
+        "burst_bytes_max": {
+          "same_day": 1.0451505016721339e-07,
+          "cross_day": 5.066932476729697e-07,
+          "seed": 0.00011789609487711339
+        },
+        "burst_gap_mean": {
+          "same_day": 0.0010495831154581376,
+          "cross_day": 0.0005773524767613836,
+          "seed": 0.0001654994273084416
+        },
+        "burst_gap_max": {
+          "same_day": 0.0,
+          "cross_day": 0.0,
+          "seed": 2.8835088522588494e-06
+        },
+        "syn_count": {
+          "same_day": 8.178319710026166e-05,
+          "cross_day": 0.0012903346201484991,
+          "seed": 0.0036576534637489874
+        },
+        "syn_ack_count": {
+          "same_day": 3.894480389363478e-05,
+          "cross_day": 0.0006107405579658907,
+          "seed": 0.01190693913223003
+        }
+      },
+      "max": {
+        "same_day": 0.003349088317957786,
+        "cross_day": 0.0030807860107159263,
+        "seed": 0.021280643327979784
+      }
+    },
+    "zero_importance": {
+      "note": "Two different findings, deliberately kept apart. A constant feature is UNINFORMATIVE -- it never varies. A non-constant feature with zero attribution is UNNECESSARY -- it varies, but a correlated neighbour was always split on instead.",
+      "constant": [
+        "size_down_min",
+        "size_up_min",
+        "size_up_p25"
+      ],
+      "varying_but_unused": [
+        "burst_gap_max",
+        "iat_down_min",
+        "size_down_median"
+      ]
+    },
+    "feature_instability": {
+      "max_rank_movement": 24,
+      "features_at_max": [
+        {
+          "name": "size_up_p75",
+          "rank_seed_42": 19,
+          "rank_seed_7": 43,
+          "rank_movement": 24
+        }
+      ],
+      "rank_index_base": 0,
+      "top10_seed_42": [
+        "iat_max",
+        "iat_down_max",
+        "size_up_max",
+        "iat_up_max",
+        "size_up_p90",
+        "size_up_std",
+        "burst_len_mean",
+        "iat_median",
+        "ack_down_count",
+        "syn_count"
+      ],
+      "top10_seed_7": [
+        "iat_max",
+        "size_up_std",
+        "iat_up_max",
+        "size_up_p90",
+        "size_up_max",
+        "iat_down_max",
+        "syn_ack_count",
+        "ack_down_count",
+        "burst_len_mean",
+        "syn_count"
+      ],
+      "top10_same_set": false,
+      "top10_overlap": 9,
+      "top10_symmetric_difference": [
+        {
+          "name": "iat_median",
+          "rank_seed_42": 7,
+          "rank_seed_7": 10,
+          "rank_movement": 3,
+          "seed_42": 0.02458957399883283,
+          "seed_7": 0.017579457119661662
+        },
+        {
+          "name": "syn_ack_count",
+          "rank_seed_42": 10,
+          "rank_seed_7": 6,
+          "rank_movement": 4,
+          "seed_42": 0.017804007532930086,
+          "seed_7": 0.029710946665160207
+        }
+      ]
+    },
+    "family_share_top2": {
+      "seed_42": {
+        "families": [
+          "timing",
+          "sizes"
+        ],
+        "summed": 0.4152882956482332,
+        "total": 0.5055865506662377,
+        "share": 0.821399016846841
+      },
+      "seed_7": {
+        "families": [
+          "sizes",
+          "timing"
+        ],
+        "summed": 0.4112707149859066,
+        "total": 0.5061420179837346,
+        "share": 0.8125599147532605
+      },
+      "same_leader": false
+    }
+  },
+  "cli": {
+    "check": "cli-vs-training feature parity; features only, never accuracy",
+    "model": {
+      "path": "models/client_classifier.joblib",
+      "sha256": "65864d6df5dc816b02831da77d16c54df10a74d9286f36856250fe6b35348904",
+      "n_features": 53
+    },
+    "limit": null,
+    "partial": false,
+    "coverage": {
+      "pcaps_found": 800,
+      "csv_rows": 800,
+      "matched": 800,
+      "pcaps_without_csv_row": [],
+      "csv_rows_without_pcap": []
+    },
+    "comparison": {
+      "traces_compared": 800,
+      "traces_matching_all_features": 800,
+      "refused_by_inference_path": [],
+      "mismatched_features": {},
+      "examples": []
+    },
+    "comparisons": {
+      "traces_compared": 800,
+      "n_features": 53,
+      "total": 42400
+    }
+  },
+  "capture": [
+    {
+      "round": 1,
+      "date": "20260807",
+      "started_at": "2026-08-06T22:46:56+00:00",
+      "finished_at": "2026-08-06T23:02:29+00:00",
+      "snaplen": 96,
+      "tcpdump_filter": "host 127.0.0.1 and port 8443",
+      "capture_interface": "lo",
+      "quiet_seconds": 3.0,
+      "max_load_seconds": 90.0,
+      "network_namespace": "sudo unshare -n (loopback only), verified per round",
+      "server_cert_sha256": "AE:44:89:82:9A:B5:24:92:CB:12:BD:9A:4B:FB:8F:09:04:33:D4:E5:26:4B:85:CB:FD:36:E1:59:BD:91:D1:08",
+      "versions": {
+        "firefox": "Mozilla Firefox 153.0.3",
+        "wget": "GNU Wget 1.21.4 built on linux-gnu.",
+        "tcpdump": "tcpdump version 4.99.4",
+        "openssl": "OpenSSL 3.0.13 30 Jan 2024 (Library: OpenSSL 3.0.13 30 Jan 2024)",
+        "python": "3.12.3"
+      },
+      "totals": {
+        "pages_available": 100,
+        "pages_attempted": 100,
+        "limit": null,
+        "traces_ok": 200,
+        "traces_failed": 0,
+        "per_client": {
+          "firefox": 100,
+          "wget": 100
+        },
+        "packets": 47645,
+        "bytes": 4921694
+      }
+    },
+    {
+      "round": 2,
+      "date": "20260807",
+      "started_at": "2026-08-07T08:51:09+00:00",
+      "finished_at": "2026-08-07T09:06:41+00:00",
+      "snaplen": 96,
+      "tcpdump_filter": "host 127.0.0.1 and port 8443",
+      "capture_interface": "lo",
+      "quiet_seconds": 3.0,
+      "max_load_seconds": 90.0,
+      "network_namespace": "sudo unshare -n (loopback only), verified per round",
+      "server_cert_sha256": "AE:44:89:82:9A:B5:24:92:CB:12:BD:9A:4B:FB:8F:09:04:33:D4:E5:26:4B:85:CB:FD:36:E1:59:BD:91:D1:08",
+      "versions": {
+        "firefox": "Mozilla Firefox 153.0.3",
+        "wget": "GNU Wget 1.21.4 built on linux-gnu.",
+        "tcpdump": "tcpdump version 4.99.4",
+        "openssl": "OpenSSL 3.0.13 30 Jan 2024 (Library: OpenSSL 3.0.13 30 Jan 2024)",
+        "python": "3.12.3"
+      },
+      "totals": {
+        "pages_available": 100,
+        "pages_attempted": 100,
+        "limit": null,
+        "traces_ok": 200,
+        "traces_failed": 0,
+        "per_client": {
+          "firefox": 100,
+          "wget": 100
+        },
+        "packets": 48098,
+        "bytes": 4965824
+      }
+    },
+    {
+      "round": 3,
+      "date": "20260808",
+      "started_at": "2026-08-08T03:04:24+00:00",
+      "finished_at": "2026-08-08T03:20:04+00:00",
+      "snaplen": 96,
+      "tcpdump_filter": "host 127.0.0.1 and port 8443",
+      "capture_interface": "lo",
+      "quiet_seconds": 3.0,
+      "max_load_seconds": 90.0,
+      "network_namespace": "sudo unshare -n (loopback only), verified per round",
+      "server_cert_sha256": "AE:44:89:82:9A:B5:24:92:CB:12:BD:9A:4B:FB:8F:09:04:33:D4:E5:26:4B:85:CB:FD:36:E1:59:BD:91:D1:08",
+      "versions": {
+        "firefox": "Mozilla Firefox 153.0.3",
+        "wget": "GNU Wget 1.21.4 built on linux-gnu.",
+        "tcpdump": "tcpdump version 4.99.4",
+        "openssl": "OpenSSL 3.0.13 30 Jan 2024 (Library: OpenSSL 3.0.13 30 Jan 2024)",
+        "python": "3.12.3"
+      },
+      "totals": {
+        "pages_available": 100,
+        "pages_attempted": 100,
+        "limit": null,
+        "traces_ok": 200,
+        "traces_failed": 0,
+        "per_client": {
+          "firefox": 100,
+          "wget": 100
+        },
+        "packets": 47771,
+        "bytes": 4931234
+      }
+    },
+    {
+      "round": 4,
+      "date": "20260809",
+      "started_at": "2026-08-08T22:09:39+00:00",
+      "finished_at": "2026-08-08T22:25:20+00:00",
+      "snaplen": 96,
+      "tcpdump_filter": "host 127.0.0.1 and port 8443",
+      "capture_interface": "lo",
+      "quiet_seconds": 3.0,
+      "max_load_seconds": 90.0,
+      "network_namespace": "sudo unshare -n (loopback only), verified per round",
+      "server_cert_sha256": "AE:44:89:82:9A:B5:24:92:CB:12:BD:9A:4B:FB:8F:09:04:33:D4:E5:26:4B:85:CB:FD:36:E1:59:BD:91:D1:08",
+      "versions": {
+        "firefox": "Mozilla Firefox 153.0.3",
+        "wget": "GNU Wget 1.21.4 built on linux-gnu.",
+        "tcpdump": "tcpdump version 4.99.4",
+        "openssl": "OpenSSL 3.0.13 30 Jan 2024 (Library: OpenSSL 3.0.13 30 Jan 2024)",
+        "python": "3.12.3"
+      },
+      "totals": {
+        "pages_available": 100,
+        "pages_attempted": 100,
+        "limit": null,
+        "traces_ok": 200,
+        "traces_failed": 0,
+        "per_client": {
+          "firefox": 100,
+          "wget": 100
+        },
+        "packets": 47906,
+        "bytes": 4945288
+      }
+    }
+  ],
+  "capture_invariants": {
+    "snaplen": {
+      "values": [
+        96
+      ],
+      "identical": true
+    },
+    "tcpdump_filter": {
+      "values": [
+        "host 127.0.0.1 and port 8443"
+      ],
+      "identical": true
+    },
+    "capture_interface": {
+      "values": [
+        "lo"
+      ],
+      "identical": true
+    },
+    "quiet_seconds": {
+      "values": [
+        3.0
+      ],
+      "identical": true
+    },
+    "server_cert_sha256": {
+      "values": [
+        "AE:44:89:82:9A:B5:24:92:CB:12:BD:9A:4B:FB:8F:09:04:33:D4:E5:26:4B:85:CB:FD:36:E1:59:BD:91:D1:08"
+      ],
+      "identical": true
+    }
+  },
+  "corpus": {
+    "user_agent": "traffic-shape-client-detection/1.0 (research mirror; +https://github.com/farhanrahmananik/traffic-shape-client-detection)",
+    "crawl_delay": 1.5,
+    "seed": 42,
+    "walks": 20,
+    "walks_run": 19,
+    "max_depth": 5,
+    "target_pages": 100,
+    "robots_fetched_at": "2026-08-06T15:43:03+00:00",
+    "robots_sha256": "9d8efde313ea84e6af4c405fed32f92ff14c0bf813e05f314c317b07075666d9",
+    "robots_provenance_file": "results/provenance/robots_20260806T163528Z.txt",
+    "environment": {
+      "python": "3.12.3",
+      "platform": "Linux-6.18.33.2-microsoft-standard-WSL2-x86_64-with-glibc2.39",
+      "requests": "2.34.2",
+      "beautifulsoup4": "4.15.0"
+    },
+    "totals": {
+      "pages": 100,
+      "assets": 1701,
+      "bytes": 220636729,
+      "refused": 7,
+      "failures_upstream": 29,
+      "failures_excluded": 7,
+      "failures_local": 1
+    },
+    "failures": {
+      "upstream": [
+        {
+          "url": "https://www.b-tu.de/typo3conf/ext/btu_template/Resources/app/images/jquery-ui/ui-bg_highlight-hard_15_f18f0b_1x100.png",
+          "outcome": "http_error",
+          "reason": "HTTP 404"
+        },
+        {
+          "url": "https://www.b-tu.de/typo3conf/ext/btu_template/Resources/app/images/jquery-ui/ui-bg_highlight-hard_100_fafaf4_1x100.png",
+          "outcome": "http_error",
+          "reason": "HTTP 404"
+        },
+        {
+          "url": "https://www.b-tu.de/typo3conf/ext/btu_template/Resources/app/images/jquery-ui/ui-icons_808080_256x240.png",
+          "outcome": "http_error",
+          "reason": "HTTP 404"
+        },
+        {
+          "url": "https://www.b-tu.de/typo3conf/ext/btu_template/Resources/app/images/jquery-ui/ui-icons_847e71_256x240.png",
+          "outcome": "http_error",
+          "reason": "HTTP 404"
+        },
+        {
+          "url": "https://www.b-tu.de/typo3conf/ext/btu_template/Resources/app/images/jquery-ui/ui-icons_eeeeee_256x240.png",
+          "outcome": "http_error",
+          "reason": "HTTP 404"
+        },
+        {
+          "url": "https://www.b-tu.de/typo3conf/ext/btu_template/Resources/app/images/jquery-ui/ui-icons_ffffff_256x240.png",
+          "outcome": "http_error",
+          "reason": "HTTP 404"
+        },
+        {
+          "url": "https://www.b-tu.de/typo3conf/ext/btu_template/Resources/app/images/jquery-ui/ui-icons_e3a345_256x240.png",
+          "outcome": "http_error",
+          "reason": "HTTP 404"
+        },
+        {
+          "url": "https://www.b-tu.de/typo3conf/ext/btu_template/Resources/app/images/jquery-ui/ui-icons_cd0a0a_256x240.png",
+          "outcome": "http_error",
+          "reason": "HTTP 404"
+        },
+        {
+          "url": "https://www.b-tu.de/typo3conf/ext/btu_template/Resources/btu-cs/images/jquery-ui/ui-icons_ffffff_256x240.png",
+          "outcome": "http_error",
+          "reason": "HTTP 404"
+        },
+        {
+          "url": "https://www.b-tu.de/typo3/sysext/frontend/Resources/Public/JavaScript/default_frontend.js?1773143742=",
+          "outcome": "blocked_robots",
+          "reason": "robots.txt prefix rule"
+        },
+        {
+          "url": "https://www.b-tu.de/media/media/embed/?autolightsoff=false&autoplay=false&chapters=false&height=405&key=7695c5aaccc3000ef58550fd9e378879&loop=false&related=false&responsive=false&t=0&width=720",
+          "outcome": "blocked_robots",
+          "reason": "robots.txt prefix rule"
+        },
+        {
+          "url": "https://www.b-tu.de/cas/webjars/normalize.css/8.0.1/normalize-112272e51c80ffe5bd01becd2ce7d656.css",
+          "outcome": "blocked_robots",
+          "reason": "robots.txt prefix rule"
+        },
+        {
+          "url": "https://www.b-tu.de/cas/webjars/bootstrap/5.3.8/css/bootstrap-grid.min-895b9494c7178ac12ad9c56d81305665.css",
+          "outcome": "blocked_robots",
+          "reason": "robots.txt prefix rule"
+        },
+        {
+          "url": "https://www.b-tu.de/cas/webjars/material-components-web/14.0.0/dist/material-components-web.min-9da9033e8d04504fe54b3dbb1298fd78.css",
+          "outcome": "blocked_robots",
+          "reason": "robots.txt prefix rule"
+        },
+        {
+          "url": "https://www.b-tu.de/cas/webjars/mdi__font/7.4.47/css/materialdesignicons.min-2c83c4bce691e18f82409f87b2bf84e4.css",
+          "outcome": "blocked_robots",
+          "reason": "robots.txt prefix rule"
+        },
+        {
+          "url": "https://www.b-tu.de/cas/webjars/datatables/2.3.2/css/dataTables.dataTables-86c98d6ce5aa289ccf4492ac3a785fad.css",
+          "outcome": "blocked_robots",
+          "reason": "robots.txt prefix rule"
+        },
+        {
+          "url": "https://www.b-tu.de/cas/css/cas-a90aca7e2afb259734284377211db332.css",
+          "outcome": "blocked_robots",
+          "reason": "robots.txt prefix rule"
+        },
+        {
+          "url": "https://www.b-tu.de/cas/css/custom-82fbae72d118e89d5c068015dd1d1a08.css",
+          "outcome": "blocked_robots",
+          "reason": "robots.txt prefix rule"
+        },
+        {
+          "url": "https://www.b-tu.de/cas/favicon-ca85a6da0bfd721283ee36001c41a9fd.ico",
+          "outcome": "blocked_robots",
+          "reason": "robots.txt prefix rule"
+        },
+        {
+          "url": "https://www.b-tu.de/cas/images/cas-logo-da0f65648a95f6a278fca5afd64ef0c6.png",
+          "outcome": "blocked_robots",
+          "reason": "robots.txt prefix rule"
+        },
+        {
+          "url": "https://www.b-tu.de/cas/webjars/jquery/3.7.1/jquery.min-2c872dbe60f4ba70fb85356113d8b35e.js",
+          "outcome": "blocked_robots",
+          "reason": "robots.txt prefix rule"
+        },
+        {
+          "url": "https://www.b-tu.de/cas/webjars/datatables/2.3.2/js/dataTables-8e31487c41abe2938c55b5dcde42a604.js",
+          "outcome": "blocked_robots",
+          "reason": "robots.txt prefix rule"
+        },
+        {
+          "url": "https://www.b-tu.de/cas/webjars/clientjs/0.2.1/dist/client.min-5b6a46b3fb2ab9307d013def98fd7289.js",
+          "outcome": "blocked_robots",
+          "reason": "robots.txt prefix rule"
+        },
+        {
+          "url": "https://www.b-tu.de/cas/webjars/material-components-web/14.0.0/dist/material-components-web.min-3c99031127092dd1984f2e3aa6aeed8b.js",
+          "outcome": "blocked_robots",
+          "reason": "robots.txt prefix rule"
+        },
+        {
+          "url": "https://www.b-tu.de/cas/js/cas-cd46228f2a9b608731f0c9dacfb9758c.js",
+          "outcome": "blocked_robots",
+          "reason": "robots.txt prefix rule"
+        },
+        {
+          "url": "https://www.b-tu.de/cas/js/material-b55ff53584b5e775934a54f8a5dd3ba8.js",
+          "outcome": "blocked_robots",
+          "reason": "robots.txt prefix rule"
+        },
+        {
+          "url": "https://www.b-tu.de/cas/js/custom-63dd40a49197131d92472a1288f662f6.js",
+          "outcome": "blocked_robots",
+          "reason": "robots.txt prefix rule"
+        },
+        {
+          "url": "https://www.b-tu.de/ikmz/xwiki/\\/cas\\/images\\/background-7e63bc5d9292dc903a38217e5fbc9e73\\.jpg",
+          "outcome": "http_error",
+          "reason": "HTTP 400"
+        },
+        {
+          "url": "https://www.b-tu.de/webmail/\\/cas\\/images\\/background-7e63bc5d9292dc903a38217e5fbc9e73\\.jpg",
+          "outcome": "http_error",
+          "reason": "HTTP 404"
+        }
+      ],
+      "excluded": [
+        {
+          "url": "https://www-docs.b-tu.de/chesco/public/Videos/chescoHallen_V4_mitFoerderlogos_2.mp4",
+          "outcome": "blocked_host",
+          "reason": "off-host 'www-docs.b-tu.de'"
+        },
+        {
+          "url": "https://www.b-tu.de/fileadmin/user_upload/b-tu.de/fg-stadtplanung/Bilder/Bilder_Startseite/Startpage.gif",
+          "outcome": "too_large",
+          "reason": "exceeded 8388608 bytes"
+        },
+        {
+          "url": "https://www.b-tu.de/fileadmin/user_upload/b-tu.de/fg-kunstgeschichte/Bilder/startseite/ForschungHeader.png",
+          "outcome": "too_large",
+          "reason": "exceeded 8388608 bytes"
+        },
+        {
+          "url": "https://www-docs.b-tu.de/lausitz-science-park/public/videos/Imagefilm_LausitzSciencePark_BTU_2022_recut_HD.mp4",
+          "outcome": "blocked_host",
+          "reason": "off-host 'www-docs.b-tu.de'"
+        },
+        {
+          "url": "https://www-docs.b-tu.de/sprachen/public/videos/German.mp4",
+          "outcome": "blocked_host",
+          "reason": "off-host 'www-docs.b-tu.de'"
+        },
+        {
+          "url": "https://www-docs.b-tu.de/lehre-studium/public/myBTU-Videotutorials/bewerbung-immatrikulation/APP_VT4_Immatrikulation_DE.mp4",
+          "outcome": "blocked_host",
+          "reason": "off-host 'www-docs.b-tu.de'"
+        },
+        {
+          "url": "https://www-docs.b-tu.de/weiterbildung/public/Medien/Podcast_ZWW.mp3",
+          "outcome": "blocked_host",
+          "reason": "off-host 'www-docs.b-tu.de'"
+        }
+      ],
+      "local": [
+        {
+          "url": "https://www.b-tu.de/fileadmin/_processed_/8/0/csm_dualesstudium-quer_e740039aa6.jpg",
+          "outcome": "error",
+          "reason": "ConnectionError"
+        }
+      ]
+    },
+    "counts": {
+      "pages": 100,
+      "assets": 1701,
+      "refused": 7
+    }
+  }
+}

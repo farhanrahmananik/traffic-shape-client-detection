@@ -1,0 +1,1149 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Browser or bot, from traffic shape alone — a measured case study</title>
+<meta name="description" content="Deciding whether an encrypted HTTPS page load came from a browser or an automated tool, using only packet sizes, directions, timings and burst structure — never payload. Evaluated with a split by capture round, never randomly.">
+
+<!--
+  Social and canonical metadata. No measured figure appears here: <head>
+  content cannot be bound at runtime, so a number typed into it would be
+  the one number on this page that goes stale silently. These describe
+  the method, which does not change when the data is recaptured.
+-->
+<link rel="canonical" href="https://farhanrahmananik.github.io/traffic-shape-client-detection/">
+<meta name="theme-color" content="#15171a">
+
+<meta property="og:type" content="article">
+<meta property="og:url" content="https://farhanrahmananik.github.io/traffic-shape-client-detection/">
+<meta property="og:title" content="Browser or bot, from traffic shape alone">
+<meta property="og:description" content="Classifying an encrypted HTTPS page load as a browser or an automated client from traffic shape alone — packet sizes, directions, timings, bursts. Never payload. Split by capture round, never randomly.">
+
+<!-- No og:image yet. A tag pointing at a file that does not exist is
+     worse than no tag: it renders as a broken card rather than a plain
+     one. -->
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="Browser or bot, from traffic shape alone">
+<meta name="twitter:description" content="Classifying an encrypted HTTPS page load as a browser or an automated client from traffic shape alone — packet sizes, directions, timings, bursts. Never payload. Split by capture round, never randomly.">
+
+<!--
+  Markup only. Styling and the data-binding script come next.
+
+  Every number on this page is an empty <span data-bind="…"> whose path
+  resolves in docs/data/case_study.json, which scripts/build_site_data.py
+  generates from results/. No measured value is typed here. If a sentence
+  needed a number that had no path, the sentence was rewritten.
+
+  Each placeholder reads "…" until it is filled, so an unbound page reads
+  as pending rather than as broken, and every sentence stays grammatical
+  with the numbers missing.
+
+  data-format declares how a value is shortened FOR DISPLAY. The rule
+  lives here, in the markup, rather than inside the script, so a reader
+  inspecting the page can see that a figure was rounded and what it was
+  rounded from — app.js keeps the exact value in the element's title
+  whenever the two differ.
+
+    fixed:N      N decimal places
+    percent:N    value x 100, N decimals, with a % sign
+    int          integer with thousands separators
+    short-hash   first characters of a digest, then an ellipsis
+    list         array joined with commas
+    count        array length or object key count
+    (absent)     the value unchanged
+-->
+<link rel="stylesheet" href="style.css">
+<script src="app.js" defer></script>
+</head>
+
+<body>
+
+<a class="skip-link" href="#main">Skip to content</a>
+
+<header class="hero">
+  <h1>Browser or bot, from traffic shape alone</h1>
+
+  <p>
+    Given an encrypted HTTPS page-load capture, decide whether the client
+    was a real browser or an automated tool — using only traffic shape:
+    packet sizes, directions, inter-arrival times and burst structure.
+    Never payload.
+  </p>
+
+  <!--
+    The shipped entry point, exactly as pyproject.toml installs it. One
+    line, because the point is that the whole thing reduces to one
+    command — not to demonstrate the flags.
+  -->
+  <div class="command">
+    <pre><code id="cli-command">tsd-classify capture.pcap</code></pre>
+    <button class="copy" type="button" data-copy-target="cli-command">
+      <span class="copy-idle">Copy</span>
+      <span class="copy-done" aria-hidden="true">Copied</span>
+    </button>
+  </div>
+  <p class="visually-hidden" role="status" aria-live="polite" id="copy-status"></p>
+
+  <!--
+    A summary, not tabular data, so a description list rather than a
+    table: each figure is a term and its label is what the term means.
+    The accuracy is deliberately absent — it belongs with the work that
+    justifies it, not in a strip a reader can screenshot on its own.
+  -->
+  <dl class="figures">
+    <div class="figure">
+      <dt class="value" data-bind="dataset.traces" data-format="int">…</dt>
+      <dd>traces</dd>
+    </div>
+    <div class="figure">
+      <dt class="value" data-bind="dataset.rounds" data-format="int">…</dt>
+      <dd>capture rounds</dd>
+    </div>
+    <div class="figure">
+      <dt class="value" data-bind="dataset.n_features" data-format="int">…</dt>
+      <dd>shape features</dd>
+    </div>
+    <div class="figure">
+      <dt class="value" data-bind="corpus.counts.pages" data-format="int">…</dt>
+      <dd>pages mirrored</dd>
+    </div>
+    <!-- A name rather than a count, so it is set one step down: at the
+         numeral size it would dominate the strip it belongs to. -->
+    <div class="figure figure--name">
+      <dt class="value" data-bind="split.method">…</dt>
+      <dd>validation split</dd>
+    </div>
+  </dl>
+
+  <p>
+    Both classes load the same pages, so the model cannot separate them on
+    content. The headline accuracy is discussed below rather than displayed
+    here — a number without the work behind it is a claim, not a result.
+  </p>
+
+  <p class="repo">
+    <a class="repo-link" href="https://github.com/farhanrahmananik/traffic-shape-client-detection">
+      Source, data pipeline and tests on GitHub
+    </a>
+  </p>
+
+</header>
+
+<!--
+  A layout wrapper, and the one <div> the page needs that no element
+  describes: the sidebar and the content column are siblings that must
+  share a grid, and neither <nav> nor <main> may contain the other.
+-->
+<div class="layout">
+
+  <!--
+    A native disclosure, not a scripted menu. Below the sidebar
+    breakpoint the list is a long block of links standing between the
+    reader and the first sentence, so it collapses; at and above it, the
+    list is the rail and is always open. The `open` attribute is present
+    in the markup so that with no CSS and no script at all the contents
+    are still visible — the collapsed state is the enhancement, not the
+    default.
+  -->
+  <nav class="toc" aria-labelledby="toc-heading">
+    <details class="toc-disclosure" open>
+      <summary id="toc-heading">On this page</summary>
+      <ol>
+        <li><a href="#why-not-accuracy">Why accuracy is not the headline</a></li>
+        <li><a href="#method">Method</a></li>
+        <li><a href="#results">Results</a></li>
+        <li><a href="#cli">The shipped tool</a></li>
+        <li><a href="#attribution">What the model uses</a></li>
+        <li><a href="#reproducibility">Reproducibility</a></li>
+        <li><a href="#limitations">Limitations</a></li>
+        <li><a href="#why-i-built-it">Why I built it</a></li>
+      </ol>
+    </details>
+  </nav>
+
+<main id="main">
+
+  <!-- 2 ................................................................. -->
+  <section id="why-not-accuracy" aria-labelledby="why-not-accuracy-heading">
+    <h2 id="why-not-accuracy-heading">Why the accuracy is not the headline</h2>
+
+    <p>
+      The random forest reaches an accuracy of
+      <span class="value" data-bind="models.random_forest.accuracy" data-format="fixed:4">…</span>
+      under leave-one-round-out evaluation. A linear model with scaled
+      features reaches
+      <span class="value" data-bind="models.logistic_regression.accuracy" data-format="fixed:4">…</span>,
+      missing only
+      <span class="value" data-bind="models.logistic_regression.confusion_matrix.1.0" data-format="int">…</span>
+      traces out of
+      <span class="value" data-bind="dataset.traces" data-format="int">…</span>.
+    </p>
+
+    <p>
+      A perfect score is a hypothesis about the measurement rig, not a
+      result. This project has already thrown away one feature for exactly
+      that reason, so the score was interrogated rather than celebrated.
+    </p>
+
+    <p>
+      The evidence that the task is genuinely easy, rather than leaking:
+      removing any single feature family leaves the forest at the same
+      accuracy. Without the size family it scores
+      <span class="value" data-bind="ablation.models.random_forest.3.accuracy" data-format="fixed:4">…</span>;
+      without the timing family,
+      <span class="value" data-bind="ablation.models.random_forest.4.accuracy" data-format="fixed:4">…</span>;
+      without the burst family,
+      <span class="value" data-bind="ablation.models.random_forest.5.accuracy" data-format="fixed:4">…</span>;
+      without the connection family,
+      <span class="value" data-bind="ablation.models.random_forest.6.accuracy" data-format="fixed:4">…</span>.
+      The signal is redundant: several families would do the job alone.
+    </p>
+
+    <p>
+      The clearest single illustration is the count of connections the
+      client opens. On its own — one feature out of
+      <span class="value" data-bind="dataset.n_features" data-format="int">…</span> — it
+      reaches
+      <span class="value" data-bind="ablation.models.random_forest.7.accuracy" data-format="fixed:4">…</span>.
+      Firefox opens several connections in parallel for one page load;
+      wget uses one, sequentially. That is what a browser does and a
+      sequential fetcher does not, and it is visible without decrypting
+      anything.
+    </p>
+
+    <p>
+      All of the linear model's errors are the automated client mistaken
+      for the browser. The forest misclassified
+      <span class="value" data-bind="models.random_forest.confusion_matrix.1.0" data-format="int">…</span>
+      traces in that direction and
+      <span class="value" data-bind="models.random_forest.confusion_matrix.0.1" data-format="int">…</span>
+      in the other — no page misclassified at all.
+    </p>
+  </section>
+
+  <!-- 3 ................................................................. -->
+  <section id="method" aria-labelledby="method-heading">
+    <h2 id="method-heading">Method — five decisions that shaped the data</h2>
+
+    <p>
+      Each of these was a choice about what to measure. Every one of them
+      could have produced a higher number by measuring something easier.
+    </p>
+
+    <article class="decision" aria-labelledby="decision-teardown">
+      <h3 id="decision-teardown">A perfect feature, measured and removed</h3>
+      <dl>
+        <dt>Done</dt>
+        <dd>
+          Connection-teardown counts — FIN and RST packets — were
+          implemented, measured across a full round, and then deleted.
+          Every Firefox trace had none of either; every wget trace had at
+          least one of each. No exceptions.
+        </dd>
+        <dt>Rejected</dt>
+        <dd>
+          Keeping a feature that separated the classes perfectly. It was
+          not measuring the clients: wget exits by itself, so its teardown
+          falls inside the capture window, while Firefox is killed only
+          after the capture has already stopped. The feature measured how
+          the harness stops each client.
+        </dd>
+        <dt>Without it</dt>
+        <dd>
+          It would have sat at the top of the attribution plots, explaining
+          the model with a statement that is false. This one was harder to
+          catch than an obviously broken feature, because
+          <em>connection teardown</em> sounds like it belongs.
+        </dd>
+      </dl>
+    </article>
+
+    <article class="decision" aria-labelledby="decision-split">
+      <h3 id="decision-split">Split by capture round, never randomly</h3>
+      <dl>
+        <dt>Done</dt>
+        <dd>
+          <span class="value" data-bind="split.method">…</span> on
+          <code><span class="value" data-bind="split.group_column">…</span></code>,
+          giving <span class="value" data-bind="split.n_folds" data-format="int">…</span>
+          folds. Each round is predicted by a model that never saw it.
+        </dd>
+        <dt>Rejected</dt>
+        <dd>
+          A random split. Traces from one round share their conditions —
+          the same machine state, the same afternoon — so a random split
+          scores the model on conditions it has already seen.
+        </dd>
+        <dt>Without it</dt>
+        <dd>
+          The failure is invisible in the output: a leaked split produces a
+          <em>better</em> number, not a worse one, and nothing downstream
+          complains. There is exactly one splitter in the codebase, and the
+          attribution analysis reuses it rather than writing its own.
+        </dd>
+      </dl>
+    </article>
+
+    <article class="decision" aria-labelledby="decision-capture">
+      <h3 id="decision-capture">Filtered capture, headers only, no padding</h3>
+      <dl>
+        <dt>Done</dt>
+        <dd>
+          tcpdump with the filter
+          <code><span class="value" data-bind="capture_invariants.tcpdump_filter.values.0">…</span></code>
+          on interface
+          <code><span class="value" data-bind="capture_invariants.capture_interface.values.0">…</span></code>,
+          snaplen
+          <span class="value" data-bind="capture_invariants.snaplen.values.0" data-format="int">…</span>
+          bytes. That keeps the IP and TCP headers and discards the
+          payload, so no page content is ever written to a capture file.
+        </dd>
+        <dt>Rejected</dt>
+        <dd>
+          An unfiltered capture, full payload storage, and a fixed number
+          of seconds of silence padded onto each end of every trace. All
+          three were flaws in an earlier version of this work, and are the
+          reason it was rebuilt.
+        </dd>
+        <dt>Without it</dt>
+        <dd>
+          Padding is a constant added to both classes: pure noise at best,
+          and a learnable artefact at worst. A trace ends when the capture
+          goes quiet instead, after
+          <span class="value" data-bind="capture_invariants.quiet_seconds.values.0">…</span>
+          seconds with no new packet.
+        </dd>
+      </dl>
+    </article>
+
+    <article class="decision" aria-labelledby="decision-scope">
+      <h3 id="decision-scope">Per-page fingerprinting not attempted</h3>
+      <dl>
+        <dt>Done</dt>
+        <dd>
+          One question only: which client produced this trace. Every page
+          appears in every round, and therefore on both sides of every
+          fold — by design.
+        </dd>
+        <dt>Rejected</dt>
+        <dd>
+          Identifying <em>which</em> page was loaded.
+          <span class="value" data-bind="corpus.counts.pages" data-format="int">…</span>
+          classes with a handful of samples each is not a trainable
+          problem, and attempting it would have produced numbers that mean
+          nothing.
+        </dd>
+        <dt>Without it</dt>
+        <dd>
+          The same page on both sides of a fold is exactly what forces the
+          model to find the difference between the two clients rather than
+          between two pages. Grouping by page instead would answer a
+          different question and quietly change what the accuracy means.
+        </dd>
+      </dl>
+    </article>
+
+    <article class="decision" aria-labelledby="decision-isolation">
+      <h3 id="decision-isolation">Network isolation, verified every round</h3>
+      <dl>
+        <dt>Done</dt>
+        <dd>
+          Every round captured inside a network namespace with loopback
+          only —
+          <code><span class="value" data-bind="capture.0.network_namespace">…</span></code>
+          — with the isolation probed before any trace was recorded.
+        </dd>
+        <dt>Rejected</dt>
+        <dd>
+          Trusting that rewriting the mirrored site had removed every
+          outbound reference. It provably had not: the mirror stores the
+          site's own JavaScript, and link rewriting cannot reach inside it.
+        </dd>
+        <dt>Without it</dt>
+        <dd>
+          A browser page load fetched analytics from the live site. That
+          traffic does not appear in a capture filtered to the local
+          server, but the DNS, connect and TLS time it costs lands inside
+          the browser's inter-arrival times — and the automated client runs
+          no JavaScript, so the cost falls on one class only.
+        </dd>
+      </dl>
+    </article>
+  </section>
+
+  <!-- 4 ................................................................. -->
+  <section id="results" aria-labelledby="results-heading">
+    <h2 id="results-heading">Results</h2>
+
+    <p>
+      Two models, evaluated identically. The linear model is there as a
+      comparison point: an ensemble that cannot beat it on
+      <span class="value" data-bind="dataset.n_features" data-format="int">…</span> features
+      would be worth knowing about before anything is concluded from its
+      attributions.
+    </p>
+
+    <article aria-labelledby="results-forest">
+      <h3 id="results-forest">Random forest</h3>
+      <p>
+        Pooled accuracy
+        <span class="value" data-bind="models.random_forest.accuracy" data-format="fixed:4">…</span>
+        over <span class="value" data-bind="models.random_forest.n_folds" data-format="int">…</span>
+        folds. Per class: precision
+        <span class="value" data-bind="models.random_forest.per_class.firefox.precision" data-format="fixed:4">…</span>
+        and recall
+        <span class="value" data-bind="models.random_forest.per_class.firefox.recall" data-format="fixed:4">…</span>
+        for
+        <span class="value" data-bind="models.random_forest.labels.0">…</span>;
+        precision
+        <span class="value" data-bind="models.random_forest.per_class.wget.precision" data-format="fixed:4">…</span>
+        and recall
+        <span class="value" data-bind="models.random_forest.per_class.wget.recall" data-format="fixed:4">…</span>
+        for
+        <span class="value" data-bind="models.random_forest.labels.1">…</span>.
+      </p>
+    </article>
+
+    <article aria-labelledby="results-linear">
+      <h3 id="results-linear">Logistic regression</h3>
+      <p>
+        Pooled accuracy
+        <span class="value" data-bind="models.logistic_regression.accuracy" data-format="fixed:4">…</span>
+        over
+        <span class="value" data-bind="models.logistic_regression.n_folds" data-format="int">…</span>
+        folds, with support of
+        <span class="value" data-bind="models.logistic_regression.per_class.wget.support" data-format="int">…</span>
+        traces per class. Its recall on
+        <span class="value" data-bind="models.logistic_regression.labels.1">…</span>
+        is
+        <span class="value" data-bind="models.logistic_regression.per_class.wget.recall" data-format="fixed:4">…</span>,
+        which is where its errors are.
+      </p>
+    </article>
+
+    <table>
+      <caption>
+        Accuracy per held-out round. Each column is a fold in which that
+        round was unseen during training.
+      </caption>
+      <thead>
+        <tr>
+          <th scope="col">Model</th>
+          <th scope="col">Round <span class="value" data-bind="split.rounds.0" data-format="int">…</span></th>
+          <th scope="col">Round <span class="value" data-bind="split.rounds.1" data-format="int">…</span></th>
+          <th scope="col">Round <span class="value" data-bind="split.rounds.2" data-format="int">…</span></th>
+          <th scope="col">Round <span class="value" data-bind="split.rounds.3" data-format="int">…</span></th>
+          <th scope="col">Pooled</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <th scope="row">Random forest</th>
+          <td><span class="value" data-bind="models.random_forest.fold_accuracies.0" data-format="fixed:4">…</span></td>
+          <td><span class="value" data-bind="models.random_forest.fold_accuracies.1" data-format="fixed:4">…</span></td>
+          <td><span class="value" data-bind="models.random_forest.fold_accuracies.2" data-format="fixed:4">…</span></td>
+          <td><span class="value" data-bind="models.random_forest.fold_accuracies.3" data-format="fixed:4">…</span></td>
+          <td><span class="value" data-bind="models.random_forest.accuracy" data-format="fixed:4">…</span></td>
+        </tr>
+        <tr>
+          <th scope="row">Logistic regression</th>
+          <td><span class="value" data-bind="models.logistic_regression.fold_accuracies.0" data-format="fixed:4">…</span></td>
+          <td><span class="value" data-bind="models.logistic_regression.fold_accuracies.1" data-format="fixed:4">…</span></td>
+          <td><span class="value" data-bind="models.logistic_regression.fold_accuracies.2" data-format="fixed:4">…</span></td>
+          <td><span class="value" data-bind="models.logistic_regression.fold_accuracies.3" data-format="fixed:4">…</span></td>
+          <td><span class="value" data-bind="models.logistic_regression.accuracy" data-format="fixed:4">…</span></td>
+        </tr>
+      </tbody>
+    </table>
+
+    <article aria-labelledby="results-errors">
+      <h3 id="results-errors">Which traces the linear model got wrong</h3>
+      <p>
+        Every error falls in the fold that held out round
+        <span class="value" data-bind="models.logistic_regression.misclassified.0.round" data-format="int">…</span>,
+        and every one is a
+        <span class="value" data-bind="models.logistic_regression.misclassified.0.true">…</span>
+        trace predicted as
+        <span class="value" data-bind="models.logistic_regression.misclassified.0.predicted">…</span>:
+      </p>
+      <ul>
+        <li><code><span class="value" data-bind="models.hardest_pages.logistic_regression.0.page">…</span></code></li>
+        <li><code><span class="value" data-bind="models.hardest_pages.logistic_regression.1.page">…</span></code></li>
+        <li><code><span class="value" data-bind="models.hardest_pages.logistic_regression.2.page">…</span></code></li>
+        <li><code><span class="value" data-bind="models.hardest_pages.logistic_regression.3.page">…</span></code></li>
+      </ul>
+      <p>
+        Each of those pages was got wrong
+        <span class="value" data-bind="models.hardest_pages.logistic_regression.0.errors" data-format="int">…</span>
+        time, so no single page is systematically hard for it — the errors
+        are spread, not concentrated.
+      </p>
+    </article>
+
+    <article aria-labelledby="results-ablation-linear">
+      <h3 id="results-ablation-linear">One result the forest could not show</h3>
+      <p>
+        With every feature, the linear model scores
+        <span class="value" data-bind="ablation.models.logistic_regression.0.accuracy" data-format="fixed:4">…</span>.
+        With the timing family removed, it scores
+        <span class="value" data-bind="ablation.models.logistic_regression.4.accuracy" data-format="fixed:4">…</span>.
+        Removing a family <em>improves</em> it. The forest cannot show
+        this, because it is already at the ceiling with everything
+        included — an ablation on a model at the top of the range can only
+        detect harm.
+      </p>
+    </article>
+  </section>
+
+  <!-- 5 ................................................................. -->
+  <section id="cli" aria-labelledby="cli-heading">
+    <h2 id="cli-heading">The shipped tool</h2>
+
+    <p>
+      One command takes a capture file and returns a verdict. JSON goes to
+      standard output and nothing else does; every diagnostic goes to
+      standard error, so the tool pipes into another program without the
+      caller having to filter anything first. On any failure standard
+      output is left completely empty — a half-written JSON object would be
+      worse than none, because a consuming pipeline would not notice it.
+    </p>
+
+    <p>
+      The exit code answers <em>did the tool work</em> and never <em>what
+      did it find</em>: <code>0</code> a verdict was produced, <code>2</code>
+      a usage error, <code>3</code> the capture could not be classified.
+      The predicted class is never an exit code. Overloading it would make
+      <code>tsd-classify x.pcap || echo failed</code> report failure
+      whenever the correct answer happened to be the automated client — a
+      right answer treated as an error.
+    </p>
+
+    <div class="command">
+      <pre><code id="sample-command">tsd-classify capture.pcap</code></pre>
+      <button class="copy" type="button" data-copy-target="sample-command">
+        <span class="copy-idle">Copy</span>
+        <span class="copy-done" aria-hidden="true">Copied</span>
+      </button>
+    </div>
+
+    <!--
+      Not an illustration. This block is fetched from
+      docs/data/sample_verdict.json, which is the unedited output of the
+      installed tool run against one capture from the last round — the
+      same provenance rule the rest of the page follows.
+
+      Nothing in it is content: a capture path, a digest of a file that is
+      not published, packet counts, timings, and the prediction. The
+      digest identifies the capture without disclosing it, which is the
+      same reason the corpus manifest publishes hashes.
+
+      If the file is missing or malformed the block says so and the rest
+      of the page binds exactly as before — it is fetched separately from
+      the measured figures and cannot take them down with it.
+    -->
+    <div class="command command--block">
+      <pre><code id="sample-verdict" data-sample="data/sample_verdict.json">…</code></pre>
+      <button class="copy" type="button" data-copy-target="sample-verdict">
+        <span class="copy-idle">Copy</span>
+        <span class="copy-done" aria-hidden="true">Copied</span>
+      </button>
+    </div>
+
+    <p>
+      That is the whole verdict, shown as the tool emitted it — nothing
+      removed and nothing abridged.
+    </p>
+
+    <p>
+      The features behind that prediction are computed by the same code
+      that produced the training data, which is checked rather than
+      assumed:
+      <span class="value" data-bind="cli.comparisons.traces_compared" data-format="int">…</span>
+      captures re-processed through this inference path,
+      <span class="value" data-bind="cli.comparisons.total" data-format="int">…</span>
+      feature comparisons against the rows the training path had already
+      recorded, and
+      <span class="value" data-bind="cli.comparison.traces_matching_all_features" data-format="int">…</span>
+      traces agreeing on every one. The model named in the verdict is the
+      artefact hashed to
+      <code><span class="value" data-bind="cli.model.sha256" data-format="short-hash">…</span></code>.
+    </p>
+  </section>
+
+  <!-- 6 ................................................................. -->
+  <section id="attribution" aria-labelledby="attribution-heading">
+    <h2 id="attribution-heading">What the model actually uses</h2>
+
+    <p>
+      Attributions were computed per fold, on the held-out round only,
+      over <span class="value" data-bind="shap.n_traces" data-format="int">…</span> traces.
+      A positive value pushes the prediction toward
+      <span class="value" data-bind="shap.direction.positive_class">…</span>,
+      the automated client; the class order is read from the fitted model
+      rather than assumed. Explaining a model on data it was fitted on
+      would reintroduce, in the explanation, the very leak the round-based
+      split prevents in the evaluation — and it would look tidier, not
+      worse.
+    </p>
+
+    <article aria-labelledby="attribution-families">
+      <h3 id="attribution-families">Stable: which families carry it</h3>
+      <p>
+        Under seed
+        <span class="value" data-bind="shap.seeds.primary" data-format="int">…</span>, the
+        timing family carries
+        <span class="value" data-bind="shap.family_importance.seed_42.timing" data-format="fixed:4">…</span>
+        of the mean absolute attribution and the size family
+        <span class="value" data-bind="shap.family_importance.seed_42.sizes" data-format="fixed:4">…</span>.
+        Under seed
+        <span class="value" data-bind="shap.seeds.comparison" data-format="int">…</span>,
+        timing carries
+        <span class="value" data-bind="shap.family_importance.seed_7.timing" data-format="fixed:4">…</span>
+        and sizes
+        <span class="value" data-bind="shap.family_importance.seed_7.sizes" data-format="fixed:4">…</span>.
+        The remaining families are far behind under both: bursts
+        <span class="value" data-bind="shap.family_importance.seed_42.bursts" data-format="fixed:4">…</span>,
+        connections
+        <span class="value" data-bind="shap.family_importance.seed_42.connections" data-format="fixed:4">…</span>,
+        counts
+        <span class="value" data-bind="shap.family_importance.seed_42.counts" data-format="fixed:4">…</span>.
+      </p>
+      <p>
+        Taken together, the two leading families carry
+        <span class="value" data-bind="shap.family_share_top2.seed_42.share" data-format="percent:1">…</span>
+        of the total attribution under seed
+        <span class="value" data-bind="shap.seeds.primary" data-format="int">…</span>
+        and
+        <span class="value" data-bind="shap.family_share_top2.seed_7.share" data-format="percent:1">…</span>
+        under seed
+        <span class="value" data-bind="shap.seeds.comparison" data-format="int">…</span>
+        — the same two families both times. What changes is which of them
+        leads: under the first seed it is
+        <code><span class="value" data-bind="shap.family_share_top2.seed_42.families.0">…</span></code>
+        ahead of
+        <code><span class="value" data-bind="shap.family_share_top2.seed_42.families.1">…</span></code>,
+        and under the second the order is reversed, with
+        <code><span class="value" data-bind="shap.family_share_top2.seed_7.families.0">…</span></code>
+        ahead of
+        <code><span class="value" data-bind="shap.family_share_top2.seed_7.families.1">…</span></code>.
+        Same leading family under both seeds:
+        <span class="value" data-bind="shap.family_share_top2.same_leader">…</span>.
+      </p>
+
+      <!--
+        The chart is drawn by app.js from shap.family_importance, after
+        binding. Nothing about it is written here: an SVG typed into the
+        markup would be five bar lengths that were true when they were
+        typed, which is the one thing this page does not do.
+
+        The <figure> is hidden outright if the data is missing or
+        malformed, rather than left as a caption describing a chart that
+        is not there. The paragraphs around it carry every number in the
+        chart already, so the section still reads.
+      -->
+      <figure class="chart" data-chart="shap" hidden>
+        <figcaption>
+          Mean absolute attribution per feature family, under both seeds,
+          sorted by the first seed. The finding the chart makes visible:
+          two families — timing and upstream sizes — stand far above the
+          other three under both seeds, and the gap between those two is
+          small enough that they change places when the seed changes,
+          while the three below them do not move. Every value is also
+          given in the paragraphs above and in the chart's own
+          description.
+        </figcaption>
+      </figure>
+
+      <p>
+        That is the finding in one line. At <em>family</em> level the
+        attribution is stable — the same two families, carrying almost all
+        of the weight, under both seeds. At <em>feature</em> level it is
+        not, and the evidence for that is below: the two top-ten lists do
+        not quite match, and one feature moves a long way between seeds
+        while the accuracy does not move at all. So the honest unit of
+        explanation here is the family, not the feature.
+      </p>
+    </article>
+
+    <article aria-labelledby="attribution-features">
+      <h3 id="attribution-features">Unstable: which feature gets the credit</h3>
+      <p>
+        Ranks here are indexed from
+        <span class="value" data-bind="shap.feature_instability.rank_index_base" data-format="int">…</span>,
+        so the first rank is the top feature.
+      </p>
+      <p>
+        Re-fitting with a different seed moves individual features by up to
+        <span class="value" data-bind="shap.feature_instability.max_rank_movement" data-format="int">…</span>
+        places —
+        <code><span class="value" data-bind="shap.feature_instability.features_at_max.0.name">…</span></code>
+        moves from rank
+        <span class="value" data-bind="shap.feature_instability.features_at_max.0.rank_seed_42" data-format="int">…</span>
+        to rank
+        <span class="value" data-bind="shap.feature_instability.features_at_max.0.rank_seed_7" data-format="int">…</span>
+        — while the accuracy does not change at all.
+      </p>
+      <p>
+        The two top-ten lists still share
+        <span class="value" data-bind="shap.feature_instability.top10_overlap" data-format="int">…</span>
+        features. Two cross the boundary:
+        <code><span class="value" data-bind="shap.feature_instability.top10_symmetric_difference.0.name">…</span></code>
+        moves from rank
+        <span class="value" data-bind="shap.feature_instability.top10_symmetric_difference.0.rank_seed_42" data-format="int">…</span>
+        to
+        <span class="value" data-bind="shap.feature_instability.top10_symmetric_difference.0.rank_seed_7" data-format="int">…</span>,
+        and
+        <code><span class="value" data-bind="shap.feature_instability.top10_symmetric_difference.1.name">…</span></code>
+        moves from
+        <span class="value" data-bind="shap.feature_instability.top10_symmetric_difference.1.rank_seed_42" data-format="int">…</span>
+        to
+        <span class="value" data-bind="shap.feature_instability.top10_symmetric_difference.1.rank_seed_7" data-format="int">…</span>.
+        Ten is an arbitrary cutoff, so a feature sitting beside it changes
+        list membership on a small movement. This is a boundary effect,
+        not evidence of large instability.
+      </p>
+      <p>
+        So the honest claim is at family level, not feature level: no
+        single feature may be called the strongest discriminator.
+      </p>
+    </article>
+
+    <article aria-labelledby="attribution-spreads">
+      <h3 id="attribution-spreads">Is it the seed, or the capture day?</h3>
+      <p>
+        Rounds
+        <span class="value" data-bind="shap.spreads.same_day_rounds.0" data-format="int">…</span>
+        and
+        <span class="value" data-bind="shap.spreads.same_day_rounds.1" data-format="int">…</span>
+        fall on the same local day; rounds
+        <span class="value" data-bind="shap.spreads.cross_day_rounds.0" data-format="int">…</span>
+        and
+        <span class="value" data-bind="shap.spreads.cross_day_rounds.1" data-format="int">…</span>
+        do not. Comparing a same-day pair against a cross-day pair
+        separates the two possible explanations, which a single dataset
+        could not.
+      </p>
+      <table>
+        <caption>
+          Largest movement in mean absolute attribution, by what was
+          varied.
+        </caption>
+        <thead>
+          <tr>
+            <th scope="col">What varied</th>
+            <th scope="col">Largest spread</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <th scope="row">Nothing — same local day</th>
+            <td><span class="value" data-bind="shap.spreads.max.same_day" data-format="fixed:4">…</span></td>
+          </tr>
+          <tr>
+            <th scope="row">The capture day</th>
+            <td><span class="value" data-bind="shap.spreads.max.cross_day" data-format="fixed:4">…</span></td>
+          </tr>
+          <tr>
+            <th scope="row">The random seed</th>
+            <td><span class="value" data-bind="shap.spreads.max.seed" data-format="fixed:4">…</span></td>
+          </tr>
+        </tbody>
+      </table>
+      <p>
+        The capture day moves attribution no more than a same-day pair
+        does, and the seed moves it by an order more. The instability
+        belongs to how credit is shared among redundant features, not to
+        the capture conditions. That is the more favourable of the two
+        outcomes for this write-up, and it is reported because it was
+        measured — the comparison was set up to be able to say the
+        opposite.
+      </p>
+    </article>
+
+    <article aria-labelledby="attribution-unused">
+      <h3 id="attribution-unused">Two kinds of zero</h3>
+      <p>
+        Some features receive no attribution at all, and they are two
+        different findings. These never vary, so they are
+        <em>uninformative</em>:
+        <code><span class="value" data-bind="shap.zero_importance.constant.0">…</span></code>,
+        <code><span class="value" data-bind="shap.zero_importance.constant.1">…</span></code>,
+        <code><span class="value" data-bind="shap.zero_importance.constant.2">…</span></code>.
+      </p>
+      <p>
+        These do vary, and were still never used, because a correlated
+        neighbour was always split on instead — <em>unnecessary</em> rather
+        than uninformative:
+        <code><span class="value" data-bind="shap.zero_importance.varying_but_unused.0">…</span></code>,
+        <code><span class="value" data-bind="shap.zero_importance.varying_but_unused.1">…</span></code>,
+        <code><span class="value" data-bind="shap.zero_importance.varying_but_unused.2">…</span></code>.
+        That second list is direct single-feature evidence of the
+        redundancy the ablation measured from the other direction.
+      </p>
+    </article>
+  </section>
+
+  <!-- 7 ................................................................. -->
+  <section id="reproducibility" aria-labelledby="reproducibility-heading">
+    <h2 id="reproducibility-heading">Reproducibility</h2>
+
+    <p>
+      The mirrored site content and the packet captures are
+      <strong>not published</strong>. The pages belong to the university
+      they were mirrored from, and the captures derive from them. What is
+      published instead is a manifest of hashes: anyone re-running the
+      scraper can check they obtained the same corpus without either side
+      distributing a byte of that content.
+    </p>
+
+    <article aria-labelledby="repro-corpus">
+      <h3 id="repro-corpus">The corpus</h3>
+      <p>
+        <span class="value" data-bind="corpus.counts.pages" data-format="int">…</span> pages
+        and <span class="value" data-bind="corpus.counts.assets" data-format="int">…</span>
+        assets, <span class="value" data-bind="corpus.totals.bytes" data-format="int">…</span>
+        bytes on disk, discovered by a seeded walk — seed
+        <span class="value" data-bind="corpus.seed" data-format="int">…</span>,
+        <span class="value" data-bind="corpus.walks_run" data-format="int">…</span> of
+        <span class="value" data-bind="corpus.walks" data-format="int">…</span> walks used,
+        maximum depth
+        <span class="value" data-bind="corpus.max_depth" data-format="int">…</span>. The
+        crawler waited
+        <span class="value" data-bind="corpus.crawl_delay">…</span> seconds
+        between requests and identified itself as
+        <code><span class="value" data-bind="corpus.user_agent">…</span></code>.
+      </p>
+      <p>
+        Not everything could be mirrored, and the failures are separated by
+        what they mean.
+        <span class="value" data-bind="corpus.totals.failures_upstream" data-format="int">…</span>
+        are properties of the site itself — assets it does not serve, and
+        paths its robots.txt withholds.
+        <span class="value" data-bind="corpus.totals.failures_excluded" data-format="int">…</span>
+        were withheld by this project's own policy: off-host assets and
+        responses over the size ceiling. Both recur identically on every
+        run.
+        <span class="value" data-bind="corpus.totals.failures_local" data-format="int">…</span>
+        was a transient connection error, which does not, and is recorded
+        as such.
+      </p>
+    </article>
+
+    <article aria-labelledby="repro-invariants">
+      <h3 id="repro-invariants">Are the rounds comparable?</h3>
+      <p>
+        Asked as a measurement rather than asserted. For each setting that
+        would change what a trace looks like, the build reports every
+        distinct value seen across the rounds and whether they agreed.
+      </p>
+      <table>
+        <caption>Capture settings across all rounds.</caption>
+        <thead>
+          <tr>
+            <th scope="col">Setting</th>
+            <th scope="col">Value</th>
+            <th scope="col">Identical in every round</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <th scope="row">Snaplen</th>
+            <td><span class="value" data-bind="capture_invariants.snaplen.values.0" data-format="int">…</span></td>
+            <td><span class="value" data-bind="capture_invariants.snaplen.identical">…</span></td>
+          </tr>
+          <tr>
+            <th scope="row">Capture filter</th>
+            <td><code><span class="value" data-bind="capture_invariants.tcpdump_filter.values.0">…</span></code></td>
+            <td><span class="value" data-bind="capture_invariants.tcpdump_filter.identical">…</span></td>
+          </tr>
+          <tr>
+            <th scope="row">Interface</th>
+            <td><code><span class="value" data-bind="capture_invariants.capture_interface.values.0">…</span></code></td>
+            <td><span class="value" data-bind="capture_invariants.capture_interface.identical">…</span></td>
+          </tr>
+          <tr>
+            <th scope="row">Quiet threshold</th>
+            <td><span class="value" data-bind="capture_invariants.quiet_seconds.values.0">…</span></td>
+            <td><span class="value" data-bind="capture_invariants.quiet_seconds.identical">…</span></td>
+          </tr>
+          <tr>
+            <th scope="row">Server certificate</th>
+            <td><code><span class="value" data-bind="capture_invariants.server_cert_sha256.values.0" data-format="short-hash">…</span></code></td>
+            <td><span class="value" data-bind="capture_invariants.server_cert_sha256.identical">…</span></td>
+          </tr>
+        </tbody>
+      </table>
+      <p>
+        The certificate matters more than it looks: it is transmitted in
+        every handshake, so a different one would change the first bytes of
+        every trace in that round.
+      </p>
+    </article>
+
+    <article aria-labelledby="repro-environment">
+      <h3 id="repro-environment">The clients, exactly</h3>
+      <p>
+        Two of these are load-bearing. A different automated client — one
+        that is multi-threaded and speaks a newer protocol version —
+        produces a completely different traffic shape. A sandboxed build of
+        the browser adds startup and network-path overhead that would land
+        on one class only.
+      </p>
+      <table>
+        <caption>Versions recorded in the round metadata.</caption>
+        <thead>
+          <tr>
+            <th scope="col">Component</th>
+            <th scope="col">Version</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <th scope="row">Browser</th>
+            <td><span class="value" data-bind="capture.0.versions.firefox">…</span></td>
+          </tr>
+          <tr>
+            <th scope="row">Automated client</th>
+            <td><span class="value" data-bind="capture.0.versions.wget">…</span></td>
+          </tr>
+          <tr>
+            <th scope="row">Capture tool</th>
+            <td><span class="value" data-bind="capture.0.versions.tcpdump">…</span></td>
+          </tr>
+          <tr>
+            <th scope="row">TLS</th>
+            <td><span class="value" data-bind="capture.0.versions.openssl">…</span></td>
+          </tr>
+          <tr>
+            <th scope="row">Python</th>
+            <td><span class="value" data-bind="capture.0.versions.python">…</span></td>
+          </tr>
+          <tr>
+            <th scope="row">Platform</th>
+            <td><span class="value" data-bind="corpus.environment.platform">…</span></td>
+          </tr>
+        </tbody>
+      </table>
+    </article>
+
+    <article aria-labelledby="repro-parity">
+      <h3 id="repro-parity">The shipped tool computes the same numbers</h3>
+      <p>
+        The command-line tool that classifies a capture must produce the
+        same features the model was trained on. Drift there would be
+        silent: the tool would emit a confident verdict built from slightly
+        different numbers, and the only symptom would be worse performance
+        in the field than the published evaluation promised.
+      </p>
+      <p>
+        So it is checked rather than assumed.
+        <span class="value" data-bind="cli.comparisons.traces_compared" data-format="int">…</span>
+        captures were re-processed through the shipped inference path and
+        compared, feature by feature, with the rows the training path had
+        already recorded:
+        <span class="value" data-bind="cli.comparisons.traces_compared" data-format="int">…</span>
+        traces &times;
+        <span class="value" data-bind="cli.comparisons.n_features" data-format="int">…</span>
+        features =
+        <span class="value" data-bind="cli.comparisons.total" data-format="int">…</span>
+        comparisons, of which
+        <span class="value" data-bind="cli.comparison.traces_matching_all_features" data-format="int">…</span>
+        traces agreed on every feature.
+      </p>
+      <p>
+        This is a parity check and not an evaluation: the shipped model was
+        fitted on every round, so each of those captures is a training row
+        for it, and any accuracy figure from this comparison would measure
+        only how well a model reproduces what it has already seen. No
+        accuracy is computed there.
+      </p>
+    </article>
+
+    <article aria-labelledby="repro-provenance">
+      <h3 id="repro-provenance">Provenance</h3>
+      <p>
+        Every figure on this page comes from one of these files, and each
+        is identified by the hash of its bytes.
+      </p>
+      <table>
+        <caption>Source artefacts and their SHA-256 digests.</caption>
+        <thead>
+          <tr>
+            <th scope="col">File</th>
+            <th scope="col">SHA-256</th>
+            <th scope="col">Generated</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <th scope="row"><code><span class="value" data-bind="provenance.metrics.path">…</span></code></th>
+            <td><code><span class="value" data-bind="provenance.metrics.sha256" data-format="short-hash">…</span></code></td>
+            <td><span class="value" data-bind="provenance.metrics.generated_at">…</span></td>
+          </tr>
+          <tr>
+            <th scope="row"><code><span class="value" data-bind="provenance.shap.path">…</span></code></th>
+            <td><code><span class="value" data-bind="provenance.shap.sha256" data-format="short-hash">…</span></code></td>
+            <td><span class="value" data-bind="provenance.shap.generated_at">…</span></td>
+          </tr>
+          <tr>
+            <th scope="row"><code><span class="value" data-bind="provenance.corpus_manifest.path">…</span></code></th>
+            <td><code><span class="value" data-bind="provenance.corpus_manifest.sha256" data-format="short-hash">…</span></code></td>
+            <td><span class="value" data-bind="provenance.corpus_manifest.generated_at">…</span></td>
+          </tr>
+          <tr>
+            <th scope="row"><code><span class="value" data-bind="provenance.cli_parity.path">…</span></code></th>
+            <td><code><span class="value" data-bind="provenance.cli_parity.sha256" data-format="short-hash">…</span></code></td>
+            <td>not stamped</td>
+          </tr>
+        </tbody>
+      </table>
+      <p>
+        The robots.txt that the crawl obeyed is kept too, fetched at
+        <span class="value" data-bind="corpus.robots_fetched_at">…</span>
+        and hashed to
+        <code><span class="value" data-bind="corpus.robots_sha256" data-format="short-hash">…</span></code>,
+        stored at
+        <code><span class="value" data-bind="corpus.robots_provenance_file">…</span></code>.
+        Sites edit that file; without a copy, nobody can check what the
+        rules were at crawl time.
+      </p>
+    </article>
+  </section>
+
+  <!-- 8 ................................................................. -->
+  <section id="limitations" aria-labelledby="limitations-heading">
+    <h2 id="limitations-heading">Limitations</h2>
+
+    <p>
+      These are not caveats in small print. Each one bounds what the
+      measured numbers above are entitled to claim.
+    </p>
+
+    <article aria-labelledby="limit-loopback">
+      <h3 id="limit-loopback">Loopback is not the wire</h3>
+      <p>
+        Everything was captured over the loopback interface, where the
+        round-trip time is a small fraction of a millisecond. The
+        inter-arrival features therefore measure <em>client-side
+        processing time</em>, not network latency — and those are the
+        features the model leans on hardest. The results characterise
+        client behaviour under ideal local conditions and do not transfer
+        directly to captures taken across a real network.
+      </p>
+      <p>
+        The same environment distorts the size features from the other
+        direction: the kernel batches writes on loopback, so the captures
+        contain single recorded packets far larger than any real network
+        frame. This affects both clients equally and is not a difference
+        the model could exploit, but it means the size and burst features
+        describe application-level write behaviour rather than
+        wire-level packet structure.
+      </p>
+    </article>
+
+    <article aria-labelledby="limit-days">
+      <h3 id="limit-days">The rounds are not fully independent</h3>
+      <p>
+        The four rounds carry the local dates
+        <span class="value" data-bind="capture.0.date">…</span>,
+        <span class="value" data-bind="capture.1.date">…</span>,
+        <span class="value" data-bind="capture.2.date">…</span> and
+        <span class="value" data-bind="capture.3.date">…</span>. The first
+        two are the same day, about ten hours apart, so they are not the
+        independent conditions a round is supposed to represent.
+      </p>
+      <p>
+        The evaluation is unaffected — no round appears on both sides of a
+        fold, and the split is honest — but two of the folds hold out
+        conditions nearly identical to each other. The fourth round was
+        captured on a genuinely different day, after a restart, precisely
+        so that the question could be answered by comparison rather than
+        admitted and left.
+      </p>
+    </article>
+
+    <article aria-labelledby="limit-scope">
+      <h3 id="limit-scope">One site, two clients</h3>
+      <p>
+        The corpus is
+        <span class="value" data-bind="corpus.counts.pages" data-format="int">…</span> pages
+        from a single university website, loaded by exactly two clients.
+        Nothing here shows that the same features separate a different
+        browser from a different scraper, or that they survive a site with
+        a different structure. The claim is bounded by the corpus.
+      </p>
+      <p>
+        A small asymmetry also remains in the data itself. The teardown
+        packets described above were dropped as features, but the packets
+        are still present in the automated client's traces and still
+        contribute to the size, count and burst statistics. Removing them
+        would mean discarding packets under an arbitrary rule — a heavier
+        intervention than the problem warrants, and stated here rather
+        than quietly carried.
+      </p>
+    </article>
+
+    <article aria-labelledby="limit-quiet">
+      <h3 id="limit-quiet">The end of a trace is a judgement</h3>
+      <p>
+        A page load is over when the capture goes quiet for
+        <span class="value" data-bind="capture_invariants.quiet_seconds.values.0">…</span>
+        seconds. That threshold is a modelling choice, not a fact about the
+        traffic, and it is recorded in every round's metadata for that
+        reason.
+      </p>
+      <p>
+        It does not pad the traces: the wait is wall-clock only and the
+        recorded page loads finished far sooner, so the quiet period sits
+        outside the span of the packet timestamps rather than inside it.
+        The earlier version of this work padded every trace at both ends,
+        which is one of the three flaws that caused it to be rebuilt.
+      </p>
+    </article>
+  </section>
+
+  <!-- 9 ................................................................. -->
+  <section id="why-i-built-it" aria-labelledby="why-i-built-it-heading">
+    <h2 id="why-i-built-it-heading">Why I built it</h2>
+
+    <p>
+      I am an M.Sc. Cyber Security student at BTU Cottbus-Senftenberg,
+      RHCSA and RHCE certified, targeting SOC Analyst and system or cloud
+      administration roles in Germany. This problem in particular because
+      deciding what a client is from traffic shape alone, without reading
+      payload, is the signal behind bot detection, scraper detection and
+      command-and-control beaconing analysis — SOC work, not an academic
+      exercise.
+    </p>
+
+    <p>
+      It is also a deliberate rebuild. An earlier version of this corpus
+      existed as university work, and its captures had three flaws:
+      tcpdump ran unfiltered, full payload was stored, and every trace was
+      padded at both ends. Removing those three was the point of doing it
+      again, and the capture settings shown above — the filter, the
+      snaplen and the quiet threshold — are what replaced them.
+    </p>
+  </section>
+
+</main>
+
+<footer>
+  <p>
+    Source, and the scripts that produced every number here:
+    <a href="https://github.com/farhanrahmananik/traffic-shape-client-detection">github.com/farhanrahmananik/traffic-shape-client-detection</a>
+  </p>
+  <p>
+    Every figure on this page is generated from <code>results/</code> by
+    <code>scripts/build_site_data.py</code> and read from
+    <code>docs/data/case_study.json</code>. None of them is typed by hand:
+    a number written into prose is a number that was true when it was
+    written, and prose has no build step to catch it going stale.
+  </p>
+</footer>
+
+</div>
+
+</body>
+</html>

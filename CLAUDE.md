@@ -745,8 +745,14 @@ measured, not because it reads better. The experiment was set up to be
 able to say the opposite.
 
 **Refinement of the earlier seed finding, and it sharpens the claim.**
-The top **ten** features are the **same set** under both seeds, only
-reordered, and `iat_max` is rank 0 under both:
+
+*Ranks below are **0-indexed**, as `shap_summary.json` stores them: rank
+0 is the top feature, rank 9 the tenth, rank 10 the eleventh and
+therefore the first one outside the top ten. `case_study.json` carries
+`rank_index_base` so the page never has to assume this.*
+
+The two top-ten lists share **9 of 10** features, heavily reordered, and
+`iat_max` is rank 0 — the top feature — under both:
 
 | seed 42 | seed 7 |
 |---|---|
@@ -761,6 +767,17 @@ reordered, and `iat_max` is rank 0 under both:
 | `ack_down_count` | `burst_len_mean` |
 | `syn_count` | `syn_count` |
 
+**Two features cross the rank-10 boundary**: `iat_median` moves rank
+7 → 10 (3 places — 8th to 11th, so out of the list) and `syn_ack_count`
+moves rank 10 → 6 (4 places — 11th to 7th, so into it). **Ten is an
+arbitrary cutoff**, so a feature sitting next to it changes list
+membership on a small movement; this is a boundary effect, and the
+difference between the two lists is not evidence of large instability.
+
+The **24 places** figure is real but describes the largest movement
+across **all 53 features** — `size_up_p75`, rank 19 → 43 — not movement
+within the top ten.
+
 So attribution is **stable at family level and unstable at feature
 level**. That is a sharper and more useful statement than the
 three-round version, which could only say that the ranking moved.
@@ -770,8 +787,9 @@ three-round version, which could only say that the ranking moved.
 - the timing and upstream-size families together carry most of the
   attribution, across four rounds and both seeds
 - which individual feature receives credit within a family is
-  seed-dependent, moving up to **24 places** while accuracy stays at
-  **1.0000**
+  seed-dependent: the largest movement across all 53 features is **24
+  places**, and the two top-ten lists share **9 of 10**, while accuracy
+  stays at **1.0000**
 - the capture day affects none of this — measured by comparing a
   same-day round pair against a cross-day pair, not asserted
 
@@ -1119,8 +1137,8 @@ stable; the explanation's ordering is not.
 **Round 4 settled what the spread was actually varying over.** The
 three-round version of this section could only say the ranking moved.
 With a same-day pair and a cross-day pair to compare, the numbers say
-where the movement comes from — seed, not capture day — and the top ten
-features turn out to be the same set under both seeds, only reordered.
+where the movement comes from — seed, not capture day — and the two
+top-ten lists turn out to share 9 of 10 features, heavily reordered.
 The measured comparison, and the sharper claim it licenses, is under
 **"Round 4, and what it answered"** in the `capture.py` section. Read
 that before quoting any ranking from here.
@@ -1145,14 +1163,48 @@ reassuring is a reason to ask what it actually varies over.** Both come
 from the same habit — treating a comfortable number as a hypothesis
 rather than a result.
 
+#### The prose was wrong and the generated data caught it
+
+This file claimed, in four places, that **the top ten features are the
+same set under both seeds, only reordered**. The first build of
+`docs/data/case_study.json` computed `top10_same_set` from
+`results/shap_summary.json` and returned **false**.
+
+The measurement: the two lists share **9 of 10**. `iat_median` moves
+rank 7 → 10 and `syn_ack_count` moves rank 10 → 6 — 0-indexed, so 8th
+to 11th and 11th to 7th — trading places across the rank-10 boundary.
+Ten is an arbitrary cutoff, so this is a boundary effect rather than
+large instability — but "9 of 10" and "the same set" are different
+statements, and only one of them is true.
+
+**How the wrong sentence survived four rounds of editing:** the table of
+both top-ten lists was already in this file, directly beneath the
+sentence, and it is correct. Reading down two columns and noticing that
+two of twenty entries differ is exactly the check a human does not
+perform on prose they wrote themselves.
+
+**This is why `scripts/build_site_data.py` exists**, and it earned its
+place on its first run. Every figure on the case-study page is computed
+from the measured JSON; nothing is retyped. A number in prose is a
+number that was true when it was written, and prose has no build step to
+catch it going stale. The rule for step 9: **if a figure is not in
+`case_study.json`, it does not go on the page.**
+
+A smaller version of the same lesson, from the same build: the top-ten
+ordering is now taken from `shap_summary.json`'s own `rank_seed_*`
+fields rather than re-derived by sorting the values. The two agreed —
+which is the moment to remove a second owner of one fact, while it is
+still free.
+
 ### `scripts/explain_model.py`
 
 - **Three plots, not one, and they are one argument in order.**
   Measured: re-fitting at `random_state=7` moves individual feature
-  ranks by up to **24 places** while accuracy stays **1.0000** — but the
-  top ten features are the same **set** under both seeds. Attribution is
-  **stable at family level and unstable at feature level**, so the
-  output is built to say exactly that and nothing stronger:
+  ranks by up to **24 places** across all 53 features while accuracy
+  stays **1.0000** — but the two top-ten lists still share **9 of 10**.
+  Attribution is **stable at family level and unstable at feature
+  level**, so the output is built to say exactly that and nothing
+  stronger:
   1. **family bar chart**, both seeds paired — the claim that survives
   2. **feature beeswarm** — informative, but seed-dependent
   3. **stability chart** — the measurement that bounds plot 2
@@ -1606,9 +1658,9 @@ concern now, so the flaw and its fix can be read together.
       computed per fold on held-out rounds only) +
       `scripts/explain_model.py` (three plots + `shap_summary.json`).
       Attribution is **stable at family level, unstable at feature
-      level**: the top ten features are the same set under seed 42 and
-      seed 7, reordered by up to 24 places, while the capture day has no
-      measurable effect. Timing + sizes carry **81–82%** of attribution
+      level**: the two top-ten lists share 9 of 10 features under seed
+      42 and seed 7, with the largest movement across all 53 features
+      being 24 places, while the capture day has no measurable effect. Timing + sizes carry **81–82%** of attribution
       under both seeds, but **which of the two leads is seed-dependent**.
       Every plot caption is **computed from the measured values**, not
       written — hardcoded ones were wrong twice. See "Round 4, and what
@@ -1628,7 +1680,36 @@ concern now, so the flaw and its fix can be read together.
       how the tool is reached, not what it computes. Known packaging
       limitations are listed under the decisions entry and go in the
       README.
-- [ ] **Step 9** — README + case-study page
+- [~] **Step 9 — README + case-study page — IN PROGRESS.**
+
+      **Done: the data layer.** `scripts/build_site_data.py` +
+      `src/tsd/site_data.py` generate `docs/data/case_study.json` from
+      `results/` and nothing else. **419 tests pass.** The output
+      carries **no wall-clock timestamp of its own** — each source's own
+      `generated_at` is carried through instead — so two runs are
+      byte-identical and `--check` can *prove* the page data is in sync
+      with `results/` rather than asserting it.
+
+      **The rule for the rest of step 9: if a number is not in
+      `case_study.json`, it does not go on the page.** The site data is
+      the single source of every figure the case study shows; nothing is
+      retyped. Prose has no build step, so a number written into prose
+      is a number that was true when it was written.
+
+      That is not a precaution. **Generating the file contradicted a
+      claim this repository had written in prose** — the top-ten seed
+      overlap, which said "same set" where the measurement says 9 of 10.
+      Corrected in CLAUDE.md and in the `explain_model.py` docstring;
+      the story is under "The prose was wrong and the generated data
+      caught it".
+
+      **Top-level keys of `case_study.json`**, so a future session knows
+      what is available without opening it: `provenance`, `dataset`,
+      `split`, `models`, `ablation`, `shap`, `cli`, `capture`,
+      `capture_invariants`, `corpus`.
+
+      **Still open:** information architecture, semantic HTML, vanilla
+      CSS, vanilla JS, README. **No page markup exists yet.**
 
 The corpus **has been scraped** (2026-08-06). `data/mirror/` is gitignored;
 what is published in its place is `results/corpus_manifest.json` (per-file

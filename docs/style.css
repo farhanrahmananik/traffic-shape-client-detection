@@ -1,0 +1,1350 @@
+/*
+ * style.css
+ * ---------
+ * Vanilla CSS. No framework, no preprocessor, no reset library, and no
+ * @import — the page depends on nothing beyond its own three files, so
+ * it renders identically offline and cannot be slowed down by someone
+ * else's CDN.
+ *
+ * The type is set in a system font stack for the same reason. A web
+ * font would be a network request on a page whose subject is measuring
+ * what a page load costs.
+ *
+ * Two readers were assumed: one with ten seconds, who reads the heading
+ * and the summary line and leaves; one with ten minutes, who reads the
+ * method cards. The first needs the top of the page to be scannable.
+ * The second needs the body to be calm enough to stay in — which is why
+ * the type scale is narrow and the colour is nearly absent.
+ *
+ * Everything is a custom property. No magic value appears in a rule.
+ */
+
+/* ================================================================== */
+/* Tokens                                                             */
+/* ================================================================== */
+
+:root {
+  /* --- type ------------------------------------------------------ */
+  /* Two ratios, because one was doing two jobs badly.
+     A minor third (1.2) still governs the steps around body size,
+     where a bigger jump would make captions and labels shout. But at
+     1.2 the section headings sat barely above the paragraphs, and six
+     sections did not read as six sections while scrolling — the page
+     had no landmarks.
+     The display steps now climb at 1.25, compounding, so h1 / figure /
+     h2 / h3 / body separate clearly without any of them reaching the
+     size a marketing page uses. */
+  --ratio: 1.2;
+  --ratio-display: 1.22;
+  --size-base: 1.0625rem;                       /* 17px, comfortable for long prose */
+  --size-sm: calc(var(--size-base) / var(--ratio));
+  --size-xs: calc(var(--size-sm) / var(--ratio));
+  --size-md: calc(var(--size-base) * var(--ratio));
+  /* --size-lg takes TWO display steps rather than one. That doubled
+     jump is the gap between the text sizes and the display sizes, and
+     it is what makes a section heading register as a landmark instead
+     of as a slightly bolder paragraph. */
+  --size-lg: calc(var(--size-md) * var(--ratio-display) * var(--ratio-display));
+  --size-xl: calc(var(--size-lg) * var(--ratio-display));
+  --size-xxl: calc(var(--size-xl) * var(--ratio-display));
+
+  --leading-tight: 1.25;
+  --leading-body: 1.65;
+  --tracking-caps: 0.08em;
+
+  --font-body: system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue",
+    Arial, "Noto Sans", sans-serif;
+  --font-mono: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas,
+    "Liberation Mono", monospace;
+
+  /* --- rhythm ---------------------------------------------------- */
+  --space-3xs: 0.125rem;
+  --space-2xs: 0.25rem;
+  --space-xs: 0.5rem;
+  --space-sm: 0.75rem;
+  --space-md: 1.25rem;
+  --space-lg: 2rem;
+  --space-xl: 3rem;
+  --space-2xl: 4.5rem;
+
+  /* --- layout ---------------------------------------------------- */
+  /* Four values, and they are the only ones in the file that decide
+     width. --container and --gutter are shared by the hero's inner
+     track and the body container, which is what keeps their left edges
+     aligned; --sidebar and --layout-gap size the rail beside the
+     content.
+     --measure is the prose cap: around 68 characters, long enough not
+     to fragment a technical sentence and short enough that the eye
+     finds the next line. It is applied to text, never to a container —
+     applying it to containers is what produced a page of empty
+     margins. */
+  --container: 69rem;
+  --gutter: var(--space-md);
+  --container-inner: calc(var(--container) - 2 * var(--gutter));
+  --sidebar: 13.5rem;
+  --layout-gap: var(--space-xl);
+  --measure: 68ch;
+
+  --radius: 4px;
+  --border-width: 1px;
+  --rule-width: 3px;
+
+  /* --- colour ---------------------------------------------------- */
+  /* Near-monochrome. One accent, used for links and for the rule down
+     the side of a method card, so that colour always means the same
+     thing. All pairs below meet WCAG AA on their own background. */
+  /* --ink-muted sat too close to --ink: supporting text carried the
+     same visual weight as primary text, so nothing receded and nothing
+     stood out. It is lighter now, and --ink-faint lighter again, while
+     both stay above 4.5:1 on this background. */
+  --bg: #fcfcfa;
+  --bg-sunken: #f2f2ee;
+  --ink: #161613;
+  --ink-muted: #64645a;
+  --ink-faint: #6f6f65;
+  --rule: #dcdcd4;
+  --rule-strong: #c2c2b8;
+
+  --accent: #0a5a8c;
+  --accent-soft: #e4eff7;
+
+  --warn-ink: #6b4a00;
+  --warn-bg: #fdf3d8;
+  --warn-rule: #c99a1e;
+
+  --fail-ink: #8f2413;
+  --fail-bg: #fbeae7;
+  --fail-rule: #b4432c;
+
+  --focus: #0a5a8c;
+  --focus-width: 3px;
+  --focus-offset: 2px;
+
+  --transition: 120ms ease;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg: #15171a;
+    --bg-sunken: #1c1f23;
+    --ink: #f0f0eb;
+    --ink-muted: #9d9d94;
+    --ink-faint: #8a8a81;
+    --rule: #2f3439;
+    --rule-strong: #434a51;
+
+    --accent: #8ecbf0;
+    --accent-soft: #1d2a33;
+
+    --warn-ink: #f0d08a;
+    --warn-bg: #2a2418;
+    --warn-rule: #8a6d20;
+
+    --fail-ink: #ffb3a3;
+    --fail-bg: #2c1b17;
+    --fail-rule: #a34a35;
+
+    --focus: #8ecbf0;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  :root {
+    --transition: 0ms;
+  }
+
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+/* ================================================================== */
+/* Base                                                               */
+/* ================================================================== */
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html {
+  scroll-behavior: smooth;
+  /* Anchored sections land below the top edge rather than flush against
+     it, so the heading is visibly the start of something. */
+  scroll-padding-top: var(--space-lg);
+}
+
+/* ================================================================== */
+/* Layout — one system, top to bottom                                 */
+/* ================================================================== */
+
+/*
+ * This replaced three overlapping width systems that had accumulated
+ * over successive edits: a single --measure applied to everything, then
+ * a prose/wide column pair, then a sidebar/content grid. Each was
+ * reasonable on its own; together they nested, so the innermost prose
+ * column ended up a fraction of its intended width while the viewport
+ * sat empty around it.
+ *
+ * The rule that prevents a repeat: **width is decided in exactly two
+ * places.** A container centres the page, and a max-width on text
+ * elements narrows prose inside it. Nothing else sets a width. An
+ * element that should be wide is simply one the prose rule does not
+ * name — there is no wide class, no escape hatch, no negative margin,
+ * and no second container to reason about.
+ */
+
+body {
+  /* No layout here. The viewport is the viewport; containers do the
+     centring, so the hero can span it edge to edge without being
+     pulled back out with negative margins. */
+  margin: 0;
+  padding: 0;
+  background: var(--bg);
+  color: var(--ink);
+  font-family: var(--font-body);
+  font-size: var(--size-base);
+  line-height: var(--leading-body);
+  text-rendering: optimizeLegibility;
+  -webkit-text-size-adjust: 100%;
+}
+
+/* ---- the hero band ------------------------------------------------ */
+
+/* Full bleed: the background reaches both edges of the viewport, and
+   the content inside it is held to the same container as everything
+   below, so the two left edges line up. */
+.hero {
+  background: var(--bg-sunken);
+  border-bottom: var(--border-width) solid var(--rule-strong);
+  padding-block: var(--space-xl) var(--space-lg);
+  margin-block-end: var(--space-2xl);
+}
+
+/* The hero's inner container. Implemented as a centred middle track
+   rather than a wrapper element, because the markup has no wrapper to
+   use and this needs none: the side tracks are the horizontal padding,
+   and the middle track is the container. */
+.hero {
+  display: grid;
+  grid-template-columns:
+    minmax(var(--gutter), 1fr)
+    [inner-start] minmax(0, var(--container-inner)) [inner-end]
+    minmax(var(--gutter), 1fr);
+}
+
+.hero > * {
+  grid-column: inner;
+}
+
+/* ---- the body container ------------------------------------------- */
+
+/* One container, centred, with the same maximum and the same gutter as
+   the hero's inner track — which is what makes the two left edges
+   agree at every width. */
+.layout {
+  max-width: var(--container);
+  margin-inline: auto;
+  padding-inline: var(--gutter);
+  padding-block-end: var(--space-2xl);
+}
+
+/* Stacked by default: on a phone the contents list is a list above the
+   text, not a rail beside it. */
+@media (min-width: 56rem) {
+  .layout {
+    display: grid;
+    grid-template-columns: var(--sidebar) minmax(0, 1fr);
+    gap: var(--layout-gap);
+    align-items: start;
+  }
+
+  /* The footer lives inside the same container and takes the same
+     column as the content above it, rather than being given a
+     container of its own. A second container would be a second place
+     that decides width — which is the thing the layout rewrite existed
+     to remove. Auto-placement would drop it under the sidebar, so the
+     column is stated. */
+  .layout > footer {
+    grid-column: 2;
+  }
+
+  .toc {
+    position: sticky;
+    top: var(--space-lg);
+    /* Its own scroll if the list ever outgrows the viewport, so a
+       longer page cannot make the rail unusable. */
+    max-height: calc(100vh - 2 * var(--space-lg));
+    overflow-y: auto;
+    margin: 0;
+    padding: var(--space-lg) var(--space-md) var(--space-lg) 0;
+    border-top: 0;
+    border-right: var(--border-width) solid var(--rule);
+  }
+}
+
+/* ---- prose measure ------------------------------------------------ */
+
+/* The content track stays as wide as the container allows. Prose is
+   narrowed by capping the TEXT, not the track — so a table, a code
+   block or a method card, none of which are named here, occupy the
+   full track without needing anything said about them.
+   This is the only other place a width is set. */
+.hero p,
+main h2,
+main h3,
+main p,
+main li,
+main dd,
+main figcaption,
+footer p {
+  max-width: var(--measure);
+}
+
+p,
+ul,
+ol,
+dl {
+  margin-block: 0 var(--space-md);
+}
+
+a {
+  color: var(--accent);
+  text-decoration-thickness: 1px;
+  text-underline-offset: 0.15em;
+}
+
+a:hover {
+  text-decoration-thickness: 2px;
+}
+
+/* Inline code carries the accent, tinted rather than shouted: feature
+   names and filters appear constantly in this text, and colouring them
+   at full strength would make the prose itself look highlighted. */
+code {
+  font-family: var(--font-mono);
+  font-size: 0.9em;
+  overflow-wrap: anywhere;                      /* hashes and long URLs */
+  padding-inline: var(--space-3xs);
+  border-radius: var(--radius);
+  background: var(--accent-soft);
+  color: var(--accent);
+}
+
+/* Inside a code block the tint would be a box within a box. */
+pre code {
+  padding-inline: 0;
+  background: none;
+  color: var(--ink);
+}
+
+em {
+  font-style: italic;
+}
+
+/* Focus is never removed, only made clearer. */
+:focus-visible {
+  outline: var(--focus-width) solid var(--focus);
+  outline-offset: var(--focus-offset);
+  border-radius: var(--radius);
+}
+
+/* ================================================================== */
+/* Bound values                                                       */
+/* ================================================================== */
+
+/* Tabular figures so a column of per-fold accuracies lines up digit for
+   digit. Without this the reader compares ragged numbers. */
+.value {
+  font-variant-numeric: tabular-nums;
+  font-feature-settings: "tnum" 1;
+}
+
+/* Shown value differs from the measured one. The dotted rule is an
+   affordance, not decoration: enough to make a reader try hovering,
+   not enough to compete with the sentence. */
+.is-shortened {
+  border-bottom: 1px dotted var(--rule-strong);
+  cursor: help;
+}
+
+.is-shortened:hover {
+  border-bottom-color: var(--accent);
+}
+
+/* A value that could not be filled. Deliberately not styled to blend
+   in: an unfilled figure on this page is a failure of the build, and
+   looking like a design choice is exactly what it must not do. */
+.is-unresolved {
+  color: var(--fail-ink);
+  background: var(--fail-bg);
+  box-shadow: inset 0 calc(-1 * var(--border-width)) 0 var(--fail-rule);
+  padding-inline: var(--space-2xs);
+  border-radius: var(--radius);
+  font-style: normal;
+}
+
+.is-unresolved::after {
+  content: " unresolved";
+  font-size: var(--size-xs);
+  text-transform: uppercase;
+  letter-spacing: var(--tracking-caps);
+}
+
+/* The binder's banner. Visible without being an alarm — the page is
+   still readable, it just is not filled in. */
+.data-error {
+  margin-block-end: var(--space-lg);
+  padding: var(--space-sm) var(--space-md);
+  border-left: var(--rule-width) solid var(--warn-rule);
+  border-radius: var(--radius);
+  background: var(--warn-bg);
+  color: var(--warn-ink);
+  font-size: var(--size-sm);
+  line-height: var(--leading-body);
+}
+
+/* ================================================================== */
+/* Utilities                                                          */
+/* ================================================================== */
+
+/* Available to a screen reader, absent from the page. Used for the copy
+   button's status region, which must announce without occupying space. */
+.visually-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  margin: -1px;
+  padding: 0;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+  border: 0;
+}
+
+/* Off-screen until focused, then a normal control in the top corner. A
+   keyboard reader should not have to walk the whole header to reach the
+   argument. */
+.skip-link {
+  position: absolute;
+  left: var(--space-xs);
+  top: calc(-1 * var(--space-2xl));
+  z-index: 1;
+  padding: var(--space-xs) var(--space-md);
+  border-radius: var(--radius);
+  background: var(--accent);
+  color: var(--bg);
+  font-size: var(--size-sm);
+  text-decoration: none;
+  transition: top var(--transition);
+}
+
+.skip-link:focus-visible {
+  top: var(--space-xs);
+}
+
+/* ================================================================== */
+/* Header                                                             */
+/* ================================================================== */
+
+header {
+  margin-block-end: var(--space-2xl);
+}
+
+/* One of the four places accent is used. The page was uniform grey, so
+   nothing led; the title, the figures, the current section and inline
+   code are the only things that carry it. Body prose stays ink. */
+h1 {
+  margin-block: 0 var(--space-md);
+  font-size: var(--size-xxl);
+  line-height: var(--leading-tight);
+  letter-spacing: -0.015em;
+  font-weight: 650;
+  color: var(--accent);
+  text-wrap: balance;
+}
+
+/* The ten-second read: the statement of the problem, set larger than
+   the body so it is the second thing seen after the title. */
+header > p:first-of-type {
+  font-size: var(--size-md);
+  line-height: 1.45;
+  color: var(--ink);
+}
+
+header > p:nth-of-type(2) {
+  color: var(--ink-muted);
+}
+
+/* ------------------------------------------------------------------ */
+/* The command                                                        */
+/* ------------------------------------------------------------------ */
+
+/* One line, and the whole project reduces to it. Set as a block a
+   reader can select, with a copy button beside rather than over it —
+   an overlaid button covers the end of the command, which is the part
+   worth reading. */
+.command {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: stretch;
+  gap: var(--space-xs);
+  margin-block: var(--space-lg) var(--space-md);
+}
+
+.command pre {
+  flex: 1 1 auto;
+  min-width: 0;
+  margin: 0;
+  padding: var(--space-sm) var(--space-md);
+  border: var(--border-width) solid var(--rule);
+  border-radius: var(--radius);
+  background: var(--bg-sunken);
+  overflow-x: auto;
+}
+
+.command code {
+  font-size: var(--size-sm);
+  white-space: pre;
+}
+
+/* A multi-line block — a whole JSON document rather than one command.
+   The button aligns to the top of it instead of stretching down the
+   side of thirty lines, which is the only difference. */
+.command--block {
+  align-items: flex-start;
+}
+
+.command--block pre {
+  max-height: 32rem;
+  overflow: auto;
+}
+
+/* An unavailable sample is a sentence, not a document, so it wraps like
+   prose instead of running off the side of the block. Everything else
+   about it is left to `.is-unresolved`: a missing sample is the same
+   kind of failure as a missing figure, and one class should say so
+   once. */
+.command--block code.is-unresolved {
+  white-space: normal;
+}
+
+.copy {
+  /* Both labels occupy the same cell, so the button's width is the
+     wider of the two and swapping them shifts nothing. */
+  display: grid;
+  place-items: center;
+  padding: var(--space-xs) var(--space-md);
+  border: var(--border-width) solid var(--rule-strong);
+  border-radius: var(--radius);
+  background: var(--bg);
+  color: var(--ink-muted);
+  font-family: inherit;
+  font-size: var(--size-xs);
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: var(--tracking-caps);
+  cursor: pointer;
+  transition: color var(--transition), border-color var(--transition);
+}
+
+.copy > span {
+  grid-area: 1 / 1;
+}
+
+.copy:hover:not(:disabled) {
+  color: var(--ink);
+  border-color: var(--accent);
+}
+
+.copy:disabled {
+  cursor: not-allowed;
+  opacity: 0.6;
+}
+
+.copy .copy-done {
+  visibility: hidden;
+}
+
+.copy.is-copied {
+  color: var(--accent);
+  border-color: var(--accent);
+}
+
+.copy.is-copied .copy-idle {
+  visibility: hidden;
+}
+
+.copy.is-copied .copy-done {
+  visibility: visible;
+}
+
+/* ------------------------------------------------------------------ */
+/* Key figures                                                        */
+/* ------------------------------------------------------------------ */
+
+/* The scale of the work, before any argument about it. A reader who
+   never scrolls should still leave knowing how much was measured.
+   These are the largest text on the page after the h1 — one step down
+   from it on the same scale, so the heading still leads.
+
+   A description list, not a table: each figure is a term and the label
+   under it says what the term counts. The <div> wrappers group each
+   term with its description, which is the one thing a <dl> cannot do
+   without them and is explicitly allowed for exactly this. */
+.figures {
+  display: flex;
+  flex-wrap: wrap;
+  /* Generous, because the job of the gap is to make four numerals read
+     as four facts rather than as one long line of digits. */
+  gap: var(--space-lg) var(--space-xl);
+  margin-block: var(--space-xl);
+  padding-block: var(--space-lg);
+  border-block: var(--border-width) solid var(--rule);
+}
+
+.figure {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2xs);
+  /* Never narrower than its own label, so nothing wraps mid-word; free
+     to grow so four numerals and one name share a row when there is
+     space, and fall to two columns when there is not. */
+  flex: 0 1 auto;
+  min-width: min-content;
+}
+
+/* A hairline between entries, so the separation survives even when the
+   row is tight and the gaps close up. */
+.figure + .figure {
+  padding-inline-start: var(--space-xl);
+  border-inline-start: var(--border-width) solid var(--rule);
+}
+
+/* Second only to the h1: the scale of the work, readable from across a
+   desk, before any argument about it. */
+.figure dt {
+  font-size: var(--size-xl);
+  line-height: 1.1;
+  font-weight: 650;
+  letter-spacing: -0.02em;
+  color: var(--accent);
+}
+
+/* Names are longer than counts and carry no digits to align, so they
+   sit one step down rather than stretching the row. */
+.figure--name dt {
+  font-size: var(--size-md);
+  letter-spacing: 0;
+  /* Optically aligns the shorter cap-height with the numerals beside it. */
+  padding-block-start: var(--space-2xs);
+}
+
+.figure dd {
+  margin: 0;
+  color: var(--ink-muted);
+  font-size: var(--size-xs);
+  line-height: var(--leading-tight);
+  text-transform: uppercase;
+  letter-spacing: var(--tracking-caps);
+  white-space: nowrap;
+}
+
+/* ------------------------------------------------------------------ */
+/* The family-importance chart                                        */
+/* ------------------------------------------------------------------ */
+
+/* Every colour the chart uses is declared here rather than in app.js,
+   so the drawing follows the page's tokens — including into dark mode —
+   without the script knowing a single colour value. */
+
+.chart {
+  margin-block: var(--space-lg);
+}
+
+/* The drawing scales with its container through the viewBox, and is
+   capped so it cannot grow to fill a wide content column. The cap is
+   set by the text inside it rather than by the bars: SVG text scales
+   with the drawing, so past about this width the family labels would be
+   larger than the paragraph they illustrate. */
+.chart svg {
+  display: block;
+  width: 100%;
+  max-width: 27rem;
+  height: auto;
+}
+
+.chart-family {
+  fill: var(--ink);
+  font-family: var(--font-body);
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.chart-value {
+  fill: var(--ink-muted);
+  font-family: var(--font-mono);
+  font-size: 10.5px;
+}
+
+.chart-legend {
+  fill: var(--ink-muted);
+  font-family: var(--font-body);
+  font-size: 11px;
+}
+
+/* Three differences between the two series, not one: fill, outline and
+   hatching. Colour alone would fail in greyscale, in a high-contrast
+   mode, and for a reader who cannot separate these two hues. */
+.chart-bar {
+  stroke: var(--accent);
+  stroke-width: 1;
+}
+
+.chart-bar--primary {
+  fill: var(--accent);
+}
+
+/* Fill comes from the hatch pattern, set on the element; the outline is
+   what makes a one-unit bar still visible at a small size. */
+.chart-hatch-bg {
+  fill: var(--accent-soft);
+}
+
+.chart-hatch-line {
+  stroke: var(--accent);
+  stroke-width: 2;
+}
+
+.chart figcaption {
+  margin-block-start: var(--space-sm);
+  color: var(--ink-muted);
+  font-size: var(--size-sm);
+}
+
+/* ------------------------------------------------------------------ */
+/* Repository link                                                    */
+/* ------------------------------------------------------------------ */
+
+.repo {
+  margin-block: var(--space-md) 0;
+}
+
+.repo-link {
+  display: inline-block;
+  padding: var(--space-xs) var(--space-md);
+  border: var(--border-width) solid var(--accent);
+  border-radius: var(--radius);
+  font-size: var(--size-sm);
+  font-weight: 600;
+  text-decoration: none;
+  transition: background-color var(--transition), color var(--transition);
+}
+
+.repo-link:hover,
+.repo-link:focus-visible {
+  background: var(--accent);
+  color: var(--bg);
+}
+
+/* ------------------------------------------------------------------ */
+/* The hero on a narrow screen                                        */
+/* ------------------------------------------------------------------ */
+
+/* Below 600px the strip could not hold five entries in a row, and
+   wrapping produced three uneven rows with the validation split
+   stranded alone on the last one — five facts reading as three
+   fragments.
+
+   The fix is to stop treating the five as one kind of thing. Four are
+   short numbers and belong in an even 2x2 block; the fifth is a long
+   string naming a method, and belongs on its own line beneath it. Flex
+   cannot express that, because it sizes each item from its content;
+   grid can, because the tracks are declared once and every cell is the
+   same width whatever is in it.
+
+   Placed here, at the end of the two sections it overrides, and not
+   beside the rules it belongs to. Everything in it has the same
+   specificity as the rule it replaces, so source order is what decides
+   — written earlier in the file, this whole block would have parsed,
+   matched, and then quietly lost. Nothing about the page would have
+   looked broken; it would simply have kept the old layout.
+
+   Bounded at 37.499rem, so 600px itself and every width above it keeps
+   the row exactly as it was. */
+@media (max-width: 37.499rem) {
+  .figures {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    /* Tighter than the desktop gap: the grid already separates the
+       cells, so the gap only has to keep them from touching. */
+    gap: var(--space-md) var(--space-lg);
+    /* The strip, the summary paragraph and the repository link are what
+       stand between the reader and the first section, so the space
+       around them comes down a step on the scale. */
+    margin-block: var(--space-lg);
+    padding-block: var(--space-md);
+  }
+
+  /* The hairlines were drawn between flex siblings; in a grid they
+     would fall inside cells and down the middle of the block. */
+  .figure + .figure {
+    padding-inline-start: 0;
+    border-inline-start: 0;
+  }
+
+  /* One step down the existing scale — 37px to 30px. Still the largest
+     text on the page after the h1, and no longer wide enough to force
+     the four numerals into rows of their own. */
+  .figure dt {
+    font-size: var(--size-lg);
+  }
+
+  /* Out of the grid and onto its own line: full width, laid out across
+     rather than stacked, so a method fact reads as one line instead of
+     occupying a cell sized for a count. It still wraps to two lines if
+     the name outgrows the width — which is why the name is allowed to
+     wrap and the counts are not. */
+  .figure--name {
+    grid-column: 1 / -1;
+    flex-direction: row;
+    flex-wrap: wrap;
+    align-items: baseline;
+    gap: var(--space-2xs) var(--space-xs);
+    padding-block-start: var(--space-sm);
+    border-block-start: var(--border-width) solid var(--rule);
+  }
+
+  .figure--name dt {
+    /* Body size: a name being stated, not a number being shown. */
+    font-size: var(--size-base);
+    font-weight: 700;
+    padding-block-start: 0;
+  }
+
+  .hero {
+    padding-block: var(--space-lg) var(--space-md);
+    margin-block-end: var(--space-xl);
+  }
+
+  .hero p {
+    margin-block-end: var(--space-sm);
+  }
+
+  .repo {
+    margin-block-start: var(--space-sm);
+  }
+}
+
+/* ------------------------------------------------------------------ */
+/* On this page                                                       */
+/* ------------------------------------------------------------------ */
+
+.toc {
+  margin-block-start: var(--space-lg);
+  padding-block-start: var(--space-md);
+  border-top: var(--border-width) solid var(--rule);
+}
+
+/* The navigation label, and below the sidebar breakpoint also the
+   control that opens the list. Set at label size so it does not read as
+   the start of the argument, and it names the <nav> for a screen reader
+   through aria-labelledby exactly as the heading it replaced did. */
+.toc summary {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-sm);
+  margin: 0 0 var(--space-xs);
+  padding: var(--space-xs) 0;
+  border: 0;
+  color: var(--ink-faint);
+  font-size: var(--size-xs);
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: var(--tracking-caps);
+  cursor: pointer;
+  /* Suppress the default disclosure triangle in every engine. It sits
+     to the left of an uppercase micro-label, where it reads as a bullet
+     on a one-item list; the chevron below sits at the far end, where
+     the same shape reads as a control. */
+  list-style: none;
+}
+
+.toc summary::-webkit-details-marker {
+  display: none;
+}
+
+/* The marker, drawn rather than inherited: a rotating chevron, pointing
+   down when the list is closed and up when it is open. */
+.toc summary::after {
+  content: "";
+  flex: none;
+  width: 0.55em;
+  height: 0.55em;
+  border-right: var(--border-width) solid currentColor;
+  border-bottom: var(--border-width) solid currentColor;
+  transform: translateY(-0.15em) rotate(45deg);
+  transition: transform var(--transition);
+}
+
+.toc-disclosure[open] > summary::after {
+  transform: translateY(0.1em) rotate(-135deg);
+}
+
+/* Still an <ol>, because the sections do have a document order and the
+   markup should say so. The numbers are suppressed because the reader
+   does not: this is navigation to jump around in, and "1. 2. 3." tells
+   them to start at the top and work down. */
+.toc ol {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  font-size: var(--size-sm);
+}
+
+.toc li {
+  margin: 0;
+}
+
+/* Each item is a target, not a word that happens to be a link: the
+   whole row responds, with room around the text to hit it. */
+.toc a {
+  display: block;
+  padding: var(--space-xs) var(--space-sm);
+  color: var(--ink-muted);
+  text-decoration: none;
+  border-radius: 0 var(--radius) var(--radius) 0;
+  transition: color var(--transition), background-color var(--transition),
+    border-color var(--transition);
+}
+
+/* Hover and focus are deliberately quiet — a shift in ink and a change
+   of background, and nothing else. They compete with the current item
+   otherwise: with the pointer resting on one row while the observer
+   marks another, two rows claim to be where the reader is. Only one may
+   look like an answer, and it is the one the observer chose.
+
+   Gated on a pointer that can actually hover, so a tap on a phone does
+   not leave a highlighted row behind it. */
+@media (hover: hover) {
+  .toc a:hover {
+    color: var(--ink);
+    background: var(--bg-sunken);
+  }
+}
+
+/* Focus adds the same quiet pair; the ring itself comes from the global
+   :focus-visible rule, which is what makes a keyboard position visible
+   on any background. */
+.toc a:focus-visible {
+  color: var(--ink);
+  background: var(--bg-sunken);
+}
+
+/* The section in view, and the only row allowed to look definite: the
+   accent ink, the weight, and — in the sidebar — the bar. `aria-current`
+   is what the observer sets and what a screen reader is told; these
+   three are additions on top of it, never the signal itself. */
+.toc a[aria-current="true"] {
+  color: var(--accent);
+  font-weight: 700;
+}
+
+/* The current item outranks the pointer. Without this, hovering another
+   row while reading a section would dim the row that is actually
+   current. */
+.toc a[aria-current="true"]:hover,
+.toc a[aria-current="true"]:focus-visible {
+  color: var(--accent);
+}
+
+/* ---- rail treatment, sidebar only --------------------------------- */
+
+/* A continuous hairline down the list with the current item's bar
+   sitting on it, so the items share one vertical axis and the eye can
+   find its place without reading. Confined to the sidebar: stacked
+   above the content the list is one or two columns wide, and a rule
+   down the left of that box would point at nothing. */
+@media (min-width: 56rem) {
+  .toc ol {
+    border-left: var(--border-width) solid var(--rule);
+  }
+
+  .toc a {
+    /* The transparent strip is reserved on every item, so nothing
+       shifts when the current one gains its bar. Pulled left by the
+       hairline's own width so the bar sits on the rule rather than
+       beside it. */
+    margin-left: calc(-1 * var(--border-width));
+    border-left: var(--rule-width) solid transparent;
+  }
+
+  /* The bar belongs to the current item alone. It used to appear on
+     hover too, in a weaker colour, which made a hovered row and the
+     current row differ by shade rather than by kind. */
+  .toc a[aria-current="true"] {
+    border-left-color: var(--accent);
+    background: var(--accent-soft);
+  }
+
+  /* At sidebar widths the list is the rail and is never collapsible:
+     the summary is a label, and the list stays visible whatever state
+     the element is in. Stated in CSS as well as set by the script, so
+     the layout does not depend on the script having run. */
+  .toc summary {
+    cursor: default;
+  }
+
+  .toc summary::after {
+    display: none;
+  }
+
+  .toc-disclosure > ol {
+    display: block;
+    content-visibility: visible;
+  }
+}
+
+/* Two columns only in the stacked band — wide enough for two, too
+   narrow for a rail. Bounded at the top as well as the bottom, because
+   once the list becomes a sidebar it must be a single column again,
+   and a one-sided min-width rule declared later in the file would
+   quietly win. */
+@media (min-width: 34rem) and (max-width: 55.999rem) {
+  .toc ol {
+    columns: 2;
+    column-gap: var(--space-lg);
+  }
+}
+
+/* ================================================================== */
+/* Sections                                                           */
+/* ================================================================== */
+
+main > section {
+  margin-block-end: var(--space-2xl);
+  scroll-margin-top: var(--space-lg);
+}
+
+/* The nav anchors must visibly land, or a reader who clicks one is not
+   sure anything happened. One rule for every section, matched on
+   `:target` and the element structure — never on a section id, so a
+   section added later is covered by it without anyone remembering to
+   add anything.
+
+   What the acknowledgement may NOT be is a filled panel: `:target`
+   holds for as long as the fragment stays in the URL, so a background
+   set here is a tinted box sitting behind that one heading for the rest
+   of the visit, and the page then has two kinds of heading in it.
+
+   So the lasting part is a rule down the left edge — quiet, the same
+   accent bar the sidebar uses for the current item — and the tint is an
+   animation that ends at transparent. The negative margin cancels the
+   padding, so the heading's text sits in exactly the same place whether
+   it is the target or not: no reflow when a fragment changes. */
+main > section:target > h2 {
+  border-left: var(--rule-width) solid var(--accent);
+  padding-left: var(--space-sm);
+  margin-left: calc(-1 * (var(--space-sm) + var(--rule-width)));
+}
+
+/* The tint, and only for a reader who has not asked for less motion.
+   `both` keeps the final frame — transparent — rather than falling back
+   to the unanimated value, which would be transparent anyway; stating
+   it means the rule does not depend on that coincidence. */
+@media (prefers-reduced-motion: no-preference) {
+  main > section:target > h2 {
+    animation: heading-landed 1.4s ease-out both;
+  }
+}
+
+@keyframes heading-landed {
+  from {
+    background-color: var(--accent-soft);
+  }
+  to {
+    background-color: transparent;
+  }
+}
+
+/* Far more space above than below, so a heading reads as belonging to
+   what follows it rather than floating between two blocks. That
+   asymmetry is what makes six sections scannable — the gap is the
+   section break, and the heading is its first line. */
+h2 {
+  margin-block: var(--space-2xl) var(--space-md);
+  padding-block-end: var(--space-xs);
+  border-bottom: var(--border-width) solid var(--rule);
+  font-size: var(--size-lg);
+  line-height: var(--leading-tight);
+  font-weight: 650;
+  letter-spacing: -0.012em;
+  text-wrap: balance;
+}
+
+/* The first heading in a section does not need the gap: the section
+   itself already provides it. */
+main > section > h2:first-child {
+  margin-block-start: 0;
+}
+
+h3 {
+  margin-block: var(--space-xl) var(--space-xs);
+  font-size: var(--size-md);
+  line-height: var(--leading-tight);
+  font-weight: 650;
+  text-wrap: balance;
+}
+
+main > section > article + article {
+  margin-block-start: var(--space-lg);
+}
+
+/* ================================================================== */
+/* Method cards                                                       */
+/* ================================================================== */
+
+/* The five method articles share one shape: what was done, what was
+   rejected, what would have gone wrong. Styled once, so the shape is
+   learnable — after the first card the reader knows where to look for
+   the part they want. */
+.decision {
+  margin-block-start: var(--space-lg);
+  padding: var(--space-md) var(--space-lg) var(--space-md);
+  border-left: var(--rule-width) solid var(--rule-strong);
+  border-radius: 0 var(--radius) var(--radius) 0;
+  background: var(--bg-sunken);
+}
+
+.decision:hover {
+  border-left-color: var(--accent);
+}
+
+/* The entry point. Five cards in a row were indistinguishable because
+   nothing inside them led — the heading sat at the same weight as the
+   text under it. It is now separated by a rule and set apart in
+   colour, size and weight together, so the eye lands on it first and
+   can skip a card it does not need. */
+.decision > h3 {
+  margin-block: 0 var(--space-md);
+  padding-block-end: var(--space-xs);
+  border-bottom: var(--border-width) solid var(--rule-strong);
+  font-size: var(--size-md);
+  font-weight: 700;
+  letter-spacing: -0.01em;
+  color: var(--ink);
+}
+
+.decision dl {
+  margin: 0;
+  display: grid;
+  grid-template-columns: minmax(7.5rem, auto) 1fr;
+  gap: 0 var(--space-md);
+  align-items: baseline;
+  counter-reset: decision-step;
+}
+
+/* Three rows, three steps of one argument. They are numbered and
+   ruled apart, not merely tinted: Rejected must not read as a
+   continuation of Done, and a reader who cannot distinguish the
+   colours must still see three. */
+.decision dt {
+  padding-block: var(--space-sm) var(--space-2xs);
+  font-size: var(--size-xs);
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: var(--tracking-caps);
+  color: var(--ink-muted);
+}
+
+.decision dt::before {
+  counter-increment: decision-step;
+  content: counter(decision-step) " · ";
+  font-variant-numeric: tabular-nums;
+  color: var(--ink-faint);
+}
+
+.decision dd {
+  margin: 0;
+  padding-block: var(--space-sm) var(--space-xs);
+  color: var(--ink);
+}
+
+.decision dt + dd {
+  padding-block-start: var(--space-sm);
+}
+
+/* A hairline across the whole row, drawn on both cells so it runs the
+   full width of the card. */
+.decision dt:not(:first-of-type),
+.decision dt:not(:first-of-type) + dd {
+  border-top: var(--border-width) solid var(--rule);
+}
+
+/* Narrow screens: the label sits above its text rather than squeezing
+   the measure to nothing. */
+@media (max-width: 34rem) {
+  .decision dl {
+    grid-template-columns: 1fr;
+  }
+
+  .decision dt {
+    padding-block-end: 0;
+  }
+
+  .decision dt + dd {
+    padding-block-start: var(--space-2xs);
+  }
+
+  .decision dt:not(:first-of-type) + dd {
+    border-top: 0;
+  }
+}
+
+/* ================================================================== */
+/* Tables                                                             */
+/* ================================================================== */
+
+/* Tables are only used where the data is genuinely tabular. No cell
+   borders: horizontal rules between rows are enough to track across,
+   and a full grid turns a small table into a diagram of itself. */
+table {
+  width: 100%;
+  margin-block: var(--space-md) var(--space-lg);
+  border-collapse: collapse;
+  font-size: var(--size-sm);
+  font-variant-numeric: tabular-nums;
+}
+
+caption {
+  margin-block-end: var(--space-xs);
+  padding-block-end: var(--space-2xs);
+  color: var(--ink-muted);
+  font-size: var(--size-xs);
+  line-height: 1.45;
+  text-align: left;
+  text-wrap: pretty;
+}
+
+thead th {
+  padding: var(--space-2xs) var(--space-sm);
+  border-bottom: 2px solid var(--rule-strong);
+  color: var(--ink-muted);
+  font-size: var(--size-xs);
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: var(--tracking-caps);
+  text-align: left;
+  vertical-align: bottom;
+}
+
+tbody th[scope="row"] {
+  font-weight: 500;
+  text-align: left;
+}
+
+tbody th,
+tbody td {
+  padding: var(--space-xs) var(--space-sm);
+  border-bottom: var(--border-width) solid var(--rule);
+  vertical-align: baseline;
+}
+
+tbody tr:last-child th,
+tbody tr:last-child td {
+  border-bottom: none;
+}
+
+/* Numeric columns read better right-aligned; the first column is a
+   label and stays left. */
+thead th:not(:first-child),
+tbody td {
+  text-align: right;
+}
+
+/* Except where the cell holds a string rather than a figure. */
+tbody td code {
+  display: inline-block;
+  text-align: left;
+}
+
+/* Wide content (hashes, filters) scrolls inside the table rather than
+   pushing the page sideways. */
+table {
+  display: block;
+  overflow-x: auto;
+}
+
+/* ================================================================== */
+/* Lists                                                              */
+/* ================================================================== */
+
+main ul {
+  padding-inline-start: var(--space-md);
+}
+
+main li {
+  margin-block-end: var(--space-2xs);
+}
+
+main li::marker {
+  color: var(--ink-faint);
+}
+
+/* ================================================================== */
+/* Footer                                                             */
+/* ================================================================== */
+
+/* A clear end rather than a trailing off: a stronger rule than the one
+   between sections, and enough space above it that the last section is
+   visibly finished before the footer begins. */
+footer {
+  margin-block-start: var(--space-2xl);
+  padding-block-start: var(--space-lg);
+  border-top: var(--border-width) solid var(--rule-strong);
+  color: var(--ink-muted);
+  font-size: var(--size-sm);
+}
+
+footer p:last-child {
+  margin-block-end: 0;
+}
+
+/* ================================================================== */
+/* Print                                                              */
+/* ================================================================== */
+
+@media print {
+  :root {
+    --bg: #ffffff;
+    --bg-sunken: #ffffff;
+    --ink: #000000;
+  }
+
+  body {
+    padding: 0;
+  }
+
+  .toc,
+  .copy,
+  .skip-link,
+  .data-error {
+    display: none;
+  }
+
+  .decision {
+    border-left: var(--border-width) solid var(--rule-strong);
+    break-inside: avoid;
+  }
+
+  table {
+    break-inside: avoid;
+  }
+}

@@ -23,11 +23,16 @@ places** while accuracy stays **1.0000**. Publishing a single beeswarm
 would therefore present a seed-dependent ordering as if it were the
 result.
 
-But the same measurement showed something else: the top **ten**
-features are the same **set** under both seeds, only reordered. So
-attribution here is **stable at family level and unstable at feature
-level**, and the output is built to say exactly that and nothing
-stronger.
+But the same measurement showed something else: the two top-ten sets
+share **9 of 10**; `iat_median` and `syn_ack_count` swap across the
+rank-10 boundary; and that 24-place movement (`size_up_p75`) is across
+all 53 features, not within the top ten. So attribution here is
+**stable at family level and unstable at feature level**, and the
+output is built to say exactly that and nothing stronger.
+
+Ranks quoted anywhere here are **0-indexed**, as `shap_summary.json`
+stores them: rank 0 is the top feature, so rank 10 is the 11th and
+therefore outside the top ten.
 
 The three plots are one argument, in order:
 

@@ -1,0 +1,28 @@
+{
+  "schema_version": 1,
+  "pcap": {
+    "path": "data/pcaps/round_04_20260809/firefox/index.pcap",
+    "sha256": "a0232397942259bb7569daadd2f6b39e34df83cb4852db44ad9b197083c0a4a6",
+    "packets": 490,
+    "duration_s": 0.556683,
+    "server_port": 8443
+  },
+  "verdict": {
+    "client": "firefox",
+    "probabilities": {
+      "firefox": 0.996667,
+      "wget": 0.003333
+    }
+  },
+  "model": {
+    "path": "models/client_classifier.joblib",
+    "sha256": "65864d6df5dc816b02831da77d16c54df10a74d9286f36856250fe6b35348904",
+    "trained_on_rounds": [
+      1,
+      2,
+      3,
+      4
+    ],
+    "n_features": 53
+  }
+}
