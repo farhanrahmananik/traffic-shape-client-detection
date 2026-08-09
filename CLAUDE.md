@@ -1270,6 +1270,172 @@ The summary JSON records the direction explicitly — `positive_class`
 reader knows which way a positive SHAP value points **without opening an
 image**.
 
+### `src/tsd/verdict.py` + `src/tsd/cli.py` + `scripts/classify_pcap.py`
+
+**Three layers, and the seam is deliberate.** `verdict.py` is pure logic
+and knows nothing of argv; `cli.py` owns argparse and the exit codes;
+`scripts/classify_pcap.py` is a shim that imports `main` and calls it.
+The CLI lives in `src/tsd/` rather than in `scripts/` for two reasons:
+`scripts/` is run-once operational tooling while **the CLI is the
+shipped deliverable**, and `main(argv)` inside the library is
+unit-testable without a subprocess — where a failure keeps its
+traceback instead of collapsing into an exit code and a silent shell.
+
+**The artefact's feature list is the authority; `feature_names()` is
+only cross-checked against it.** The pipeline was fitted with the
+columns in the artefact's order, and this is the failure being defended
+against: scikit-learn takes a **positional array** and validates the
+column *count*, never the names. A permuted or mismatched vector is
+still a valid vector, so the model returns a **confident wrong answer
+with nothing raised**. `load_artefact()` therefore refuses on any
+difference in the feature set and names what moved, and `build_vector()`
+iterates the artefact rather than the feature dict.
+
+**stdout carries JSON and nothing else; every diagnostic goes to
+stderr.** On any failure stdout is left **completely empty** — verified
+against the real binary at **0 bytes**, not only through `capsys`. A
+half-written JSON object is worse than none, because a consuming
+pipeline would not notice it; an empty stream at least fails honestly.
+The tool has to pipe into `jq` without the caller filtering anything
+first.
+
+**The exit code never encodes the predicted class.** 0 a verdict was
+produced, 2 usage, 3 `VerdictError`. Exit status answers *"did the tool
+work"*, not *"what did it find"*. Overloading it would make
+
+    classify_pcap x.pcap || echo failed
+
+report failure whenever the correct answer happened to be `wget` — a
+right answer treated as an error. The class is in the JSON, where a
+caller has to read it deliberately.
+
+**`MIN_PACKETS = 4`.** The handshake alone is three packets, so anything
+shorter is a connection attempt, a stray retransmission, or a capture
+that never ran — and the model has never seen such a trace. A prediction
+there would be **extrapolation wearing the costume of a verdict**, which
+is worse than a refusal because it looks like an answer.
+
+**Rounding is presentation only.** The model receives full precision;
+the six-decimal rounding exists so two verdicts on the same input diff
+cleanly. Two tests hold this from both sides — one asserts the JSON's
+order *after* rounding, the other asserts the model **never** receives
+pre-rounded values. A later "consistency" fix that moved the rounding
+upstream would change the prediction path for a presentation concern,
+and would look like tidying.
+
+**`--json` was deliberately not added.** JSON is the only output format,
+so a flag that switches nothing would be a promise of a second one.
+`--output` and directory/batch input are out of scope for the same
+reason: the shell already has redirection and `find`.
+
+#### Packaging
+
+**`pyproject.toml` declares what the library needs to run;
+`requirements.lock.txt` records the environment the published numbers
+were measured in.** Lower bounds in one, pins in the other. Pinning in
+both would be two places to update and one of them would rot — silently,
+because a stale lower bound still installs. The lockfile has to stay
+exact, since it is what makes the measured results reproducible; the
+dependency list has to stay loose, since it describes what the code
+imports rather than what one machine happened to have.
+
+**The version is single-sourced** from `src/tsd/__init__.py` via
+`[tool.setuptools.dynamic]`, and `--version` renders `%(prog)s` rather
+than a constant. Two hardcoded versions drift, and the one nobody looks
+at is the one that ships.
+
+**`prog` is not hardcoded — it was, briefly, and the result was
+`tsd-classify --help` printing `usage: classify_pcap`**: a help text
+naming a command that does not exist on the reader's system. The
+hardcoding existed to stop argparse showing `pytest` when `main()` is
+called from the suite. That is **one caller's problem**, so it now lives
+in the tests as an explicit `prog=` argument instead of in the shipped
+parser. The stderr prefix reads `parser.prog` rather than a literal:
+**the prefix on an error and the name in `--help` are the same fact, and
+two copies of one fact eventually disagree.**
+
+**`pytest.ini` keeps `pythonpath = src` alongside the install, and the
+two are not redundant.** The suite must run on a fresh clone *before*
+anything is installed; `pip install -e .` is what makes the console
+script exist. They serve the uninstalled and the installed case, and
+removing either breaks a case the other never covered.
+
+**A bidirectional test ties the dependency list to the actual imports
+under `src/tsd/`.** An added import or a stale dependency fails the suite
+here, rather than surfacing as an `ImportError` on a reader's machine
+after a `pip install` that looked successful. Neither direction is
+visible in this repository, where every package is already in the
+virtualenv — which is exactly why it is asserted rather than noticed.
+
+#### Known packaging limitations — for the README
+
+**`dependencies` is one flat set.** Installing the CLI therefore also
+pulls `shap`, `requests` and `beautifulsoup4` — and transitively
+`numba`/`llvmlite` — because those really are imported under `src/tsd/`.
+The correct fix is `[project.optional-dependencies]` splitting `scrape`
+and `explain` extras, which means rearranging module boundaries so the
+classifier path imports none of them. **Out of scope for step 8, and
+stated rather than hidden.**
+
+**The default `--model` path is relative to the working directory**, so
+the installed tool finds it only when run from the repository root; from
+anywhere else `--model` must be given. Deliberate: `models/` is
+gitignored and per-user, so resolving it relative to the *package* would
+point confidently at a file that does not exist.
+
+**The console script installs into the venv's `bin/`**, so the README
+quickstart must include activating the venv — otherwise a reader
+following it lands on `command not found` and blames the install.
+
+#### MEASURED: training path and inference path are identical — 2026-08-09
+
+`scripts/verify_cli_parity.py` compares, for every real capture, the
+features the **shipped inference path** produces against the row already
+recorded in `data/features/features.csv` by the **training path**.
+
+| | |
+|---|---|
+| PCAPs found | 800 |
+| CSV rows | 800 |
+| compared | 800 |
+| agreeing on **every** one of 53 features | **800** |
+| total comparisons | **42,400** |
+| mismatches | **0** |
+
+Exit 0. Record in `results/cli_parity.json`.
+
+**This is a parity check, not an evaluation.** The model in `models/` is
+fitted on all four rounds, so every PCAP here is a **training row**, and
+any accuracy figure from this script would measure only how well a model
+reproduces data it has already seen. The published accuracy remains the
+`LeaveOneGroupOut` number from step 6. The script computes and records
+**no accuracy, label or agreement field at all** — asserted by a test
+over the record's keys.
+
+**Method note: exact equality after applying the same rounding to both
+sides, never a tolerance.** Choosing a tolerance decides in advance how
+much drift is acceptable, which is precisely the question being asked.
+Differences, had there been any, are recorded **with their magnitude
+rather than approved by it**.
+
+#### Two self-referential test traps, because both generalise
+
+Writing that script produced two failing assertions that were wrong in
+the same way:
+
+- an assertion that the record **contains no accuracy** failed on the
+  record's own sentence *declaring that it measures none*
+- an assertion that a trace key **held no client name** failed because
+  the key is derived from the capture directory — `round_01_20260807/
+  wget/index` — where the client name is the path, not an answer
+
+**A naive substring assertion tests the prose, not the structure.** Both
+are now checked against parsed keys rather than raw text. This is the
+same lesson as the token-based guard test in `features.py` — where
+`'rst'` matches `'burst'` — arrived at from the opposite direction:
+there the substring was too broad, here it was matching the right word
+in the wrong place.
+
 ---
 
 ## Reusing my earlier scripts
@@ -1448,7 +1614,20 @@ concern now, so the flaw and its fix can be read together.
       written — hardcoded ones were wrong twice. See "Round 4, and what
       it answered", "MEASURED: what SHAP measured", and the
       `explain_model.py` decisions.
-- [ ] **Step 8** — CLI
+- [x] **Step 8 — CLI**. Three layers: `src/tsd/verdict.py` (pure logic),
+      `src/tsd/cli.py` (argparse and exit codes) and
+      `scripts/classify_pcap.py` (shim). **Installable as
+      `tsd-classify`** via `pyproject.toml`, so `PYTHONPATH=src` is no
+      longer required. JSON on stdout and nothing else, diagnostics on
+      stderr, exit codes **0 / 2 / 3** — never the predicted class.
+      **Parity verified: 800 PCAPs × 53 features = 42,400 comparisons,
+      0 mismatches** (`results/cli_parity.json`), confirming the shipped
+      inference path and the training path produce identical features.
+      Parity was **re-run after the editable install, without
+      `PYTHONPATH`, and still gave 800/800** — so the install changed
+      how the tool is reached, not what it computes. Known packaging
+      limitations are listed under the decisions entry and go in the
+      README.
 - [ ] **Step 9** — README + case-study page
 
 The corpus **has been scraped** (2026-08-06). `data/mirror/` is gitignored;

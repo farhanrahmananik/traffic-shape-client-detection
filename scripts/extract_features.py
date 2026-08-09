@@ -11,8 +11,9 @@ round metadata, and writes CSV. Same split as scrape_corpus.py over
 mirror.py: the library is importable and tested, the script is
 operational.
 
-    PYTHONPATH=src python scripts/extract_features.py
-    PYTHONPATH=src python scripts/extract_features.py --rounds round_01_20260807
+    pip install -e .
+    python scripts/extract_features.py
+    python scripts/extract_features.py --rounds round_01_20260807
 
 Labels come from the layout, never from a re-derivation:
 

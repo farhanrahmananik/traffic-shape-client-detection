@@ -11,8 +11,9 @@ re-implements nothing, and in particular it does not define a second
 feature-family mapping -- model.py owns that, and a test already fails
 if a feature belongs to no family.
 
-    PYTHONPATH=src python scripts/explain_model.py
-    PYTHONPATH=src python scripts/explain_model.py --force
+    pip install -e .
+    python scripts/explain_model.py
+    python scripts/explain_model.py --force
 
 Why three plots and not one
 ---------------------------

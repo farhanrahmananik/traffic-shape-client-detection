@@ -1,0 +1,24 @@
+{
+  "check": "cli-vs-training feature parity; features only, never accuracy",
+  "model": {
+    "path": "models/client_classifier.joblib",
+    "sha256": "65864d6df5dc816b02831da77d16c54df10a74d9286f36856250fe6b35348904",
+    "n_features": 53
+  },
+  "limit": null,
+  "partial": false,
+  "coverage": {
+    "pcaps_found": 800,
+    "csv_rows": 800,
+    "matched": 800,
+    "pcaps_without_csv_row": [],
+    "csv_rows_without_pcap": []
+  },
+  "comparison": {
+    "traces_compared": 800,
+    "traces_matching_all_features": 800,
+    "refused_by_inference_path": [],
+    "mismatched_features": {},
+    "examples": []
+  }
+}

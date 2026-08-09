@@ -9,8 +9,9 @@ All the logic lives in src/tsd/capture.py; this file parses arguments,
 puts itself inside the capture network namespace, and reports. Same split
 as mirror.py / scrape_corpus.py and server.py / serve.py.
 
-    PYTHONPATH=src python scripts/capture_round.py --round 1
-    PYTHONPATH=src python scripts/capture_round.py --round 2 --limit 3
+    pip install -e .
+    python scripts/capture_round.py --round 1
+    python scripts/capture_round.py --round 2 --limit 3
 
 The script re-executes ITSELF under `sudo unshare -n`, so you do not
 wrap it by hand -- and so the server and both clients end up in the same

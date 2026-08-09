@@ -5,13 +5,15 @@ scrape_corpus.py
 Build the corpus: discover ~100 unique b-tu.de pages, mirror them with
 their assets into data/mirror/, and write results/corpus_manifest.json.
 
-Run it from the repository root, with src/ on the import path. This
-script deliberately does NOT touch sys.path -- a script that edits its
-own import path hides a broken layout instead of reporting it, and the
-same PYTHONPATH is what pytest.ini already declares:
+Run it from the repository root, after `pip install -e .`. This script
+deliberately does NOT touch sys.path -- a script that edits its own
+import path hides a broken layout instead of reporting it:
 
-    PYTHONPATH=src python scripts/scrape_corpus.py --dry-run
-    PYTHONPATH=src python scripts/scrape_corpus.py
+    python scripts/scrape_corpus.py --dry-run
+    python scripts/scrape_corpus.py
+
+Without the install, prefix with PYTHONPATH=src -- the same path
+pytest.ini declares, so the suite runs before anything is installed.
 
 If you pipe the output anywhere -- `| tee`, `| less` -- set pipefail
 first, or the exit code you read is the pipe's, not this script's. See
@@ -34,7 +36,7 @@ Exit codes:
     ${PIPESTATUS[0]}:
 
         set -o pipefail
-        PYTHONPATH=src python scripts/scrape_corpus.py | tee scrape.log
+        python scripts/scrape_corpus.py | tee scrape.log
 
 Why failures are split into three classes:
 

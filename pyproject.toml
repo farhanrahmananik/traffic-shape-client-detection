@@ -1,0 +1,54 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "traffic-shape-client-detection"
+description = "Classify an encrypted HTTPS page-load capture as a browser or an automated client, from traffic shape alone."
+requires-python = ">=3.12"
+dynamic = ["version"]
+
+# Derived from what src/tsd/ actually imports, nothing else. matplotlib
+# is absent on purpose: it is used by scripts/explain_model.py, which is
+# operational tooling rather than part of the importable library.
+#
+# The division of labour, and why there are two files:
+#
+#   pyproject.toml          what the LIBRARY needs in order to run,
+#                           as lower bounds
+#   requirements.lock.txt   the exact environment the published results
+#                           were MEASURED in, as pins
+#
+# Pinning in both would create two places to update, and one of them
+# would rot -- silently, since a stale lower bound still installs. The
+# lock file stays the authority for reproducing the numbers; this list
+# is the authority for what the package imports.
+dependencies = [
+    "beautifulsoup4>=4.12",  # discover.py, mirror.py
+    "dpkt>=1.9.8",           # features.py
+    "joblib>=1.3",           # verdict.py
+    "numpy>=2.0",            # model.py, shap_explain.py
+    "pandas>=2.2",           # model.py
+    "requests>=2.31",        # fetcher.py, robots.py
+    "scikit-learn>=1.5",     # model.py
+    "shap>=0.45",            # shap_explain.py
+]
+
+[project.scripts]
+# setuptools wraps this as `sys.exit(main())`, so `main()` returning an
+# int is already the correct exit-code contract -- 0 verdict, 2 usage,
+# 3 VerdictError. scripts/classify_pcap.py does the same thing by hand
+# and keeps working unchanged.
+tsd-classify = "tsd.cli:main"
+
+[tool.setuptools]
+package-dir = { "" = "src" }
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.setuptools.dynamic]
+# Single-sourced: the version lives in src/tsd/__init__.py and is read
+# from there. Two hardcoded versions drift, and the one nobody looks at
+# is the one that ends up on PyPI.
+version = { attr = "tsd.__version__" }

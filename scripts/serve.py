@@ -9,10 +9,10 @@ line arguments into a MirrorServer. Same split as mirror.py and
 scrape_corpus.py: the library is importable and testable, the script is
 run-once operational tooling.
 
-Run from the repository root with src/ on the import path:
+Run from the repository root, after `pip install -e .`:
 
-    PYTHONPATH=src python scripts/serve.py
-    PYTHONPATH=src python scripts/serve.py --quiet     # during capture
+    python scripts/serve.py
+    python scripts/serve.py --quiet     # during capture
 
 Prerequisites:
 
@@ -50,14 +50,14 @@ from tsd.server import (
 )
 
 EPILOG = """\
-run from the repository root:
+run from the repository root, after `pip install -e .`:
 
-    PYTHONPATH=src python scripts/serve.py
-    PYTHONPATH=src python scripts/serve.py --quiet     # during capture
+    python scripts/serve.py
+    python scripts/serve.py --quiet     # during capture
 
-src/ is not installed as a package, so PYTHONPATH=src is required --
-the same invocation pytest.ini declares and scripts/scrape_corpus.py
-documents.
+Without the install, prefix with PYTHONPATH=src -- the same path
+pytest.ini declares, so the suite runs on a fresh clone before anything
+has been installed.
 """
 
 

@@ -24,9 +24,13 @@ certs/
 .venv/
 __pycache__/
 *.py[cod]
-*.egg-info/
 .pytest_cache/
 .mypy_cache/
+
+# build artefacts
+*.egg-info/
+build/
+dist/
 
 models/*.joblib
 models/*.pkl
@@ -35,3 +39,4 @@ models/*.pkl
 Thumbs.db
 .idea/
 .vscode/
+.claude/

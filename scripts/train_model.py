@@ -8,8 +8,9 @@ results/metrics.json, and save a model for the step-8 CLI.
 All the logic lives in src/tsd/model.py; this script parses arguments,
 writes files and prints. Same split as everywhere else in this repo.
 
-    PYTHONPATH=src python scripts/train_model.py
-    PYTHONPATH=src python scripts/train_model.py --force
+    pip install -e .
+    python scripts/train_model.py
+    python scripts/train_model.py --force
 
 Two numbers must never be confused, so the script prints them
 differently:
