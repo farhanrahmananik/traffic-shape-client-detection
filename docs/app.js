@@ -59,7 +59,7 @@ const TOC_DISCLOSURE_SELECTOR = ".toc-disclosure";
 /* The same breakpoint the stylesheet uses for the sidebar. The two have
  * to agree, and there is no way to read one from the other, so it is
  * written once here and once there and named in both. */
-const TOC_SIDEBAR_QUERY = "(min-width: 56rem)";
+const TOC_SIDEBAR_QUERY = "(min-width: 64rem)";
 
 const CHART_SELECTOR = "[data-chart]";
 const SVG_NS = "http://www.w3.org/2000/svg";
@@ -481,7 +481,7 @@ function manageTocDisclosure() {
 
   const summary = disclosure.querySelector("summary");
   const sidebar = window.matchMedia(TOC_SIDEBAR_QUERY);
-  let toggledByReader = false;
+  let narrowOpen = false;
 
   const apply = () => {
     if (sidebar.matches) {
@@ -491,16 +491,13 @@ function manageTocDisclosure() {
     }
 
     summary?.removeAttribute("tabindex");
-    if (!toggledByReader) {
-      disclosure.open = false;
-    }
+    disclosure.open = narrowOpen;
   };
 
   disclosure.addEventListener("toggle", () => {
-    /* Only a narrow-screen toggle is the reader's; the forced open above
-     * fires this event too. */
+    /* Remember the narrow-screen state; desktop remains forced open. */
     if (!sidebar.matches) {
-      toggledByReader = true;
+      narrowOpen = disclosure.open;
     }
   });
 

@@ -78,11 +78,11 @@
      finds the next line. It is applied to text, never to a container —
      applying it to containers is what produced a page of empty
      margins. */
-  --container: 69rem;
-  --gutter: var(--space-md);
+  --container: 76rem;
+  --gutter: clamp(1rem, 4vw, 2.5rem);
   --container-inner: calc(var(--container) - 2 * var(--gutter));
-  --sidebar: 13.5rem;
-  --layout-gap: var(--space-xl);
+  --sidebar: 14rem;
+  --layout-gap: clamp(2rem, 5vw, 4rem);
   --measure: 68ch;
 
   --radius: 4px;
@@ -224,7 +224,7 @@ body {
   background: var(--bg-sunken);
   border-bottom: var(--border-width) solid var(--rule-strong);
   padding-block: var(--space-xl) var(--space-lg);
-  margin-block-end: var(--space-2xl);
+  margin-block-end: 0;
 }
 
 /* The hero's inner container. Implemented as a centred middle track
@@ -257,11 +257,12 @@ body {
 
 /* Stacked by default: on a phone the contents list is a list above the
    text, not a rail beside it. */
-@media (min-width: 56rem) {
+@media (min-width: 64rem) {
   .layout {
     display: grid;
-    grid-template-columns: var(--sidebar) minmax(0, 1fr);
+    grid-template-columns: var(--sidebar) minmax(0, var(--measure));
     gap: var(--layout-gap);
+    justify-content: center;
     align-items: start;
   }
 
@@ -277,16 +278,20 @@ body {
 
   .toc {
     position: sticky;
-    top: var(--space-lg);
+    top: 2rem;
     /* Its own scroll if the list ever outgrows the viewport, so a
        longer page cannot make the rail unusable. */
-    max-height: calc(100vh - 2 * var(--space-lg));
+    max-height: calc(100vh - 4rem);
     overflow-y: auto;
     margin: 0;
-    padding: var(--space-lg) var(--space-md) var(--space-lg) 0;
+    padding: 2.5rem 1.5rem 2.5rem 0;
     border-top: 0;
+    border-bottom: 0;
     border-right: var(--border-width) solid var(--rule);
   }
+
+  main { padding-block: 0 3rem; }
+  main > section:first-child { padding-top: 2.5rem; }
 }
 
 /* ---- prose measure ------------------------------------------------ */
@@ -847,9 +852,10 @@ header > p:nth-of-type(2) {
 /* ------------------------------------------------------------------ */
 
 .toc {
-  margin-block-start: var(--space-lg);
-  padding-block-start: var(--space-md);
-  border-top: var(--border-width) solid var(--rule);
+  margin-block-start: 0;
+  padding-block: 1.5rem;
+  border-top: 0;
+  border-bottom: var(--border-width) solid var(--rule);
 }
 
 /* The navigation label, and below the sidebar breakpoint also the
@@ -972,7 +978,7 @@ header > p:nth-of-type(2) {
    find its place without reading. Confined to the sidebar: stacked
    above the content the list is one or two columns wide, and a rule
    down the left of that box would point at nothing. */
-@media (min-width: 56rem) {
+@media (min-width: 64rem) {
   .toc ol {
     border-left: var(--border-width) solid var(--rule);
   }
@@ -1017,7 +1023,7 @@ header > p:nth-of-type(2) {
    once the list becomes a sidebar it must be a single column again,
    and a one-sided min-width rule declared later in the file would
    quietly win. */
-@media (min-width: 34rem) and (max-width: 55.999rem) {
+@media (min-width: 34rem) and (max-width: 63.999rem) {
   .toc ol {
     columns: 2;
     column-gap: var(--space-lg);
@@ -1028,10 +1034,16 @@ header > p:nth-of-type(2) {
 /* Sections                                                           */
 /* ================================================================== */
 
+main { padding-block: 1rem 3rem; }
+
 main > section {
-  margin-block-end: var(--space-2xl);
+  margin-block-end: 0;
+  padding-block: clamp(2.5rem, 6vw, 4rem);
+  border-top: var(--border-width) solid var(--rule);
   scroll-margin-top: var(--space-lg);
 }
+
+main > section:first-child { border-top: 0; }
 
 /* The nav anchors must visibly land, or a reader who clicks one is not
    sure anything happened. One rule for every section, matched on
